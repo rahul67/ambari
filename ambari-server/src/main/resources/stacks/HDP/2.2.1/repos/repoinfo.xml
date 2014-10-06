@@ -64,4 +64,16 @@
       <reponame>HDP-UTILS</reponame>
     </repo>
   </os>
+  <os type="debian7">
+    <repo>
+      <baseurl>http://s3.amazonaws.com/dev.hortonworks.com/HDP/ubuntu12/2.x/updates/2.2.0.0</baseurl>
+      <repoid>HDP-2.2.1</repoid>
+      <reponame>HDP</reponame>
+    </repo>
+    <repo>
+      <baseurl>http://s3.amazonaws.com/dev.hortonworks.com/HDP-UTILS-1.1.0.19/repos/ubuntu12</baseurl>
+      <repoid>HDP-UTILS-1.1.0.19</repoid>
+      <reponame>HDP-UTILS</reponame>
+    </repo>
+  </os>
 </reposinfo>

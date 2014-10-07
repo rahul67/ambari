@@ -38,6 +38,12 @@
     <description>YARN User</description>
   </property>
   <property>
+    <name>yarn_group</name>
+    <value>yarn</value>
+    <property-type>GROUP</property-type>
+    <description>YARN Group</description>
+  </property>
+  <property>
     <name>yarn_heapsize</name>
     <value>1024</value>
     <description>Max heapsize for all YARN components using a numerical value in the scale of MB</description>

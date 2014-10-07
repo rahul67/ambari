@@ -252,6 +252,15 @@
             <package>
               <name>libhdfs0-dev</name>
             </package>
+            <package>
+                <name>zookeeper</name>
+            </package>
+            <package>
+                <name>parquet</name>
+            </package>
+            <package>
+                <name>parquet-format</name>
+            </package>
           </packages>
         </osSpecific>
                         

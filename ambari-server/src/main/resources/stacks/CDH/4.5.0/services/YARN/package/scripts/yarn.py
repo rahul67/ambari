@@ -155,7 +155,7 @@ def yarn(name = None):
     )
 
     File(format("{hadoop_conf_dir}/container-executor.cfg"),
-         group=params.user_group,
+         group=params.yarn_group,
          mode=0644,
          content=Template('container-executor.cfg.j2')
     )

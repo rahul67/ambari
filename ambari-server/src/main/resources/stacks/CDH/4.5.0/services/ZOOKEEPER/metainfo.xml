@@ -68,6 +68,9 @@
             <package>
               <name>zookeeper</name>
             </package>
+            <package>
+              <name>zookeeper-server</name>
+            </package>
           </packages>
         </osSpecific>
       </osSpecifics>

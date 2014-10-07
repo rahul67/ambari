@@ -28,6 +28,12 @@
     <description>ZooKeeper User.</description>
   </property>
   <property>
+    <name>zk_group</name>
+    <value>zookeeper</value>
+    <property-type>GROUP</property-type>
+    <description>ZooKeeper Group.</description>
+  </property>
+  <property>
     <name>zk_data_dir</name>
     <value>/hadoop/zookeeper</value>
     <description>Data directory for ZooKeeper.</description>

@@ -40,7 +40,7 @@ else:
 config_dir = "/etc/zookeeper/conf"
 zk_user =  config['configurations']['zookeeper-env']['zk_user']
 hostname = config['hostname']
-user_group = config['configurations']['cluster-env']['user_group']
+user_group = config['configurations']['zookeeper-env']['zk_group']
 zk_env_sh_template = config['configurations']['zookeeper-env']['content']
 
 zk_log_dir = config['configurations']['zookeeper-env']['zk_log_dir']

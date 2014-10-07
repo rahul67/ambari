@@ -113,6 +113,7 @@ mapred_job_summary_log = format("{mapred_log_dir_prefix}/{mapred_user}/hadoop-ma
 yarn_job_summary_log = format("{yarn_log_dir_prefix}/{yarn_user}/hadoop-mapreduce.jobsummary.log")
 
 user_group = config['configurations']['cluster-env']['user_group']
+yarn_group = config['configurations']['yarn-env']['yarn_group']
 
 #exclude file
 exclude_hosts = default("/clusterHostInfo/decom_nm_hosts", [])

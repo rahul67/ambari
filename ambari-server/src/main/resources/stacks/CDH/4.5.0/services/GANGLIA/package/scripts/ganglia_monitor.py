@@ -125,7 +125,7 @@ class GangliaMonitor(Script):
     import params
 
     generate_daemon("gmond",
-                    name = "HDPSlaves",
+                    name = "CDHSlaves",
                     role = "monitor",
                     owner = "root",
                     group = params.user_group)
@@ -136,97 +136,97 @@ class GangliaMonitor(Script):
      
     if params.has_namenodes:
       generate_daemon("gmond",
-                      name = "HDPNameNode",
+                      name = "CDHNameNode",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_jobtracker:
       generate_daemon("gmond",
-                      name = "HDPJobTracker",
+                      name = "CDHJobTracker",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_hbase_masters:
       generate_daemon("gmond",
-                      name = "HDPHBaseMaster",
+                      name = "CDHHBaseMaster",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_resourcemanager:
       generate_daemon("gmond",
-                      name = "HDPResourceManager",
+                      name = "CDHResourceManager",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_nodemanager:
       generate_daemon("gmond",
-                      name = "HDPNodeManager",
+                      name = "CDHNodeManager",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_historyserver:
       generate_daemon("gmond",
-                      name = "HDPHistoryServer",
+                      name = "CDHHistoryServer",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_slaves:
       generate_daemon("gmond",
-                      name = "HDPDataNode",
+                      name = "CDHDataNode",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_tasktracker:
       generate_daemon("gmond",
-                      name = "HDPTaskTracker",
+                      name = "CDHTaskTracker",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_hbase_rs:
       generate_daemon("gmond",
-                      name = "HDPHBaseRegionServer",
+                      name = "CDHHBaseRegionServer",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_nimbus_server:
       generate_daemon("gmond",
-                      name = "HDPNimbus",
+                      name = "CDHNimbus",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_supervisor_server:
       generate_daemon("gmond",
-                      name = "HDPSupervisor",
+                      name = "CDHSupervisor",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_flume:
       generate_daemon("gmond",
-                      name = "HDPFlumeServer",
+                      name = "CDHFlumeServer",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     if params.has_journalnode:
       generate_daemon("gmond",
-                      name = "HDPJournalNode",
+                      name = "CDHJournalNode",
                       role = "server",
                       owner = "root",
                       group = params.user_group)
 
     generate_daemon("gmond",
-                    name = "HDPSlaves",
+                    name = "CDHSlaves",
                     role = "server",
                     owner = "root",
                     group = params.user_group)

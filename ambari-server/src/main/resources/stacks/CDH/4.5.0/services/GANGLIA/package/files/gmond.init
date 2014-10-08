@@ -1,7 +1,7 @@
 #!/bin/sh
 # chkconfig: 2345 70 40
-# description: hdp-gmond startup script
-# processname: hdp-gmond
+# description: cdh-gmond startup script
+# processname: cdh-gmond
 #/*
 # * Licensed to the Apache Software Foundation (ASF) under one
 # * or more contributor license agreements.  See the NOTICE file
@@ -22,34 +22,34 @@
 
 # Remember to keep this in-sync with the definition of 
 # GANGLIA_RUNTIME_COMPONENTS_UNPACK_DIR in monrpmInstaller.sh.
-HDP_GANGLIA_RUNTIME_COMPONENTS_DIR=/usr/libexec/hdp/ganglia
-HDP_GANLIA_GMOND_STARTER=${HDP_GANGLIA_RUNTIME_COMPONENTS_DIR}/startGmond.sh
-HDP_GANLIA_GMOND_STOPPER=${HDP_GANGLIA_RUNTIME_COMPONENTS_DIR}/stopGmond.sh
-HDP_GANLIA_GMOND_CHECKER=${HDP_GANGLIA_RUNTIME_COMPONENTS_DIR}/checkGmond.sh
+CDH_GANGLIA_RUNTIME_COMPONENTS_DIR=/usr/libexec/cdh/ganglia
+CDH_GANLIA_GMOND_STARTER=${CDH_GANGLIA_RUNTIME_COMPONENTS_DIR}/startGmond.sh
+CDH_GANLIA_GMOND_STOPPER=${CDH_GANGLIA_RUNTIME_COMPONENTS_DIR}/stopGmond.sh
+CDH_GANLIA_GMOND_CHECKER=${CDH_GANGLIA_RUNTIME_COMPONENTS_DIR}/checkGmond.sh
 
 RETVAL=0
 
 case "$1" in
    start)
       echo "============================="
-      echo "Starting hdp-gmond..."
+      echo "Starting cdh-gmond..."
       echo "============================="
-      [ -f ${HDP_GANLIA_GMOND_STARTER} ] || exit 1
-      eval "${HDP_GANLIA_GMOND_STARTER}"
+      [ -f ${CDH_GANLIA_GMOND_STARTER} ] || exit 1
+      eval "${CDH_GANLIA_GMOND_STARTER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && touch /var/lock/subsys/hdp-gmond
+      [ $RETVAL -eq 0 ] && touch /var/lock/subsys/cdh-gmond
       ;;
 
   stop)
       echo "=================================="
-      echo "Shutting down hdp-gmond..."
+      echo "Shutting down cdh-gmond..."
       echo "=================================="
-      [ -f ${HDP_GANLIA_GMOND_STOPPER} ] || exit 1
-      eval "${HDP_GANLIA_GMOND_STOPPER}"
+      [ -f ${CDH_GANLIA_GMOND_STOPPER} ] || exit 1
+      eval "${CDH_GANLIA_GMOND_STOPPER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/hdp-gmond
+      [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/cdh-gmond
       ;;
 
   restart|reload)
@@ -59,10 +59,10 @@ case "$1" in
 	;;
   status)
       echo "======================================="
-      echo "Checking status of hdp-gmond..."
+      echo "Checking status of cdh-gmond..."
       echo "======================================="
-      [ -f ${HDP_GANLIA_GMOND_CHECKER} ] || exit 1
-      eval "${HDP_GANLIA_GMOND_CHECKER}"
+      [ -f ${CDH_GANLIA_GMOND_CHECKER} ] || exit 1
+      eval "${CDH_GANLIA_GMOND_CHECKER}"
       RETVAL=$?
       ;;
   *)

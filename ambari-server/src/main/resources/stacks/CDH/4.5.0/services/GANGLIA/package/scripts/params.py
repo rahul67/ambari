@@ -23,10 +23,10 @@ import os
 config = Script.get_config()
 
 user_group = config['configurations']['cluster-env']["user_group"]
-ganglia_conf_dir = default("/configurations/ganglia-env/ganglia_conf_dir", "/etc/ganglia/hdp")
+ganglia_conf_dir = default("/configurations/ganglia-env/ganglia_conf_dir", "/etc/ganglia/cdh")
 ganglia_dir = "/etc/ganglia"
 ganglia_runtime_dir = config['configurations']['ganglia-env']["ganglia_runtime_dir"]
-ganglia_shell_cmds_dir = "/usr/libexec/hdp/ganglia"
+ganglia_shell_cmds_dir = "/usr/libexec/cdh/ganglia"
 
 gmetad_user = config['configurations']['ganglia-env']["gmetad_user"]
 gmond_user = config['configurations']['ganglia-env']["gmond_user"]
@@ -109,25 +109,25 @@ has_nimbus_server = not len(nimbus_server_hosts) == 0
 has_supervisor_server = not len(supervisor_server_hosts) == 0
 
 ganglia_cluster_names = {
-  "jn_hosts": [("HDPJournalNode", 8654)],
-  "flume_hosts": [("HDPFlumeServer", 8655)],
-  "hbase_rs_hosts": [("HDPHBaseRegionServer", 8656)],
-  "nm_hosts": [("HDPNodeManager", 8657)],
-  "mapred_tt_hosts": [("HDPTaskTracker", 8658)],
-  "slave_hosts": [("HDPDataNode", 8659)],
-  "namenode_host": [("HDPNameNode", 8661)],
-  "jtnode_host": [("HDPJobTracker", 8662)],
-  "hbase_master_hosts": [("HDPHBaseMaster", 8663)],
-  "rm_host": [("HDPResourceManager", 8664)],
-  "hs_host": [("HDPHistoryServer", 8666)],
-  "nimbus_hosts": [("HDPNimbus", 8649)],
-  "supervisor_hosts": [("HDPSupervisor", 8650)],
+  "jn_hosts": [("CDHJournalNode", 8654)],
+  "flume_hosts": [("CDHFlumeServer", 8655)],
+  "hbase_rs_hosts": [("CDHHBaseRegionServer", 8656)],
+  "nm_hosts": [("CDHNodeManager", 8657)],
+  "mapred_tt_hosts": [("CDHTaskTracker", 8658)],
+  "slave_hosts": [("CDHDataNode", 8659)],
+  "namenode_host": [("CDHNameNode", 8661)],
+  "jtnode_host": [("CDHJobTracker", 8662)],
+  "hbase_master_hosts": [("CDHHBaseMaster", 8663)],
+  "rm_host": [("CDHResourceManager", 8664)],
+  "hs_host": [("CDHHistoryServer", 8666)],
+  "nimbus_hosts": [("CDHNimbus", 8649)],
+  "supervisor_hosts": [("CDHSupervisor", 8650)],
   "ReservedPort1": [("ReservedPort1", 8667)],
   "ReservedPort2": [("ReservedPort2", 8668)],
   "ReservedPort3": [("ReservedPort3", 8669)]
 }
 
-ganglia_clusters = [("HDPSlaves", 8660)]
+ganglia_clusters = [("CDHSlaves", 8660)]
 
 for key in ganglia_cluster_names:
   property_name = format("/clusterHostInfo/{key}")

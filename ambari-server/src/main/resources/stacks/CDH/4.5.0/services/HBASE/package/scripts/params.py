@@ -96,7 +96,7 @@ else:
 smoke_test_user = config['configurations']['cluster-env']['smokeuser']
 smokeuser_permissions = "RWXCA"
 service_check_data = functions.get_unique_id_and_date()
-user_group = config['configurations']['cluster-env']["user_group"]
+user_group = config['configurations']['hbase-env']["hbase_group"]
 
 if security_enabled:
   _hostname_lowercase = config['hostname'].lower()
@@ -122,7 +122,7 @@ else:
 hbase_env_sh_template = config['configurations']['hbase-env']['content']
 
 hbase_hdfs_root_dir = config['configurations']['hbase-site']['hbase.rootdir']
-hbase_staging_dir = "/apps/hbase/staging"
+hbase_staging_dir = "/hbase/staging"
 #for create_hdfs_directory
 hostname = config["hostname"]
 hdfs_user_keytab = config['configurations']['hadoop-env']['hdfs_user_keytab']

@@ -57,6 +57,12 @@
     <property-type>USER</property-type>
     <description>HBase User Name.</description>
   </property>
+   <property>
+    <name>hbase_group</name>
+    <value>hbase</value>
+    <property-type>GROUP</property-type>
+    <description>HBase Group Name.</description>
+  </property>
 
   <!-- hbase-env.sh -->
   <property>

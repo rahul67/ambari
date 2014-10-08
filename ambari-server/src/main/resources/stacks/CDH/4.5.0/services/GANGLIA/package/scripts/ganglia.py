@@ -48,7 +48,7 @@ def config():
 def init_file(name):
   import params
 
-  File("/etc/init.d/hdp-" + name,
+  File("/etc/init.d/cdh-" + name,
        content=StaticFile(name + ".init"),
        mode=0755
   )

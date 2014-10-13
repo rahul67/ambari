@@ -20,12 +20,14 @@ limitations under the License.
 from resource_management import *
 from utils import service
 from utils import hdfs_directory
+from hdfs_namenode import create_name_dirs
 
 
 def snamenode(action=None, format=False):
   import params
 
   if action == "configure":
+    create_name_dirs(params.fs_checkpoint_dir)
     Directory(params.fs_checkpoint_dir,
               recursive=True,
               mode=0755,

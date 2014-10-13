@@ -108,6 +108,15 @@ def server_files():
             recursive=True
   )
   
+  gmetad_root_dir_file_owner = params.gmetad_user
+  
+  Directory(params.gmetad_root_dir,
+            owner=gmetad_root_dir_file_owner,
+            group=gmetad_root_dir_file_owner,
+            mode=0755,
+            recursive=True
+  )
+  
   if System.get_instance().os_family in ["ubuntu","suse"]:
     File( params.ganglia_apache_config_file,
       content = Template("ganglia.conf.j2"),

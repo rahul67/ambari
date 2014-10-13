@@ -64,6 +64,7 @@ public class OsFamily {
       Collections.addAll(osMap.get("centos6"), "centos6", "redhat6", "oraclelinux6", "rhel6");
       Collections.addAll(osMap.get("suse11"), "suse11", "sles11", "opensuse11");
       Collections.addAll(osMap.get("ubuntu12"), "ubuntu12");
+            Collections.addAll(osMap.get("ubuntu7"), "ubuntu7");
     }
   }
 

@@ -155,7 +155,7 @@ elif  System.get_instance().os_family == "redhat":
   rrd_py_path = '/var/www/cgi-bin'
   dwoo_path = '/var/lib/ganglia/dwoo'
   web_user = "apache"
-elif  System.get_instance().os_family == "ubuntu":
+elif  System.get_instance().os_family == "ubuntu" or System.get_instance().os_family == "debian":
   rrd_py_path = '/usr/lib/cgi-bin'
   ganglia_web_path = '/usr/share/ganglia-webfrontend'
   dwoo_path = '/var/lib/ganglia/dwoo'

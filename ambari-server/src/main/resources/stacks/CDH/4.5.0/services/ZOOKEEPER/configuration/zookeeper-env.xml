@@ -24,7 +24,7 @@
   <property>
     <name>zk_user</name>
     <value>zookeeper</value>
-    <property-type>USER</property-type>
+    <property-type>USER GROUP</property-type>
     <description>ZooKeeper User.</description>
   </property>
   <property>

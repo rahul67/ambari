@@ -54,7 +54,7 @@
    <property>
     <name>hbase_user</name>
     <value>hbase</value>
-    <property-type>USER</property-type>
+    <property-type>USER GROUP</property-type>
     <description>HBase User Name.</description>
   </property>
    <property>

@@ -94,7 +94,7 @@ def webhcat():
                 hadoop_bin_dir=params.hadoop_bin_dir,
                 hadoop_conf_dir=params.hadoop_conf_dir
   )
-
+"""
   CopyFromLocal(params.pig_tar_file,
                 owner=params.webhcat_user,
                 mode=0755,
@@ -114,3 +114,4 @@ def webhcat():
                 hadoop_bin_dir=params.hadoop_bin_dir,
                 hadoop_conf_dir=params.hadoop_conf_dir
   )
+"""

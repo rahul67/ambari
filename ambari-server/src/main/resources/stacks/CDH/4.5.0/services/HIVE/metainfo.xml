@@ -192,6 +192,11 @@
             <package>
               <name>hive</name>
             </package>
+          </packages>
+        </osSpecific>
+        <osSpecific>
+          <osFamily>redhat5,redhat6,suse11</osFamily>
+          <packages>
             <package>
               <name>hcatalog</name>
             </package>
@@ -202,23 +207,35 @@
               <name>webhcat-tar-pig</name>
             </package>
             <package>
+              <name>mysql</name>
+            </package>
+            <package>
               <name>mysql-connector-java</name>
             </package>
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>redhat5,redhat6,suse11</osFamily>
+          <osFamily>redhat5,redhat6,ubuntu12,ubuntu7</osFamily>
           <packages>
             <package>
-              <name>mysql</name>
+              <name>mysql-server</name>
             </package>
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>redhat5,redhat6,ubuntu12</osFamily>
+          <osFamily>ubuntu12,ubuntu7</osFamily>
           <packages>
             <package>
-              <name>mysql-server</name>
+              <name>libmysql-java</name>
+            </package>
+            <package>
+              <name>hive-hcatalog</name>
+            </package>
+            <package>
+              <name>hive-webhcat</name>
+            </package>
+            <package>
+              <name>hive-webhcat-server</name>
             </package>
           </packages>
         </osSpecific>
@@ -241,7 +258,7 @@
       <requiredServices>
         <service>ZOOKEEPER</service>
         <service>YARN</service>
-        <service>TEZ</service>
+<!--         <service>TEZ</service> -->
       </requiredServices>
 
       <configuration-dependencies>

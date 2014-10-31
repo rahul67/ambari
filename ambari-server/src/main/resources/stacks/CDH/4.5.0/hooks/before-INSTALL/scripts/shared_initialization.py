@@ -34,7 +34,7 @@ def setup_users():
     
   for user in params.user_list:
     User(user,
-        gid = params.user_to_gid_dict[user],
+        gid = user,
         groups = params.user_to_groups_dict[user],
         ignore_failures = params.ignore_groupsusers_create       
     )

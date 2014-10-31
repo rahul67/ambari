@@ -24,7 +24,7 @@
   <property>
     <name>nagios_user</name>
     <value>nagios</value>
-    <property-type>USER</property-type>
+    <property-type>USER GROUP</property-type>
     <description>Nagios Username.</description>
   </property>
   <property>

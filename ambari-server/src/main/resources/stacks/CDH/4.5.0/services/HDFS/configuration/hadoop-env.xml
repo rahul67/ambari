@@ -70,7 +70,7 @@
   <property>
     <name>hdfs_user</name>
     <value>hdfs</value>
-    <property-type>USER</property-type>
+    <property-type>USER GROUP</property-type>
     <description>User to run HDFS as</description>
   </property>
   

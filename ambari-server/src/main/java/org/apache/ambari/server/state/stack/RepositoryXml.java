@@ -90,6 +90,7 @@ public class RepositoryXml {
     private String mirrorslist = null;
     private String repoid = null;
     private String reponame = null;
+        private String repobranch = null;
     private String latest = null;
 
     private Repo() {
@@ -123,6 +124,13 @@ public class RepositoryXml {
       return reponame;
     }
     
+        /**
+         * @return the repo branch
+         */
+        public String getRepoBranch() {
+            return repobranch;
+        }
+
     public String getLatestUri() {
       return latest;
     }

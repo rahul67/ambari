@@ -27,6 +27,7 @@ App.Repository = DS.Model.extend({
   defaultBaseUrl: DS.attr('string'),
   latestBaseUrl: DS.attr('string'),
   repoName: DS.attr('string'),
+  repoBranch: DS.attr('string'),
   stackName: DS.attr('string'),
   stackVersion: DS.attr('string'),
   operatingSystem: DS.belongsTo('App.OperatingSystem'),

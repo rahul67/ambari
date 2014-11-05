@@ -25,6 +25,7 @@ public class RepositoryInfo {
   private String osType;
   private String repoId;
   private String repoName;
+    private String repoBranch;
   private String mirrorsList;
   private String defaultBaseUrl;
   private String latestBaseUrl;
@@ -85,9 +86,24 @@ public class RepositoryInfo {
     this.repoName = repoName;
   }
 
-  /**
-   * @return the mirrorsList
-   */
+    /**
+     * @return the repoBranch
+     */
+    public String getRepoBranch() {
+        return repoBranch;
+    }
+
+    /**
+     * @param repoBranch
+     *            the repoBranch to set
+     */
+    public void setRepoBranch(String repoBranch) {
+        this.repoBranch = repoBranch;
+    }
+
+    /**
+     * @return the mirrorsList
+     */
   public String getMirrorsList() {
     return mirrorsList;
   }
@@ -134,6 +150,7 @@ public class RepositoryInfo {
         + ", repoId=" + repoId
         + ", baseUrl=" + baseUrl
         + ", repoName=" + repoName
+                + ", repoBranch=" + repoBranch
         + ", mirrorsList=" + mirrorsList
         + " ]";
   }
@@ -142,7 +159,8 @@ public class RepositoryInfo {
   public RepositoryResponse convertToResponse()
   {
     return new RepositoryResponse(getBaseUrl(), getOsType(), getRepoId(),
-        getRepoName(), getMirrorsList(), getDefaultBaseUrl(), getLatestBaseUrl());
+ getRepoName(), getRepoBranch(), getMirrorsList(),
+                getDefaultBaseUrl(), getLatestBaseUrl());
   }
 
 

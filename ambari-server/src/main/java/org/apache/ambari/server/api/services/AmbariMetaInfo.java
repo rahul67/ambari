@@ -995,6 +995,7 @@ public class AmbariMetaInfo {
           ri.setOsType(os.trim());
           ri.setRepoId(r.getRepoId());
           ri.setRepoName(r.getRepoName());
+                    ri.setRepoBranch(r.getRepoBranch());
           ri.setLatestBaseUrl(r.getBaseUrl());
 
           if (null != metainfoDAO) {

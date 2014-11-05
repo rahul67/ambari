@@ -46,6 +46,7 @@ App.MainAdminRepositoriesView = Em.View.extend({
             'repoId': repo.repoId,
             'id': repo.repoId + '-' + repo.osType,
             'repoName' : repo.repoName,
+            'repoBranch' : repo.repoBranch,
             'stackName' : repo.stackName,
             'stackVersion' : repo.stackVersion,
             'baseUrl': repo.baseUrl,

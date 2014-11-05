@@ -37,8 +37,7 @@ def _alter_repo(action, repo_string, repo_template):
       repo['baseUrl'] = None
     if not 'mirrorsList' in repo:
       repo['mirrorsList'] = None
-    
-    ubuntu_components = [ repo['repoName'] ] + _UBUNTU_REPO_COMPONENTS_POSTFIX
+    ubuntu_components = [ repo['repoName'] ] + [ repo['repoBranch'] ]
     
     Repository(repo['repoId'],
                action = action,

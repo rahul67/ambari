@@ -21,11 +21,19 @@
       <baseurl>http://archive.cloudera.com/cdh5/debian/wheezy/amd64/cdh</baseurl>
       <repoid>wheezy-cdh5</repoid>
       <reponame>wheezy-cdh5</reponame>
+      <repobranch>contrib</repobranch>
     </repo>
     <repo>
       <baseurl>http://archive.cloudera.com/gplextras/debian/squeeze/amd64/gplextras</baseurl>
       <repoid>squeeze-gplextras4</repoid>
       <reponame>squeeze-gplextras4</reponame>
+      <repobranch>contrib</repobranch>
+    </repo>
+    <repo>
+      <baseurl>http://debian.datastax.com/community</baseurl>
+      <repoid>stable</repoid>
+      <reponame>datastax</reponame>
+      <repobranch>main</repobranch>
     </repo>
   </os>
   <os type="ubuntu7">
@@ -33,11 +41,19 @@
       <baseurl>http://archive.cloudera.com/cdh5/debian/wheezy/amd64/cdh</baseurl>
       <repoid>wheezy-cdh5</repoid>
       <reponame>wheezy-cdh5</reponame>
+      <repobranch>contrib</repobranch>
     </repo>
     <repo>
       <baseurl>http://archive.cloudera.com/gplextras/debian/squeeze/amd64/gplextras</baseurl>
       <repoid>squeeze-gplextras4</repoid>
       <reponame>squeeze-gplextras4</reponame>
+      <repobranch>contrib</repobranch>
+    </repo>
+    <repo>
+      <baseurl>http://debian.datastax.com/community</baseurl>
+      <repoid>stable</repoid>
+      <reponame>datastax</reponame>
+      <repobranch>main</repobranch>
     </repo>
   </os>
 <!--   <os type="redhat6"> -->

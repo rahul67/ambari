@@ -104,6 +104,8 @@ public class Role {
   public static final Role FALCON_SERVICE_CHECK = valueOf("FALCON_SERVICE_CHECK");
   public static final Role STORM_SERVICE_CHECK = valueOf("STORM_SERVICE_CHECK");
   public static final Role YARN_CLIENT = valueOf("YARN_CLIENT");
+  public static final Role CASSANDRA_SERVER = valueOf("CASSANDRA_SERVER");
+  public static final Role CASSANDRA_SERVICE_CHECK = valueOf("CASSANDRA_SERVICE_CHECK");
 
   private String name = null;
   

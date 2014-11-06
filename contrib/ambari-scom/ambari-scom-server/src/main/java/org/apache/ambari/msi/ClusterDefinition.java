@@ -103,6 +103,7 @@ public class ClusterDefinition {
     componentNameMap.put("HBASE_MASTER",            Collections.singleton("HBASE_MASTER"));
     componentNameMap.put("HBASE_REGIONSERVERS",     Collections.singleton("HBASE_REGIONSERVER"));
     componentNameMap.put("ZOOKEEPER_HOSTS",         Collections.singleton("ZOOKEEPER_SERVER"));
+    componentNameMap.put("CASSANDRA_HOSTS",         Collections.singleton("CASSANDRA_SERVER"));
 
     Set<String> slaveComponents = new HashSet<String>();
     slaveComponents.add("DATANODE");
@@ -172,6 +173,7 @@ public class ClusterDefinition {
     componentServiceMap.put("HBASE_MASTER",       "HBASE");
     componentServiceMap.put("HBASE_REGIONSERVER", "HBASE");
     componentServiceMap.put("ZOOKEEPER_SERVER",   "ZOOKEEPER");
+    componentServiceMap.put("CASSANDRA_SERVER",   "CASSANDRA");
 
     Integer majorStackVersion = getMajorStackVersion();
     if(majorStackVersion != null) {

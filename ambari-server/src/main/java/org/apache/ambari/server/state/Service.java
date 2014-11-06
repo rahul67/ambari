@@ -18,12 +18,13 @@
 
 package org.apache.ambari.server.state;
 
-import com.google.inject.persist.Transactional;
+import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+
 import org.apache.ambari.server.AmbariException;
 import org.apache.ambari.server.controller.ServiceResponse;
 
-import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
+import com.google.inject.persist.Transactional;
 
 public interface Service {
 
@@ -114,6 +115,6 @@ public interface Service {
     PIG,
     FLUME,
     YARN,
-    MAPREDUCE2
+ MAPREDUCE2, CASSANDRA
   }
 }

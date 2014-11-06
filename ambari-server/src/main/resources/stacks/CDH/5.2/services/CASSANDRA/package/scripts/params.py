@@ -22,6 +22,7 @@ Ambari Agent
 from resource_management import *
 import status_params
 import partition_tokenizer
+import socket
 
 # server configurations
 config = Script.get_config()
@@ -42,6 +43,7 @@ else:
 
 config_dir = "/etc/cassandra"
 default_cassandra_dir = "/var/lib/cassandra"
+cluster_name = config['configurations']['cassandra-env']['cluster_name']
 cassandra_user =  config['configurations']['cassandra-env']['cassandra_user']
 hostname = config['hostname']
 cassandra_group = config['configurations']['cassandra-env']['cassandra_group']
@@ -51,6 +53,7 @@ cassandra_rackdc_template = config['configurations']['cassandra-env']['rackdc_co
 cassandra_env_sh_template = config['configurations']['cassandra-env']['content']
 """
 data_file_directories = config['configurations']['cassandra-env']['data_file_directories']
+data_file_directories = data_file_directories.split(",")
 commitlog_directory = config['configurations']['cassandra-env']['commitlog_directory']
 saved_caches_directory = config['configurations']['cassandra-env']['saved_caches_directory']
 cassandra_log_dir = config['configurations']['cassandra-env']['cassandra_log_dir']
@@ -75,8 +78,14 @@ java64_home = config['hostLevelParams']['java_home']
 cassandra_hosts = config['clusterHostInfo']['cassandra_hosts']
 cassandra_hosts.sort()
 
-currentHostIndex = str(sorted(params.cassandra_hosts).index(params.hostname))
+currentHostIndex = sorted(cassandra_hosts).index(hostname)
 
+"""
+Dynamic variables for cassandra.yaml.
+"""
 initial_token = partition_tokenizer.getToken(partitioner, len(cassandra_hosts), currentHostIndex)
+listen_address = socket.gethostbyname(hostname)
+seeds = socket.gethostbyname(sorted(cassandra_hosts)[0])
+rpc_address = listen_address
 
 smokeuser = config['configurations']['cluster-env']['smokeuser']

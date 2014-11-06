@@ -23,7 +23,7 @@ import sys
 from resource_management import *
 
 from cassandra import cassandra
-from cassandra_service import cassandra_service, clean_initial
+import cassandra_service as cs
 
 class CassandraServer(Script):
     
@@ -36,7 +36,7 @@ class CassandraServer(Script):
   def clean(self, env):
     import params
     env.set_params(params)
-    cassandra_service.clean_initial()
+    cs.clean_initial()
 
   def configure(self, env):
     import params
@@ -47,12 +47,12 @@ class CassandraServer(Script):
     import params
     env.set_params(params)
     self.configure(env)
-    cassandra_service(action = 'start')
+    cs.cassandra_service(action = 'start')
 
   def stop(self, env):
     import params
     env.set_params(params)
-    cassandra_service(action = 'stop')
+    cs.cassandra_service(action = 'stop')
 
   def status(self, env):
     import status_params

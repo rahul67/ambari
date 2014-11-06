@@ -22,6 +22,11 @@
 
 <configuration>
   <property>
+    <name>cluster_name</name>
+    <value>cassandra</value>
+    <description>Cassandra Cluster Name</description>
+  </property>
+  <property>
     <name>cassandra_user</name>
     <value>cassandra</value>
     <property-type>USER GROUP</property-type>

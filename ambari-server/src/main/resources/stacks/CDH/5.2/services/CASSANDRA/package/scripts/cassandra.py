@@ -47,7 +47,7 @@ def cassandra():
             group=params.cassandra_group
   )
 
-  Directory(params.data_file_directories.split(","),
+  Directory(params.data_file_directories,
             owner=params.cassandra_user,
             recursive=True,
             group=params.cassandra_group

@@ -23,7 +23,7 @@ from math import ceil
 
 from stack_advisor import DefaultStackAdvisor
 
-class HDP206StackAdvisor(DefaultStackAdvisor):
+class CDH52StackAdvisor(DefaultStackAdvisor):
 
   def getLayoutValidationItems(self, services, hosts):
     """Returns array of Validation objects about issues with hostnames components assigned to"""

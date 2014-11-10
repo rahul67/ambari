@@ -22,6 +22,6 @@ from resource_management import *
 def monitor(action=None):# 'start' or 'stop'
   Execute(
     format(
-      "service cdh-gmond {action} >> /tmp/gmond.log  2>&1 ; /bin/ps auwx | /bin/grep [g]mond  >> /tmp/gmond.log  2>&1"),
+      "service ambari-gmond {action} >> /tmp/gmond.log  2>&1 ; /bin/ps auwx | /bin/grep [g]mond  >> /tmp/gmond.log  2>&1"),
     path='/usr/sbin:/sbin:/usr/local/bin:/bin:/usr/bin'
   )

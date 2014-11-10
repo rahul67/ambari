@@ -23,11 +23,11 @@ import os
 config = Script.get_config()
 
 user_group = config['configurations']['cluster-env']["user_group"]
-ganglia_conf_dir = default("/configurations/ganglia-env/ganglia_conf_dir", "/etc/ganglia/cdh")
+ganglia_conf_dir = default("/configurations/ganglia-env/ganglia_conf_dir", "/etc/ganglia/ambari")
 gmetad_root_dir = config['configurations']['ganglia-env']['gmetad_root_dir']
 ganglia_dir = "/etc/ganglia"
 ganglia_runtime_dir = config['configurations']['ganglia-env']["ganglia_runtime_dir"]
-ganglia_shell_cmds_dir = "/usr/libexec/cdh/ganglia"
+ganglia_shell_cmds_dir = "/usr/libexec/ambari/ganglia"
 
 gmetad_user = config['configurations']['ganglia-env']["gmetad_user"]
 gmond_user = config['configurations']['ganglia-env']["gmond_user"]
@@ -110,25 +110,25 @@ has_nimbus_server = not len(nimbus_server_hosts) == 0
 has_supervisor_server = not len(supervisor_server_hosts) == 0
 
 ganglia_cluster_names = {
-  "jn_hosts": [("CDHJournalNode", 8654)],
-  "flume_hosts": [("CDHFlumeServer", 8655)],
-  "hbase_rs_hosts": [("CDHHBaseRegionServer", 8656)],
-  "nm_hosts": [("CDHNodeManager", 8657)],
-  "mapred_tt_hosts": [("CDHTaskTracker", 8658)],
-  "slave_hosts": [("CDHDataNode", 8659)],
-  "namenode_host": [("CDHNameNode", 8661)],
-  "jtnode_host": [("CDHJobTracker", 8662)],
-  "hbase_master_hosts": [("CDHHBaseMaster", 8663)],
-  "rm_host": [("CDHResourceManager", 8664)],
-  "hs_host": [("CDHHistoryServer", 8666)],
-  "nimbus_hosts": [("CDHNimbus", 8649)],
-  "supervisor_hosts": [("CDHSupervisor", 8650)],
+  "jn_hosts": [("AmbariJournalNode", 8654)],
+  "flume_hosts": [("AmbariFlumeServer", 8655)],
+  "hbase_rs_hosts": [("AmbariHBaseRegionServer", 8656)],
+  "nm_hosts": [("AmbariNodeManager", 8657)],
+  "mapred_tt_hosts": [("AmbariTaskTracker", 8658)],
+  "slave_hosts": [("AmbariDataNode", 8659)],
+  "namenode_host": [("AmbariNameNode", 8661)],
+  "jtnode_host": [("AmbariJobTracker", 8662)],
+  "hbase_master_hosts": [("AmbariHBaseMaster", 8663)],
+  "rm_host": [("AmbariResourceManager", 8664)],
+  "hs_host": [("AmbariHistoryServer", 8666)],
+  "nimbus_hosts": [("AmbariNimbus", 8649)],
+  "supervisor_hosts": [("AmbariSupervisor", 8650)],
   "ReservedPort1": [("ReservedPort1", 8667)],
   "ReservedPort2": [("ReservedPort2", 8668)],
   "ReservedPort3": [("ReservedPort3", 8669)]
 }
 
-ganglia_clusters = [("CDHSlaves", 8660)]
+ganglia_clusters = [("AmbariSlaves", 8660)]
 
 for key in ganglia_cluster_names:
   property_name = format("/clusterHostInfo/{key}")

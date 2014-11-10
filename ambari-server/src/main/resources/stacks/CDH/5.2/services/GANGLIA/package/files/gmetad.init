@@ -1,7 +1,7 @@
 #!/bin/sh
 # chkconfig: 2345 70 40
-# description: cdh-gmetad startup script
-# processname: cdh-gmetad
+# description: ambari-gmetad startup script
+# processname: ambari-gmetad
 #/*
 # * Licensed to the Apache Software Foundation (ASF) under one
 # * or more contributor license agreements.  See the NOTICE file
@@ -22,34 +22,34 @@
 
 # Remember to keep this in-sync with the definition of 
 # GANGLIA_RUNTIME_COMPONENTS_UNPACK_DIR in monrpmInstaller.sh.
-CDH_GANGLIA_RUNTIME_COMPONENTS_DIR=/usr/libexec/cdh/ganglia
-CDH_GANLIA_GMETAD_STARTER=${CDH_GANGLIA_RUNTIME_COMPONENTS_DIR}/startGmetad.sh
-CDH_GANLIA_GMETAD_STOPPER=${CDH_GANGLIA_RUNTIME_COMPONENTS_DIR}/stopGmetad.sh
-CDH_GANLIA_GMETAD_CHECKER=${CDH_GANGLIA_RUNTIME_COMPONENTS_DIR}/checkGmetad.sh
+AMBARI_GANGLIA_RUNTIME_COMPONENTS_DIR=/usr/libexec/ambari/ganglia
+AMBARI_GANLIA_GMETAD_STARTER=${AMBARI_GANGLIA_RUNTIME_COMPONENTS_DIR}/startGmetad.sh
+AMBARI_GANLIA_GMETAD_STOPPER=${AMBARI_GANGLIA_RUNTIME_COMPONENTS_DIR}/stopGmetad.sh
+AMBARI_GANLIA_GMETAD_CHECKER=${AMBARI_GANGLIA_RUNTIME_COMPONENTS_DIR}/checkGmetad.sh
 
 RETVAL=0
 
 case "$1" in
    start)
       echo "============================="
-      echo "Starting cdh-gmetad..."
+      echo "Starting ambari-gmetad..."
       echo "============================="
-      [ -f ${CDH_GANLIA_GMETAD_STARTER} ] || exit 1
-      eval "${CDH_GANLIA_GMETAD_STARTER}"
+      [ -f ${AMBARI_GANLIA_GMETAD_STARTER} ] || exit 1
+      eval "${AMBARI_GANLIA_GMETAD_STARTER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && touch /var/lock/subsys/cdh-gmetad
+      [ $RETVAL -eq 0 ] && touch /var/lock/subsys/ambari-gmetad
       ;;
 
   stop)
       echo "=================================="
-      echo "Shutting down cdh-gmetad..."
+      echo "Shutting down ambari-gmetad..."
       echo "=================================="
-      [ -f ${CDH_GANLIA_GMETAD_STOPPER} ] || exit 1
-      eval "${CDH_GANLIA_GMETAD_STOPPER}"
+      [ -f ${AMBARI_GANLIA_GMETAD_STOPPER} ] || exit 1
+      eval "${AMBARI_GANLIA_GMETAD_STOPPER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/cdh-gmetad
+      [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/ambari-gmetad
       ;;
 
   restart|reload)
@@ -59,10 +59,10 @@ case "$1" in
 	;;
   status)
       echo "======================================="
-      echo "Checking status of cdh-gmetad..."
+      echo "Checking status of ambari-gmetad..."
       echo "======================================="
-      [ -f ${CDH_GANLIA_GMETAD_CHECKER} ] || exit 1
-      eval "${CDH_GANLIA_GMETAD_CHECKER}"
+      [ -f ${AMBARI_GANLIA_GMETAD_CHECKER} ] || exit 1
+      eval "${AMBARI_GANLIA_GMETAD_CHECKER}"
       RETVAL=$?
       ;;
   *)

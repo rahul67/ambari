@@ -23,12 +23,12 @@
 <configuration>
   <property>
     <name>ganglia_conf_dir</name>
-    <value>/etc/ganglia/cdh</value>
+    <value>/etc/ganglia/ambari</value>
     <description>Config directory for Ganglia</description>
   </property>
   <property>
     <name>ganglia_runtime_dir</name>
-    <value>/var/run/ganglia/cdh</value>
+    <value>/var/run/ganglia/ambari</value>
     <description>Run directories for Ganglia</description>
   </property>
   <property>

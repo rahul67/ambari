@@ -18,21 +18,34 @@
 
 package org.apache.ambari.server.controller.ganglia;
 
-import org.apache.ambari.server.controller.internal.AbstractPropertyProvider;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.ambari.server.configuration.ComponentSSLConfiguration;
+import org.apache.ambari.server.controller.internal.AbstractPropertyProvider;
 import org.apache.ambari.server.controller.internal.PropertyInfo;
-import org.apache.ambari.server.controller.spi.*;
+import org.apache.ambari.server.controller.spi.Predicate;
+import org.apache.ambari.server.controller.spi.Request;
+import org.apache.ambari.server.controller.spi.Resource;
+import org.apache.ambari.server.controller.spi.SystemException;
+import org.apache.ambari.server.controller.spi.TemporalInfo;
 import org.apache.ambari.server.controller.utilities.StreamProvider;
 import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Abstract property provider implementation for a Ganglia source.
@@ -60,19 +73,19 @@ public abstract class GangliaPropertyProvider extends AbstractPropertyProvider {
 
   
   static {
-    GANGLIA_CLUSTER_NAME_MAP.put("NAMENODE",           Collections.singletonList("HDPNameNode"));
-    GANGLIA_CLUSTER_NAME_MAP.put("DATANODE",           Arrays.asList("HDPDataNode", "HDPSlaves"));
-    GANGLIA_CLUSTER_NAME_MAP.put("JOBTRACKER",         Collections.singletonList("HDPJobTracker"));
-    GANGLIA_CLUSTER_NAME_MAP.put("TASKTRACKER",        Arrays.asList("HDPTaskTracker", "HDPSlaves"));
-    GANGLIA_CLUSTER_NAME_MAP.put("RESOURCEMANAGER",    Collections.singletonList("HDPResourceManager"));
-    GANGLIA_CLUSTER_NAME_MAP.put("NODEMANAGER",        Arrays.asList("HDPNodeManager", "HDPSlaves"));
-    GANGLIA_CLUSTER_NAME_MAP.put("HISTORYSERVER",      Collections.singletonList("HDPHistoryServer"));
-    GANGLIA_CLUSTER_NAME_MAP.put("HBASE_MASTER",       Collections.singletonList("HDPHBaseMaster"));
-    GANGLIA_CLUSTER_NAME_MAP.put("HBASE_REGIONSERVER", Arrays.asList("HDPHBaseRegionServer", "HDPSlaves"));
-    GANGLIA_CLUSTER_NAME_MAP.put("FLUME_HANDLER",      Arrays.asList("HDPFlumeServer", "HDPSlaves"));
-    GANGLIA_CLUSTER_NAME_MAP.put("JOURNALNODE",        Arrays.asList("HDPJournalNode", "HDPSlaves"));
-    GANGLIA_CLUSTER_NAME_MAP.put("NIMBUS",             Collections.singletonList("HDPNimbus"));
-    GANGLIA_CLUSTER_NAME_MAP.put("SUPERVISOR",         Collections.singletonList("HDPSupervisor"));
+        GANGLIA_CLUSTER_NAME_MAP.put("NAMENODE", Collections.singletonList("AmbariNameNode"));
+        GANGLIA_CLUSTER_NAME_MAP.put("DATANODE", Arrays.asList("AmbariDataNode", "AmbariSlaves"));
+        GANGLIA_CLUSTER_NAME_MAP.put("JOBTRACKER", Collections.singletonList("AmbariJobTracker"));
+        GANGLIA_CLUSTER_NAME_MAP.put("TASKTRACKER", Arrays.asList("AmbariTaskTracker", "AmbariSlaves"));
+        GANGLIA_CLUSTER_NAME_MAP.put("RESOURCEMANAGER", Collections.singletonList("AmbariResourceManager"));
+        GANGLIA_CLUSTER_NAME_MAP.put("NODEMANAGER", Arrays.asList("AmbariNodeManager", "AmbariSlaves"));
+        GANGLIA_CLUSTER_NAME_MAP.put("HISTORYSERVER", Collections.singletonList("AmbariHistoryServer"));
+        GANGLIA_CLUSTER_NAME_MAP.put("HBASE_MASTER", Collections.singletonList("AmbariHBaseMaster"));
+        GANGLIA_CLUSTER_NAME_MAP.put("HBASE_REGIONSERVER", Arrays.asList("AmbariHBaseRegionServer", "AmbariSlaves"));
+        GANGLIA_CLUSTER_NAME_MAP.put("FLUME_HANDLER", Arrays.asList("AmbariFlumeServer", "AmbariSlaves"));
+        GANGLIA_CLUSTER_NAME_MAP.put("JOURNALNODE", Arrays.asList("AmbariJournalNode", "AmbariSlaves"));
+        GANGLIA_CLUSTER_NAME_MAP.put("NIMBUS", Collections.singletonList("AmbariNimbus"));
+        GANGLIA_CLUSTER_NAME_MAP.put("SUPERVISOR", Collections.singletonList("AmbariSupervisor"));
   }
 
   protected final static Logger LOG =

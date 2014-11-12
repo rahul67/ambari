@@ -44,7 +44,7 @@ while i < len(gmond_app_strs):
   gmond_apps.append((gmond_app_strs[i].strip(), gmond_app_strs[i+1].strip()))
   i = i + 2
 
-if System.get_instance().os_family == "ubuntu":
+if System.get_instance().os_family == "ubuntu" or System.get_instance().os_family == "debian":
   gmond_service_name = "ganglia-monitor"
   modules_dir = "/usr/lib/ganglia"
 else:

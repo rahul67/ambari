@@ -27,7 +27,7 @@ import status_params
 # server configurations
 config = Script.get_config()
 
-if System.get_instance().os_family == "ubuntu":
+if System.get_instance().os_family == "ubuntu" or System.get_instance().os_family == "debian":
   nagios_service_name = "nagios3"
 else:
   nagios_service_name = "nagios"
@@ -42,7 +42,7 @@ nagios_rw_dir = status_params.nagios_rw_dir
 ubuntu_stylesheets_real_location = "/etc/nagios3/stylesheets"
 ubuntu_stylesheets_desired_location = "/usr/share/nagios3/htdocs/stylesheets"
 
-if System.get_instance().os_family == "ubuntu":
+if System.get_instance().os_family == "ubuntu" or System.get_instance().os_family == "debian":
   host_template = "generic-host"
   plugins_dir = "/usr/lib/nagios/plugins"
   nagios_web_dir = "/usr/share/nagios3/htdocs"

@@ -35,6 +35,12 @@
       <reponame>datastax</reponame>
       <repobranch>main</repobranch>
     </repo>
+    <repo>
+      <baseurl>http://public-repo-1.hortonworks.com/HDP-UTILS-1.1.0.17/repos/ubuntu12</baseurl>
+      <repoid>HDP-UTILS</repoid>
+      <reponame>HDP-TEZ</reponame>
+      <repobranch>main</repobranch>
+    </repo>
   </os>
   <os type="ubuntu7">
     <repo>
@@ -53,6 +59,12 @@
       <baseurl>http://debian.datastax.com/community</baseurl>
       <repoid>stable</repoid>
       <reponame>datastax</reponame>
+      <repobranch>main</repobranch>
+    </repo>
+    <repo>
+      <baseurl>http://public-repo-1.hortonworks.com/HDP-UTILS-1.1.0.17/repos/ubuntu12</baseurl>
+      <repoid>HDP-UTILS</repoid>
+      <reponame>HDP-TEZ</reponame>
       <repobranch>main</repobranch>
     </repo>
   </os>

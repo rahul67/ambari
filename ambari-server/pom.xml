@@ -485,10 +485,18 @@
               </sources>
             </mapping>
             <mapping>
-              <directory>/var/lib/ambari-server/resources/stacks/${stack.distribution}</directory>
+              <directory>/var/lib/ambari-server/resources/stacks/${stack.distribution.hdp}</directory>
               <sources>
                 <source>
-                  <location>target/classes/stacks/${stack.distribution}</location>
+                  <location>target/classes/stacks/${stack.distribution.hdp}</location>
+                </source>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/ambari-server/resources/stacks/${stack.distribution.cdh}</directory>
+              <sources>
+                <source>
+                  <location>target/classes/stacks/${stack.distribution.cdh}</location>
                 </source>
               </sources>
             </mapping>
@@ -848,11 +856,19 @@
             </mapper>
           </data>
           <data>
-            <src>target/classes/stacks/${stack.distribution}</src>
+            <src>target/classes/stacks/${stack.distribution.hdp}</src>
             <type>directory</type>
             <mapper>
               <type>perm</type>
-              <prefix>/var/lib/ambari-server/resources/stacks/${stack.distribution}</prefix>
+              <prefix>/var/lib/ambari-server/resources/stacks/${stack.distribution.hdp}</prefix>
+            </mapper>
+          </data>
+          <data>
+            <src>target/classes/stacks/${stack.distribution.cdh}</src>
+            <type>directory</type>
+            <mapper>
+              <type>perm</type>
+              <prefix>/var/lib/ambari-server/resources/stacks/${stack.distribution.cdh}</prefix>
             </mapper>
           </data>
           <data>

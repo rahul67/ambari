@@ -94,7 +94,8 @@
       <outputDirectory>/ambari-server-${project.version}/var/lib/ambari-server/resources/</outputDirectory>
       <includes>
         <include>stacks/stack_advisor.py</include>
-        <include>stacks/${stack.distribution}/**</include>
+        <include>stacks/${stack.distribution.hdp}/**</include>
+        <include>stacks/${stack.distribution.cdh}/**</include>
       </includes>
     </fileSet>
   </fileSets>

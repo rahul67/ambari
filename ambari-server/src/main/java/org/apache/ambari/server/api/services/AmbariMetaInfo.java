@@ -122,8 +122,13 @@ public class AmbariMetaInfo {
   public static final String REPOSITORY_XML_PROPERTY_BASEURL = "baseurl";
   // all the supported OS'es
   private static final List<String> ALL_SUPPORTED_OS = Arrays.asList(
+<<<<<<< HEAD
       "redhat7","centos7","centos5", "redhat5", "centos6", "redhat6", "oraclelinux5",
  "oraclelinux6", "suse11", "sles11", "ubuntu12", "debian7");
+=======
+      "centos5", "redhat5", "centos6", "redhat6", "oraclelinux5",
+            "oraclelinux6", "suse11", "sles11", "ubuntu12", "debian7");
+>>>>>>> cdh-stack
 
   private final ActionDefinitionManager adManager = new ActionDefinitionManager();
   private String serverVersion = "undefined";

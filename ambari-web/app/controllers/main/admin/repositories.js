@@ -104,6 +104,7 @@ App.MainAdminRepositoriesController = Em.Controller.extend({
           osType: osType,
           repoId: repository.Repositories.repo_id,
           repoName : repository.Repositories.repo_name,
+          repoBranch : repository.Repositories.repo_branch,
           stackName : repository.Repositories.stack_name,
           stackVersion : repository.Repositories.stack_version,
           isFirst: false

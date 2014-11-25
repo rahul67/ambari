@@ -26,17 +26,20 @@ public class RepositoryResponse {
   private String osType;
   private String repoId;
   private String repoName;
+    private String repoBranch;
   private String mirrorsList;
   private String defaultBaseUrl;
   private String latestBaseUrl;
   
   
   public RepositoryResponse(String baseUrl, String osType, String repoId,
-      String repoName, String mirrorsList, String defaultBaseUrl, String latestBaseUrl) {
+ String repoName, String repoBranch, String mirrorsList,
+            String defaultBaseUrl, String latestBaseUrl) {
     setBaseUrl(baseUrl);
     setOsType(osType);
     setRepoId(repoId);
     setRepoName(repoName);
+        setRepoBranch(repoBranch);
     setMirrorsList(mirrorsList);
     setDefaultBaseUrl(defaultBaseUrl);
     setLatestBaseUrl(latestBaseUrl);
@@ -96,7 +99,22 @@ public class RepositoryResponse {
     this.repoName = repoName;
   }
 
-  public String getMirrorsList() {
+    /**
+     * @return the repoBranch
+     */
+    public String getRepoBranch() {
+        return repoBranch;
+    }
+
+    /**
+     * @param repoBranch
+     *            the repoBranch to set
+     */
+    public void setRepoBranch(String repoBranch) {
+        this.repoBranch = repoBranch;
+    }
+
+    public String getMirrorsList() {
     return mirrorsList;
   }
 

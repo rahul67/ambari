@@ -87,6 +87,7 @@ public class SQLProviderModule extends DefaultProviderModule implements HostInfo
     serviceNames.put("NODEMANAGER", "nodemanager");
     serviceNames.put("RESOURCEMANAGER", "resourcemanager");
     serviceNames.put("JOURNALNODE", "journalnode");
+    serviceNames.put("CASSANDRA_SERVER", "cassandra");
   }
 
   private static final String STATE_PREFIX = "STATE              : ";

@@ -47,6 +47,8 @@ public class RepositoryResourceProvider extends AbstractControllerResourceProvid
   public static final String REPOSITORY_NAME_PROPERTY_ID = PropertyHelper
       .getPropertyId("Repositories", "repo_name");
 
+    public static final String REPOSITORY_BRANCH_PROPERTY_ID = PropertyHelper.getPropertyId("Repositories", "repo_branch");
+
   public static final String STACK_NAME_PROPERTY_ID = PropertyHelper
       .getPropertyId("Repositories", "stack_name");
 
@@ -150,6 +152,8 @@ public class RepositoryResourceProvider extends AbstractControllerResourceProvid
 
         setResourceProperty(resource, REPOSITORY_NAME_PROPERTY_ID,
             response.getRepoName(), requestedIds);
+
+            setResourceProperty(resource, REPOSITORY_BRANCH_PROPERTY_ID, response.getRepoBranch(), requestedIds);
 
         setResourceProperty(resource, REPOSITORY_BASE_URL_PROPERTY_ID,
             response.getBaseUrl(), requestedIds);

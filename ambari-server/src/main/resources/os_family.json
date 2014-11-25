@@ -25,5 +25,8 @@
   "ubuntu12": [
     "debian12",
     "ubuntu12"
+  ],
+  "debian7": [
+    "debian7"
   ]
 }

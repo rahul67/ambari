@@ -18,14 +18,14 @@
 
 package org.apache.ambari.server.controller.ganglia;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.ambari.server.configuration.ComponentSSLConfiguration;
 import org.apache.ambari.server.controller.internal.PropertyInfo;
 import org.apache.ambari.server.controller.spi.Resource;
 import org.apache.ambari.server.controller.utilities.StreamProvider;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Ganglia property provider implementation for host resources.
@@ -38,17 +38,17 @@ public class GangliaHostPropertyProvider extends GangliaPropertyProvider{
   private static final Set<String> GANGLIA_CLUSTER_NAMES = new HashSet<String>();
 
   static {
-    GANGLIA_CLUSTER_NAMES.add("HDPNameNode");
-    GANGLIA_CLUSTER_NAMES.add("HDPSlaves");
-    GANGLIA_CLUSTER_NAMES.add("HDPJobTracker");
-    GANGLIA_CLUSTER_NAMES.add("HDPResourceManager");
-    GANGLIA_CLUSTER_NAMES.add("HDPHBaseMaster");
-    GANGLIA_CLUSTER_NAMES.add("HDPHistoryServer");
-    GANGLIA_CLUSTER_NAMES.add("HDPNameNode");
-    GANGLIA_CLUSTER_NAMES.add("HDPTaskTracker");
-    GANGLIA_CLUSTER_NAMES.add("HDPHBaseRegionServer");
-    GANGLIA_CLUSTER_NAMES.add("HDPFlumeServer");
-    GANGLIA_CLUSTER_NAMES.add("HDPJournalNode");
+        GANGLIA_CLUSTER_NAMES.add("AmbariNameNode");
+        GANGLIA_CLUSTER_NAMES.add("AmbariSlaves");
+        GANGLIA_CLUSTER_NAMES.add("AmbariJobTracker");
+        GANGLIA_CLUSTER_NAMES.add("AmbariResourceManager");
+        GANGLIA_CLUSTER_NAMES.add("AmbariHBaseMaster");
+        GANGLIA_CLUSTER_NAMES.add("AmbariHistoryServer");
+        GANGLIA_CLUSTER_NAMES.add("AmbariNameNode");
+        GANGLIA_CLUSTER_NAMES.add("AmbariTaskTracker");
+        GANGLIA_CLUSTER_NAMES.add("AmbariHBaseRegionServer");
+        GANGLIA_CLUSTER_NAMES.add("AmbariFlumeServer");
+        GANGLIA_CLUSTER_NAMES.add("AmbariJournalNode");
   }
 
   // ----- Constructors ------------------------------------------------------

@@ -86,7 +86,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>ubuntu12</osFamily>
+          <osFamily>ubuntu12,ubuntu7</osFamily>
           <packages>
             <package>
               <name>nagios3</name>
@@ -101,7 +101,7 @@
               <name>nagios3-doc</name>
             </package>
             <package>
-              <name>nagios-plugins-extra</name>
+              <name>nagios-plugins-contrib</name>
             </package>
             <package>
               <name>php5-curl</name>

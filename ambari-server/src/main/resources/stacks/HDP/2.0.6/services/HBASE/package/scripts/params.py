@@ -124,7 +124,7 @@ else:
 hbase_env_sh_template = config['configurations']['hbase-env']['content']
 
 hbase_hdfs_root_dir = config['configurations']['hbase-site']['hbase.rootdir']
-hbase_staging_dir = "/apps/hbase/staging"
+hbase_staging_dir = "/hbase/staging"
 #for create_hdfs_directory
 hostname = config["hostname"]
 hdfs_user_keytab = config['configurations']['hadoop-env']['hdfs_user_keytab']

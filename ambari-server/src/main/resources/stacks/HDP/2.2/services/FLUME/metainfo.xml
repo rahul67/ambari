@@ -33,7 +33,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>ubuntu12</osFamily>
+          <osFamily>ubuntu12,ubuntu7</osFamily>
           <packages>
             <package>
               <name>flume-2-2-.*</name>

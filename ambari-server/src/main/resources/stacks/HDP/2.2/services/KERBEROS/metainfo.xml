@@ -79,7 +79,7 @@
         </osSpecific>
 
         <osSpecific>
-          <osFamily>ubuntu12</osFamily>
+          <osFamily>ubuntu12,ubuntu7</osFamily>
           <packages>
             <package>
               <name>krb5-kdc</name>

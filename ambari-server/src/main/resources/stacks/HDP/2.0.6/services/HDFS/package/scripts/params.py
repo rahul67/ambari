@@ -29,7 +29,9 @@ config = Script.get_config()
 tmp_dir = Script.get_tmp_dir()
 
 libhadoop_cdh_wheezy_pkg = "http://archive.cloudera.com/cdh5/debian/wheezy/amd64/cdh/pool/contrib/h/hadoop/hadoop_2.5.0+cdh5.2.1+578-1.cdh5.2.1.p0.14~wheezy-cdh5.2.1_all.deb"
+libhadoop_cdh_version = "5.2.1"
 hdp_native_lib_link = "/usr/hdp/current/hadoop-client/lib/native/libhadoop.so"
+cdh_native_lib_link = "/usr/lib/hadoop/lib/native/libhadoop.so"
 
 stack_version_unformatted = str(config['hostLevelParams']['stack_version'])
 hdp_stack_version = format_hdp_stack_version(stack_version_unformatted)

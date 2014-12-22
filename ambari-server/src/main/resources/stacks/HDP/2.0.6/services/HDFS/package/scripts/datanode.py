@@ -91,15 +91,23 @@ class DataNode(Script):
     
     Execute(format("dpkg -x {deb_name} {tempdir}"))
 
-    hdp_native_lib_path = os.path.join(os.path.dirname(params.hdp_native_lib_link), os.readlink(params.hdp_native_lib_link))
-    lib_backup = hdp_native_lib_path + ".bak"
+    hdp_native_lib_link_name = os.readlink(params.hdp_native_lib_link)
+    hdp_native_lib_path = os.path.join(os.path.dirname(params.hdp_native_lib_link), hdp_native_lib_link_name)
+    lib_backup = hdp_native_lib_path + ".hdp"
+    libhadoop_cdh_name_suffix_dest = ".cdh-" + params.libhadoop_cdh_version
     
-    cdh_native_lib_link = tempdir + os.sep + "usr/lib/hadoop/lib/native/libhadoop.so"
+    cdh_native_lib_link = os.path.join(tempdir, params.cdh_native_lib_link)
     cdh_native_lib_path = os.path.join(os.path.dirname(cdh_native_lib_link), os.readlink(cdh_native_lib_link))
+    cdh_native_lib_path_dest = os.path.join(os.path.dirname(hdp_native_lib_path), os.path.basename(cdh_native_lib_path)) + libhadoop_cdh_name_suffix_dest
 
     if (os.path.isfile(cdh_native_lib_path)):
         os.rename(hdp_native_lib_path, lib_backup)
-        shutil.move(cdh_native_lib_path, hdp_native_lib_path)
+        shutil.move(cdh_native_lib_path, cdh_native_lib_path_dest)
+        os.chdir(os.path.dirname(params.hdp_native_lib_link))
+        lib_link_name = os.path.basename(params.hdp_native_lib_link)
+        if (os.path.islink(lib_link_name)):
+            os.unlink(lib_link_name)
+        os.symlink(os.path.basename(cdh_native_lib_path_dest), lib_link_name)
     
     shutil.rmtree(tempdir)
     

@@ -31,7 +31,7 @@ from resource_management.libraries.functions.check_process_status import check_p
 from hdfs_namenode import namenode
 from hdfs import hdfs
 import hdfs_rebalance
-from utils import failover_namenode
+from utils import failover_namenode, fetch_libhadoop
 
 
 class NameNode(Script):
@@ -39,6 +39,7 @@ class NameNode(Script):
     import params
 
     self.install_packages(env, params.exclude_packages)
+    fetch_libhadoop()
     env.set_params(params)
     #TODO we need this for HA because of manual steps
     self.configure(env)

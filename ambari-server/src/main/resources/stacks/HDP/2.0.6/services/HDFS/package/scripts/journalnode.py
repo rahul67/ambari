@@ -21,7 +21,7 @@ from resource_management import *
 from resource_management.libraries.functions.version import compare_versions, format_hdp_stack_version
 from resource_management.libraries.functions.format import format
 
-from utils import service
+from utils import service, fetch_libhadoop
 from hdfs import hdfs
 
 
@@ -30,6 +30,7 @@ class JournalNode(Script):
     import params
 
     self.install_packages(env, params.exclude_packages)
+    fetch_libhadoop()
     env.set_params(params)
 
   def pre_rolling_restart(self, env):

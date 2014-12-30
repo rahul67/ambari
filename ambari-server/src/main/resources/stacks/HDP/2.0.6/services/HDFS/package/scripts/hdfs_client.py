@@ -19,7 +19,7 @@ limitations under the License.
 
 from resource_management import *
 from hdfs import hdfs
-from utils import service
+from utils import service, fetch_libhadoop
 
 
 class HdfsClient(Script):
@@ -27,6 +27,7 @@ class HdfsClient(Script):
     import params
 
     self.install_packages(env, params.exclude_packages)
+    fetch_libhadoop()
     env.set_params(params)
     self.config(env)
 

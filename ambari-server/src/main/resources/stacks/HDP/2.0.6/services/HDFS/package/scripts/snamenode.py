@@ -20,6 +20,7 @@ limitations under the License.
 from resource_management import *
 from hdfs_snamenode import snamenode
 from hdfs import hdfs
+from utils import fetch_libhadoop
 
 
 class SNameNode(Script):
@@ -30,6 +31,7 @@ class SNameNode(Script):
     env.set_params(params)
 
     self.install_packages(env, params.exclude_packages)
+    fetch_libhadoop()
 
   def pre_rolling_restart(self, env):
     # Secondary namenode is actually removed in an HA cluster, which is a pre-requisite for Rolling Upgrade,

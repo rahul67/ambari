@@ -70,6 +70,7 @@ class HdfsDirectoryProvider(Provider):
     keytab_file = self.resource.keytab
     kinit_path = self.resource.kinit_path_local
     bin_dir = self.resource.bin_dir
+    
 
     chmod_commands = []
     chown_commands = []
@@ -97,8 +98,11 @@ class HdfsDirectoryProvider(Provider):
     #create all directories in one 'mkdir' call
     dir_list_str = ' '.join(directories_list)
     #for hadoop 2 we need to specify -p to create directories recursively
-    parent_flag = '`rpm -q hadoop | grep -q "hadoop-1" || echo "-p"`'
-
+    if System.get_instance().os_family in ["ubuntu", "debian"]:
+        parent_flag = '`dpkg -l | grep -q "hadoop-1" || echo "-p"`'
+    else:
+        parent_flag = '`rpm -q hadoop | grep -q "hadoop-1" || echo "-p"`'
+    
     Execute(format('hadoop --config {hdp_conf_dir} fs -mkdir {parent_flag} {dir_list_str} && {chmod_cmd} && {chown_cmd}',
                    chmod_cmd=' && '.join(chmod_commands),
                    chown_cmd=' && '.join(chown_commands)),

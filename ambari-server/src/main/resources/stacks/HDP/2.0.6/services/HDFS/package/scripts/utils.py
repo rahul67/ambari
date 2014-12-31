@@ -234,45 +234,48 @@ def is_secure_port(port):
 def fetch_libhadoop():
     import params
     if params.overwrite_native:
-
-      hdp_native_lib_link_name = os.readlink(params.hdp_native_lib_link)
-      hdp_native_lib_path = os.path.join(os.path.dirname(params.hdp_native_lib_link), hdp_native_lib_link_name)
-      lib_backup = hdp_native_lib_path + ".hdp"
-      libhadoop_cdh_name_suffix_dest = ".cdh-" + params.libhadoop_cdh_version
-      
-      # If libhadoop native library is NOT already replaced with CDH, then overwrite.
-      if not hdp_native_lib_link_name.find(libhadoop_cdh_name_suffix_dest):
-          tempdir=tempfile.mkdtemp()
-          deb_name = tempdir + os.sep + "hadoop.deb"
-          u = urllib2.urlopen(params.libhadoop_cdh_wheezy_pkg)
-          f = open(deb_name, 'wb')
-          meta = u.info()
-          deb_size = int(meta.getheaders("Content-Length")[0])
-          print "Downloading: %s Bytes: %s" %(deb_name, deb_size)
-          
-          chunk = 16 * 1024
-          while True:
-              buffer = u.read(chunk)
-              if not buffer:
-                  break
-              f.write(buffer)
-          
-          f.close()
-          
-          Execute(format("dpkg -x {deb_name} {tempdir}"))
+        Logger.debug("Native library overwirte flag is TRUE. Trying to overwrite with CDH native library.")
+        hdp_native_lib_link_name = os.readlink(params.hdp_native_lib_link)
+        hdp_native_lib_path = os.path.join(os.path.dirname(params.hdp_native_lib_link), hdp_native_lib_link_name)
+        lib_backup = hdp_native_lib_path + ".hdp"
+        libhadoop_cdh_name_suffix_dest = ".cdh-" + params.libhadoop_cdh_version
         
-          
-          cdh_native_lib_link = os.path.join(tempdir, params.cdh_native_lib_link)
-          cdh_native_lib_path = os.path.join(os.path.dirname(cdh_native_lib_link), os.readlink(cdh_native_lib_link))
-          cdh_native_lib_path_dest = os.path.join(os.path.dirname(hdp_native_lib_path), os.path.basename(cdh_native_lib_path)) + libhadoop_cdh_name_suffix_dest
-        
-          if (os.path.isfile(cdh_native_lib_path)):
-              os.rename(hdp_native_lib_path, lib_backup)
-              shutil.move(cdh_native_lib_path, cdh_native_lib_path_dest)
-              os.chdir(os.path.dirname(params.hdp_native_lib_link))
-              lib_link_name = os.path.basename(params.hdp_native_lib_link)
-              if (os.path.islink(lib_link_name)):
-                  os.unlink(lib_link_name)
-              os.symlink(os.path.basename(cdh_native_lib_path_dest), lib_link_name)
-          
-          shutil.rmtree(tempdir)
+        # If libhadoop native library is NOT already replaced with CDH, then overwrite.
+        if libhadoop_cdh_name_suffix_dest not in hdp_native_lib_link_name:
+            tempdir = tempfile.mkdtemp()
+            deb_name = tempdir + os.sep + "hadoop.deb"
+            u = urllib2.urlopen(params.libhadoop_cdh_wheezy_pkg)
+            f = open(deb_name, 'wb')
+            meta = u.info()
+            deb_size = int(meta.getheaders("Content-Length")[0])
+            Logger.info("Downloading: %s Bytes: %s" % (deb_name, deb_size))
+            
+            chunk = 16 * 1024
+            while True:
+                buffer = u.read(chunk)
+                if not buffer:
+                    break
+                f.write(buffer)
+            
+            f.close()
+            
+            Execute(format("dpkg -x {deb_name} {tempdir}"))
+            
+            cdh_native_lib_link = os.path.normpath(tempdir + params.cdh_native_lib_link)
+            Logger.info("CDH library symlink path in tempdir: %s" % cdh_native_lib_link)
+            cdh_native_lib_path = os.path.join(os.path.dirname(cdh_native_lib_link), os.readlink(cdh_native_lib_link))
+            Logger.info("CDH library abs path in tempdir: %s" % cdh_native_lib_path)
+            cdh_native_lib_path_dest = os.path.join(os.path.dirname(hdp_native_lib_path), os.path.basename(cdh_native_lib_path)) + libhadoop_cdh_name_suffix_dest
+            Logger.info("CDH library abs path at destination: %s" % cdh_native_lib_path_dest)
+            
+            if (os.path.isfile(cdh_native_lib_path)):
+                os.rename(hdp_native_lib_path, lib_backup)
+                shutil.move(cdh_native_lib_path, cdh_native_lib_path_dest)
+                os.chdir(os.path.dirname(params.hdp_native_lib_link))
+                lib_link_name = os.path.basename(params.hdp_native_lib_link)
+                # Remove symlink if it already exists.
+                if (os.path.islink(lib_link_name)):
+                    os.unlink(lib_link_name)
+                os.symlink(os.path.basename(cdh_native_lib_path_dest), lib_link_name)
+                
+            shutil.rmtree(tempdir)

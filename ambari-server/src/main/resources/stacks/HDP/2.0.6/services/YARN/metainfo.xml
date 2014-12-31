@@ -34,7 +34,7 @@
           <commandScript>
             <script>scripts/resourcemanager.py</script>
             <scriptType>PYTHON</scriptType>
-            <timeout>600</timeout>
+            <timeout>900</timeout>
           </commandScript>
           <customCommands>
             <customCommand>
@@ -67,7 +67,7 @@
           <commandScript>
             <script>scripts/nodemanager.py</script>
             <scriptType>PYTHON</scriptType>
-            <timeout>600</timeout>
+            <timeout>900</timeout>
           </commandScript>
         </component>
 
@@ -79,7 +79,7 @@
           <commandScript>
             <script>scripts/yarn_client.py</script>
             <scriptType>PYTHON</scriptType>
-            <timeout>600</timeout>
+            <timeout>900</timeout>
           </commandScript>
           <configFiles>
             <configFile>

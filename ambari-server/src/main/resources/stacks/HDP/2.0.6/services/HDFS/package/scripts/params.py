@@ -28,7 +28,7 @@ import re
 config = Script.get_config()
 tmp_dir = Script.get_tmp_dir()
 
-overwrite_native = False
+overwrite_native = True
 libhadoop_cdh_wheezy_pkg = "http://archive.cloudera.com/cdh5/debian/wheezy/amd64/cdh/pool/contrib/h/hadoop/hadoop_2.5.0+cdh5.2.1+578-1.cdh5.2.1.p0.14~wheezy-cdh5.2.1_all.deb"
 libhadoop_cdh_version = "5.2.1"
 hdp_native_lib_link = "/usr/hdp/current/hadoop-client/lib/native/libhadoop.so"

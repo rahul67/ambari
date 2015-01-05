@@ -81,6 +81,8 @@ def change_permission():
   import params
 
   Directory(os.path.abspath(os.path.join(params.ganglia_runtime_dir, "..")),
+            owner=params.gmetad_user,
+            group=params.user_group,
             mode=0755,
             recursive=True
   )
@@ -112,7 +114,16 @@ def server_files():
             recursive=True
   )
   
-  if System.get_instance().os_family in ["ubuntu","suse"]:
+  gmetad_root_dir_file_owner = params.gmetad_user
+  
+  Directory(params.gmetad_root_dir,
+            owner=gmetad_root_dir_file_owner,
+            group=gmetad_root_dir_file_owner,
+            mode=0755,
+            recursive=True
+  )
+  
+  if System.get_instance().os_family in ["ubuntu","suse","debian"]:
     File( params.ganglia_apache_config_file,
       content = Template("ganglia.conf.j2"),
       mode = 0644

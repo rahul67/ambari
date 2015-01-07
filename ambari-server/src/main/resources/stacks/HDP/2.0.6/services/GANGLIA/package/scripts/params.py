@@ -24,7 +24,7 @@ config = Script.get_config()
 
 user_group = config['configurations']['cluster-env']["user_group"]
 ganglia_conf_dir = default("/configurations/ganglia-env/ganglia_conf_dir", "/etc/ganglia/hdp")
-gmetad_root_dir = config['configurations']['cluster-env']['gmetad_root_dir']
+gmetad_root_dir = config['configurations']['ganglia-env']['gmetad_root_dir']
 ganglia_dir = "/etc/ganglia"
 ganglia_runtime_dir = config['configurations']['ganglia-env']["ganglia_runtime_dir"]
 ganglia_shell_cmds_dir = "/usr/libexec/hdp/ganglia"

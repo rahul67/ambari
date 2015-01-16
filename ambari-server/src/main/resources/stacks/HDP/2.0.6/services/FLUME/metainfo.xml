@@ -32,7 +32,7 @@
           <commandScript>
             <script>scripts/flume_handler.py</script>
             <scriptType>PYTHON</scriptType>
-            <timeout>600</timeout>
+            <timeout>900</timeout>
           </commandScript>
         </component>
       </components>

@@ -51,7 +51,7 @@
           <commandScript>
             <script>scripts/hbase_master.py</script>
             <scriptType>PYTHON</scriptType>
-            <timeout>600</timeout>
+            <timeout>900</timeout>
           </commandScript>
           <customCommands>
             <customCommand>
@@ -59,7 +59,7 @@
               <commandScript>
                 <script>scripts/hbase_master.py</script>
                 <scriptType>PYTHON</scriptType>
-                <timeout>600</timeout>
+                <timeout>900</timeout>
               </commandScript>
             </customCommand>
           </customCommands>

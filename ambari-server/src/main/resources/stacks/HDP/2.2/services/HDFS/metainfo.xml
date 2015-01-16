@@ -87,6 +87,15 @@
             <package>
               <name>libhdfs0-2-2-.*</name>
             </package>
+            <package>
+              <name>libprotobuf8</name>
+            </package>
+            <package>
+              <name>libprotoc8</name>
+            </package>
+            <package>
+              <name>protobuf-compiler</name>
+            </package>
           </packages>
         </osSpecific>
       </osSpecifics>

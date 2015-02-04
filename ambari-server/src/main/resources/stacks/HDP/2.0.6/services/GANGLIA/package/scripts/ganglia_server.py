@@ -71,6 +71,7 @@ class GangliaServer(Script):
 
     change_permission()
     server_files()
+    congi_apache_modules()
     File(path.join(params.ganglia_dir, "gmetad.conf"),
          owner="root",
          group=params.user_group
@@ -128,7 +129,14 @@ def server_files():
       content = Template("ganglia.conf.j2"),
       mode = 0644
     )
+    Execute(format("/usr/sbin/a2enconf ganglia"))
 
+def config_apache_modules():
+    import params
+    
+    if System.get_instance().os_family in ["ubuntu", "debian"]:
+        Execute(format("/usr/sbin/a2enmod cgi"))
+        Execute(format("/usr/sbin/a2enmod cgid"))
 
 if __name__ == "__main__":
   GangliaServer().execute()

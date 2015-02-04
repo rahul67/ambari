@@ -165,3 +165,4 @@ elif  System.get_instance().os_family in ["ubuntu","debian"]:
   dwoo_path = '/var/lib/ganglia/dwoo'
   web_user = "www-data"
   webserver_group = "www-data"
+  ganglia_apache_config_file = "/etc/apache2/conf-available/ganglia.conf"

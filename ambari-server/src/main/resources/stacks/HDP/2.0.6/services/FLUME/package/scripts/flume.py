@@ -34,6 +34,7 @@ def flume(action = None):
 
     Directory(params.flume_conf_dir, recursive=True)
     Directory(params.flume_log_dir, owner=params.flume_user)
+    Directory(params.flume_run_dir, owner=params.flume_user)
 
     flume_agents = {}
     if params.flume_conf_content is not None:

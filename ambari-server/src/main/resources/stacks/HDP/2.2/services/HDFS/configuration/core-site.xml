@@ -27,5 +27,25 @@
     <value>true</value>
     <description></description>
   </property>
+  
+  <!--  Hue related parameters. -->
+  
+  <property>
+    <name>hadoop.proxyuser.hue.hosts</name>
+    <value>*</value>
+    <description></description>
+  </property>
+
+  <property>
+    <name>hadoop.proxyuser.hue.groups</name>
+    <value>*</value>
+    <description></description>
+  </property>
+
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value>/tmp/hadoop-${user.name}-${hue.suffix}</value>
+    <description></description>
+  </property>
 
 </configuration>

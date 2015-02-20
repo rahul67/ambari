@@ -71,7 +71,7 @@ class GangliaServer(Script):
 
     change_permission()
     server_files()
-    congi_apache_modules()
+    config_apache_modules()
     File(path.join(params.ganglia_dir, "gmetad.conf"),
          owner="root",
          group=params.user_group

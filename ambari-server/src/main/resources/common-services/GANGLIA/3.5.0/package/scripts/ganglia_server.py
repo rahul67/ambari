@@ -72,6 +72,7 @@ class GangliaServer(Script):
 
     change_permission()
     server_files()
+    config_apache_modules()
     File(path.join(params.ganglia_dir, "gmetad.conf"),
          owner="root",
          group=params.user_group
@@ -82,6 +83,8 @@ def change_permission():
   import params
 
   Directory(os.path.abspath(os.path.join(params.ganglia_runtime_dir, "..")),
+            owner=params.gmetad_user,
+            group=params.user_group,
             mode=0755,
             recursive=True
   )
@@ -116,11 +119,28 @@ def server_files():
   )
   
   if OSCheck.is_suse_family() or OSCheck.is_ubuntu_family():
+  gmetad_root_dir_file_owner = params.gmetad_user
+  
+  Directory(params.gmetad_root_dir,
+            owner=gmetad_root_dir_file_owner,
+            group=gmetad_root_dir_file_owner,
+            mode=0755,
+            recursive=True
+  )
+  
+  if System.get_instance().os_family in ["ubuntu", "debian", "suse"]:
     File( params.ganglia_apache_config_file,
       content = Template("ganglia.conf.j2"),
       mode = 0644
     )
+    Execute(format("/usr/sbin/a2enconf ganglia"))
 
+def config_apache_modules():
+    import params
+    
+    if System.get_instance().os_family in ["ubuntu", "debian"]:
+        Execute(format("/usr/sbin/a2enmod cgi"))
+        Execute(format("/usr/sbin/a2enmod cgid"))
 
 if __name__ == "__main__":
   GangliaServer().execute()

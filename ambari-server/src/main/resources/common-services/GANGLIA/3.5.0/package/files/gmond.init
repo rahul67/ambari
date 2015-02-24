@@ -38,7 +38,7 @@ case "$1" in
       eval "${HDP_GANLIA_GMOND_STARTER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && touch /var/lock/subsys/hdp-gmond
+      [ $RETVAL -eq 0 ] && touch /var/lock/hdp-gmond
       ;;
 
   stop)
@@ -49,7 +49,7 @@ case "$1" in
       eval "${HDP_GANLIA_GMOND_STOPPER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/hdp-gmond
+      [ $RETVAL -eq 0 ] && rm -f /var/lock/hdp-gmond
       ;;
 
   restart|reload)

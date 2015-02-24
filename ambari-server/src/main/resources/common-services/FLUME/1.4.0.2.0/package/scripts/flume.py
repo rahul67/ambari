@@ -100,6 +100,7 @@ def flume(action = None):
               owner=params.flume_user,
               )
     Directory(params.flume_log_dir, owner=params.flume_user)
+    Directory(params.flume_run_dir, owner=params.flume_user)
 
     flume_agents = {}
     if params.flume_conf_content is not None:

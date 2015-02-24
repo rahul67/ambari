@@ -92,7 +92,7 @@ gmondClusterName=;
 isMasterGmond=0;
 configureGmetad=0;
 owner='root';
-group='root';
+group='hadoop';
 
 while getopts ":c:mto:g:" OPTION
 do
@@ -124,6 +124,9 @@ createDirectory ${GANGLIA_RUNTIME_DIR};
 # So rrdcached can drop its PID files in here.
 /var/lib/ambari-agent/ambari-sudo.sh -H -E chmod -R o+rw ${GANGLIA_RUNTIME_DIR};
 /var/lib/ambari-agent/ambari-sudo.sh -H -E chown ${owner}:${group} ${GANGLIA_CONF_DIR};
+sudo -H -E chmod -R g+rw ${GANGLIA_RUNTIME_DIR};
+sudo -H -E chown ${owner}:${group} ${GANGLIA_CONF_DIR};
+sudo -H -E chown -R ${owner}:${group} ${GANGLIA_RUNTIME_DIR};
 
 if [ -n "${gmondClusterName}" ]
 then

@@ -17,14 +17,20 @@
  */
 package org.apache.ambari.server.upgrade;
 
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Provider;
-import com.google.inject.persist.Transactional;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import javax.persistence.EntityManager;
 
 import org.apache.ambari.server.AmbariException;
 import org.apache.ambari.server.configuration.Configuration;
+import org.apache.ambari.server.configuration.Configuration.DatabaseType;
 import org.apache.ambari.server.controller.AmbariManagementController;
 import org.apache.ambari.server.controller.ConfigurationRequest;
 import org.apache.ambari.server.orm.DBAccessor;
@@ -35,24 +41,16 @@ import org.apache.ambari.server.state.Clusters;
 import org.apache.ambari.server.state.Config;
 import org.apache.ambari.server.state.ConfigHelper;
 import org.apache.ambari.server.state.PropertyInfo;
-import org.apache.ambari.server.state.Service;
 import org.apache.ambari.server.state.ServiceInfo;
-import org.apache.ambari.server.state.StackId;
-import org.apache.ambari.server.state.StackInfo;
 import org.apache.ambari.server.utils.VersionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.EntityManager;
-
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
+import com.google.common.collect.Maps;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provider;
+import com.google.inject.persist.Transactional;
 
 public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
   @Inject
@@ -63,6 +61,13 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
   protected StackUpgradeUtil stackUpgradeUtil;
 
   protected Injector injector;
+
+  /**
+   * The user name to use as the authenticated user when perform authenticated tasks or operations
+   * that require the name of the authenticated user
+   */
+  protected static final String AUTHENTICATED_USER_NAME = "ambari-upgrade";
+
   private static final Logger LOG = LoggerFactory.getLogger
     (AbstractUpgradeCatalog.class);
   private static final Map<String, UpgradeCatalog> upgradeCatalogMap =
@@ -126,25 +131,6 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
     return rows;
   }
 
-  protected String getDbType() {
-    String dbUrl = configuration.getDatabaseUrl();
-    String dbType;
-
-    if (dbUrl.contains(Configuration.POSTGRES_DB_NAME)) {
-      dbType = Configuration.POSTGRES_DB_NAME;
-    } else if (dbUrl.contains(Configuration.ORACLE_DB_NAME)) {
-      dbType = Configuration.ORACLE_DB_NAME;
-    } else if (dbUrl.contains(Configuration.MYSQL_DB_NAME)) {
-      dbType = Configuration.MYSQL_DB_NAME;
-    } else if (dbUrl.contains(Configuration.DERBY_DB_NAME)) {
-      dbType = Configuration.DERBY_DB_NAME;
-    } else {
-      throw new RuntimeException("Unable to determine database type.");
-    }
-
-    return dbType;
-  }
-
   protected Provider<EntityManager> getEntityManagerProvider() {
     return injector.getProvider(EntityManager.class);
   }
@@ -183,11 +169,11 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
       dbAccessor.executeQuery(String.format("ALTER ROLE %s SET search_path to '%s';", dbUser, schemaName));
     }
   }
-  
+
   public void addNewConfigurationsFromXml() throws AmbariException {
     ConfigHelper configHelper = injector.getInstance(ConfigHelper.class);
     AmbariManagementController controller = injector.getInstance(AmbariManagementController.class);
-    
+
     Clusters clusters = controller.getClusters();
     if (clusters == null) {
       return;
@@ -197,23 +183,23 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
     if (clusterMap != null && !clusterMap.isEmpty()) {
       for (Cluster cluster : clusterMap.values()) {
         Map<String, Set<String>> newProperties = new HashMap<String, Set<String>>();
-        
+
         Set<PropertyInfo> stackProperties = configHelper.getStackProperties(cluster);
         for(String serviceName: cluster.getServices().keySet()) {
           Set<PropertyInfo> properties = configHelper.getServiceProperties(cluster, serviceName);
-          
+
           if(properties == null) {
             continue;
           }
           properties.addAll(stackProperties);
-          
+
           for(PropertyInfo property:properties) {
             String configType = ConfigHelper.fileNameToConfigType(property.getFilename());
             Config clusterConfigs = cluster.getDesiredConfigByType(configType);
             if(clusterConfigs == null || !clusterConfigs.getProperties().containsKey(property.getName())) {
               LOG.info("Config " + property.getName() + " from " + configType + " from xml configurations" +
                   " is not found on the cluster. Adding it...");
-              
+
               if(!newProperties.containsKey(configType)) {
                 newProperties.put(configType, new HashSet<String>());
               }
@@ -221,22 +207,22 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
             }
           }
         }
-        
-        
-        
+
+
+
         for (Entry<String, Set<String>> newProperty : newProperties.entrySet()) {
           updateConfigurationPropertiesWithValuesFromXml(newProperty.getKey(), newProperty.getValue(), false, true);
         }
       }
     }
   }
-  
+
   /**
    * Create a new cluster scoped configuration with the new properties added
    * with the values from the coresponding xml files.
-   * 
+   *
    * If xml owner service is not in the cluster, the configuration won't be added.
-   * 
+   *
    * @param configType Configuration type. (hdfs-site, etc.)
    * @param properties Set property names.
    */
@@ -244,7 +230,7 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
       Set<String> propertyNames, boolean updateIfExists, boolean createNewConfigType) throws AmbariException {
     ConfigHelper configHelper = injector.getInstance(ConfigHelper.class);
     AmbariManagementController controller = injector.getInstance(AmbariManagementController.class);
-    
+
     Clusters clusters = controller.getClusters();
     if (clusters == null) {
       return;
@@ -254,43 +240,43 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
     if (clusterMap != null && !clusterMap.isEmpty()) {
       for (Cluster cluster : clusterMap.values()) {
         Map<String, String> properties = new HashMap<String, String>();
-        
+
         for(String propertyName:propertyNames) {
           String propertyValue = configHelper.getPropertyValueFromStackDefinitions(cluster, configType, propertyName);
-          
+
           if(propertyValue == null) {
             LOG.info("Config " + propertyName + " from " + configType + " is not found in xml definitions." +
                 "Skipping configuration property update");
             continue;
           }
-          
+
           ServiceInfo propertyService = configHelper.getPropertyOwnerService(cluster, configType, propertyName);
           if(propertyService != null && !cluster.getServices().containsKey(propertyService.getName())) {
             LOG.info("Config " + propertyName + " from " + configType + " with value = " + propertyValue + " " +
                 "Is not added due to service " + propertyService.getName() + " is not in the cluster.");
             continue;
           }
-          
+
           properties.put(propertyName, propertyValue);
         }
-        
+
         updateConfigurationPropertiesForCluster(cluster, configType,
             properties, updateIfExists, createNewConfigType);
       }
     }
   }
-  
+
   protected void updateConfigurationPropertiesForCluster(Cluster cluster, String configType,
       Map<String, String> properties, boolean updateIfExists, boolean createNewConfigType) throws AmbariException {
     AmbariManagementController controller = injector.getInstance(AmbariManagementController.class);
     String newTag = "version" + System.currentTimeMillis();
-    
+
     if (properties != null) {
       Map<String, Config> all = cluster.getConfigsByType(configType);
       if (all == null || !all.containsKey(newTag) || properties.size() > 0) {
         Map<String, String> oldConfigProperties;
         Config oldConfig = cluster.getDesiredConfigByType(configType);
-        
+
         if (oldConfig == null && !createNewConfigType) {
           LOG.info("Config " + configType + " not found. Assuming service not installed. " +
               "Skipping configuration properties update");
@@ -318,7 +304,7 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
 
           Config baseConfig = cluster.getConfig(cr.getType(), cr.getVersionTag());
           if (baseConfig != null) {
-            String authName = "ambari-upgrade";
+            String authName = AUTHENTICATED_USER_NAME;
 
             if (cluster.addDesiredConfig(authName, Collections.singleton(baseConfig)) != null) {
               String oldConfigString = (oldConfig != null) ? " from='" + oldConfig.getTag() + "'" : "";
@@ -376,11 +362,13 @@ public abstract class AbstractUpgradeCatalog implements UpgradeCatalog {
 
   @Override
   public void upgradeSchema() throws AmbariException, SQLException {
-    if (getDbType().equals(Configuration.POSTGRES_DB_NAME)) {
+    DatabaseType databaseType = configuration.getDatabaseType();
+
+    if (databaseType == DatabaseType.POSTGRES) {
       changePostgresSearchPath();
     }
 
-    this.executeDDLUpdates();
+    executeDDLUpdates();
   }
 
   @Override

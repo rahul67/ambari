@@ -55,6 +55,7 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
   tasksMessagesPrefix: '',
 
   loadStep: function () {
+    this.clearStep();
     var self = this;
     if (!self.isSingleRequestPage) {
       this.initStep();
@@ -62,19 +63,7 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
       var requestIds = this.get('content.tasksRequestIds');
       var currentRequestId = requestIds && requestIds[0][0];
       if (!currentRequestId) {
-        this.submitRequest().done(function (data, result, request) {
-          if (data) {
-            self.set('currentPageRequestId', data.Requests.id);
-            self.doPollingForPageRequest();
-          } else {
-            //Step has been successfully completed
-            if (request.status === 200) {
-              self.set('status', 'COMPLETED');
-              self.set('isSubmitDisabled', false);
-              self.set('isLoaded', true);
-            }
-          }
-        });
+        this.submitRequest();
       } else {
         self.set('currentPageRequestId', currentRequestId);
         self.doPollingForPageRequest();
@@ -83,7 +72,6 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
   },
 
   initStep: function () {
-    this.clearStep();
     this.initializeTasks();
     if (!this.isSingleRequestPage) {
       this.loadTasks();
@@ -111,6 +99,19 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
     this.set('isLoaded', false);
   },
 
+  /**
+   * Clear stages info for single page request.
+   */
+  clearStage: function() {
+    this.setDBProperty('tasksRequestIds', null);
+    this.setDBProperty('tasksStatuses', null);
+    this.set('showRetry', false);
+    this.set('content.tasksRequestIds', null);
+    this.set('content.tasksStatuses', null);
+    this.set('content.currentTaskId', null);
+    this.get('stages').clear();
+  },
+
   retry: function () {
     this.set('showRetry', false);
     this.get('tasks').setEach('status','PENDING');
@@ -118,14 +119,31 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
   },
 
   submitRequest: function () {
-    var dfd;
-    var self = this;
-    dfd = App.ajax.send({
-      name: self.get('request.ajaxName'),
-      data: self.get('request.ajaxData'),
-      sender: this
+    return App.ajax.send({
+      name: this.get('request.ajaxName'),
+      data: this.get('request.ajaxData'),
+      sender: this,
+      success: 'submitRequestSuccess',
+      kdcCancelHandler: 'failTaskOnKdcCheck'
     });
-    return dfd.promise();
+  },
+
+  submitRequestSuccess: function(data, result, request) {
+    if (data) {
+      this.set('currentPageRequestId', data.Requests.id);
+      this.doPollingForPageRequest();
+    } else {
+      //Step has been successfully completed
+      if (request.status === 200) {
+        this.set('status', 'COMPLETED');
+        this.set('isSubmitDisabled', false);
+        this.set('isLoaded', true);
+      }
+    }
+  },
+
+  failTaskOnKdcCheck: function() {
+    App.router.send('back');
   },
 
   doPollingForPageRequest: function () {
@@ -157,6 +175,9 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
   },
 
   updatePageWithPolledData: function(data) {
+    // If all tasks completed no need to update each task status.
+    // Preferable to skip polling of data for completed tasks after page refresh.
+    if (this.get('status') === 'COMPLETED') return;
     var self = this;
     var tasks = [];
     var currentPageRequestId = this.get('currentPageRequestId');
@@ -186,7 +207,8 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
       this.get('tasks').findProperty('id', currentTaskId).set('progress', progress);
     }
 
-    if (!(this.get('status') === 'COMPLETED')) {
+    // start polling if current step status not completed or failed
+    if (!(this.get('status') === 'COMPLETED' && this.get('status') === 'FAILED')) {
       window.setTimeout(function () {
         self.doPollingForPageRequest();
       }, self.POLL_INTERVAL);
@@ -198,10 +220,13 @@ App.wizardProgressPageControllerMixin = Em.Mixin.create({
     var commands = this.isSingleRequestPage ? this.get('stages') : this.get('commands');
     var currentStep = App.router.get(this.get('content.controllerName') + '.currentStep');
     var tasksMessagesPrefix = this.get('tasksMessagesPrefix');
+    // check that all stages have been completed for single request type
+    var allStagesCompleted = commands.everyProperty('status', 'COMPLETED');
     for (var i = 0; i < commands.length; i++) {
       this.get('tasks').pushObject(Ember.Object.create({
         title: self.isSingleRequestPage ? commands[i].get('context') : Em.I18n.t(tasksMessagesPrefix + currentStep + '.task' + i + '.title'),
-        status: 'PENDING',
+        // set COMPLETED status for task if all stages completed successfully
+        status: allStagesCompleted ? 'COMPLETED' : 'PENDING',
         id: i,
         stageId: self.isSingleRequestPage ? commands[i].get('stage_id') : null,
         command: self.isSingleRequestPage ? 'k' : commands[i],

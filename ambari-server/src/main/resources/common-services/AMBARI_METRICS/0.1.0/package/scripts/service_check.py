@@ -38,7 +38,7 @@ import socket
 class AMSServiceCheck(Script):
   AMS_METRICS_POST_URL = "/ws/v1/timeline/metrics/"
   AMS_METRICS_GET_URL = "/ws/v1/timeline/metrics?%s"
-  AMS_CONNECT_TRIES = 3
+  AMS_CONNECT_TRIES = 5
   AMS_CONNECT_TIMEOUT = 10
 
   @OsFamilyFuncImpl(os_family=OSConst.WINSRV_FAMILY)
@@ -68,7 +68,7 @@ class AMSServiceCheck(Script):
     env.set_params(params)
 
     random_value1 = random.random()
-    current_time = time.time()
+    current_time = int(time.time()) * 1000
     metric_json = Template('smoketest_metrics.json.j2', hostname=params.hostname, random1=random_value1,
                            current_time=current_time).get_content()
     Logger.info("Generated metrics:\n%s" % metric_json)
@@ -83,35 +83,42 @@ class AMSServiceCheck(Script):
         conn = httplib.HTTPConnection(params.ams_collector_host_single,
                                         int(params.metric_collector_port))
         conn.request("POST", self.AMS_METRICS_POST_URL, metric_json, headers)
-        break
       except (httplib.HTTPException, socket.error) as ex:
         if i < self.AMS_CONNECT_TRIES - 1:  #range/xrange returns items from start to end-1
           time.sleep(self.AMS_CONNECT_TIMEOUT)
           Logger.info("Connection failed. Next retry in %s seconds."
                       % (self.AMS_CONNECT_TIMEOUT))
+          continue
         else:
           raise Fail("Metrics were not saved. Service check has failed. "
                "\nConnection failed.")
 
-    response = conn.getresponse()
-    Logger.info("Http response: %s %s" % (response.status, response.reason))
+      response = conn.getresponse()
+      Logger.info("Http response: %s %s" % (response.status, response.reason))
 
-    data = response.read()
-    Logger.info("Http data: %s" % data)
-    conn.close()
+      data = response.read()
+      Logger.info("Http data: %s" % data)
+      conn.close()
 
-    if response.status == 200:
-      Logger.info("Metrics were saved.")
-    else:
-      Logger.info("Metrics were not saved. Service check has failed.")
-      raise Fail("Metrics were not saved. Service check has failed. POST request status: %s %s \n%s" %
-                 (response.status, response.reason, data))
+      if response.status == 200:
+        Logger.info("Metrics were saved.")
+        break
+      else:
+        Logger.info("Metrics were not saved. Service check has failed.")
+        if i < self.AMS_CONNECT_TRIES - 1:  #range/xrange returns items from start to end-1
+          time.sleep(self.AMS_CONNECT_TIMEOUT)
+          Logger.info("Next retry in %s seconds."
+                      % (self.AMS_CONNECT_TIMEOUT))
+        else:
+          raise Fail("Metrics were not saved. Service check has failed. POST request status: %s %s \n%s" %
+                     (response.status, response.reason, data))
 
     get_metrics_parameters = {
       "metricNames": "AMBARI_METRICS.SmokeTest.FakeMetric",
       "appId": "amssmoketestfake",
       "hostname": params.hostname,
-      "startTime": 1419860000000,
+      "startTime": current_time - 60000,
+      "endTime": current_time + 61000,
       "precision": "seconds",
       "grouped": "false",
     }
@@ -143,14 +150,15 @@ class AMSServiceCheck(Script):
       return abs(f1-f2) < delta
 
     for metrics_data in data_json["metrics"]:
-      if (floats_eq(metrics_data["metrics"]["1419860001000"], random_value1, 0.0000001)
-          and floats_eq(metrics_data["metrics"]["1419860002000"], current_time, 1)):
-        Logger.info("Values %s and %s were found in response." % (random_value1, current_time))
+      if (str(current_time) in metrics_data["metrics"] and str(current_time + 1000) in metrics_data["metrics"]
+          and floats_eq(metrics_data["metrics"][str(current_time)], random_value1, 0.0000001)
+          and floats_eq(metrics_data["metrics"][str(current_time + 1000)], current_time, 1)):
+        Logger.info("Values %s and %s were found in the response." % (random_value1, current_time))
         break
       pass
     else:
-      Logger.info("Values %s and %s were not found in response." % (random_value1, current_time))
-      raise Fail("Values %s and %s were not found in response." % (random_value1, current_time))
+      Logger.info("Values %s and %s were not found in the response." % (random_value1, current_time))
+      raise Fail("Values %s and %s were not found in the response." % (random_value1, current_time))
 
     Logger.info("Ambari Metrics service check is finished.")
 

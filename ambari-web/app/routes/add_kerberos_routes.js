@@ -252,11 +252,7 @@ module.exports = App.WizardRoute.extend({
       var kerberosDescriptor = kerberosWizardController.get('kerberosDescriptorConfigs');
       step6Controller.postKerberosDescriptor(kerberosDescriptor).always(function (data, result, request) {
         if (result === 'error' && data.status === 409) {
-          step6Controller.putKerberosDescriptor(kerberosDescriptor).always(function (data) {
-            step6Controller.unkerberizeCluster().always(function (data) {
-              router.transitionTo('step6');
-            });
-          });
+          step6Controller.putKerberosDescriptor(kerberosDescriptor);
         } else {
           router.transitionTo('step6');
         }
@@ -279,11 +275,8 @@ module.exports = App.WizardRoute.extend({
         controller.connectOutlet('kerberosWizardStep6', controller.get('content'));
       });
     },
-    retry: function () {
-      var router = App.get('router');
-      var stepController = router.get('kerberosWizardStep6Controller');
-      stepController.setRequest();
-      stepController.loadStep();
+    retry: function (router) {
+      router.get('kerberosWizardStep6Controller').setRequest(true);
     },
     unroutePath: function () {
       return false;

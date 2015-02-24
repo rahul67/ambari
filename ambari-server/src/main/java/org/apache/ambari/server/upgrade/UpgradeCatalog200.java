@@ -18,16 +18,10 @@
 
 package org.apache.ambari.server.upgrade;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
-
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import org.apache.ambari.server.AmbariException;
+import org.apache.ambari.server.api.services.AmbariMetaInfo;
 import org.apache.ambari.server.controller.AmbariManagementController;
 import org.apache.ambari.server.orm.DBAccessor;
 import org.apache.ambari.server.orm.DBAccessor.DBColumnInfo;
@@ -35,6 +29,7 @@ import org.apache.ambari.server.orm.dao.ClusterDAO;
 import org.apache.ambari.server.orm.dao.ClusterServiceDAO;
 import org.apache.ambari.server.orm.dao.HostComponentDesiredStateDAO;
 import org.apache.ambari.server.orm.dao.HostComponentStateDAO;
+import org.apache.ambari.server.orm.dao.MetainfoDAO;
 import org.apache.ambari.server.orm.dao.ServiceComponentDesiredStateDAO;
 import org.apache.ambari.server.orm.dao.ServiceDesiredStateDAO;
 import org.apache.ambari.server.orm.entities.ClusterEntity;
@@ -48,14 +43,25 @@ import org.apache.ambari.server.orm.entities.ServiceDesiredStateEntity;
 import org.apache.ambari.server.state.Cluster;
 import org.apache.ambari.server.state.Clusters;
 import org.apache.ambari.server.state.Config;
+import org.apache.ambari.server.state.ConfigHelper;
+import org.apache.ambari.server.state.OperatingSystemInfo;
+import org.apache.ambari.server.state.PropertyInfo;
+import org.apache.ambari.server.state.RepositoryInfo;
 import org.apache.ambari.server.state.SecurityState;
 import org.apache.ambari.server.state.SecurityType;
+import org.apache.ambari.server.state.StackId;
 import org.apache.ambari.server.state.UpgradeState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.Inject;
-import com.google.inject.Injector;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -309,6 +315,36 @@ public class UpgradeCatalog200 extends AbstractUpgradeCatalog {
     setSecurityType();
     updateTezConfiguration();
     addMissingConfigs();
+    persistHDPRepo();
+    updateClusterEnvConfiguration();
+  }
+
+  protected void persistHDPRepo() throws AmbariException{
+    AmbariManagementController amc = injector.getInstance(
+            AmbariManagementController.class);
+    AmbariMetaInfo ambariMetaInfo = amc.getAmbariMetaInfo();
+    Map<String, Cluster> clusterMap = amc.getClusters().getClusters();
+    for (Cluster cluster : clusterMap.values()) {
+      StackId stackId = cluster.getCurrentStackVersion();
+      String stackName = stackId.getStackName();
+      String stackVersion = stackId.getStackVersion();
+      String stackRepoId = stackName + "-" + stackVersion;
+
+      for (OperatingSystemInfo osi : ambariMetaInfo.getOperatingSystems(stackName, stackVersion)) {
+        MetainfoDAO metaInfoDAO = injector.getInstance(MetainfoDAO.class);
+        String repoMetaKey = AmbariMetaInfo.generateRepoMetaKey(stackName,stackVersion,osi.getOsType(),
+                stackRepoId,AmbariMetaInfo.REPOSITORY_XML_PROPERTY_BASEURL);
+        // Check if default repo is used and not persisted
+        if (metaInfoDAO.findByKey(repoMetaKey) == null) {
+          RepositoryInfo repositoryInfo = ambariMetaInfo.getRepository(stackName, stackVersion, osi.getOsType(), stackRepoId);
+          // We save default base url which has not changed during upgrade as base url
+          String baseUrl = repositoryInfo.getDefaultBaseUrl();
+          ambariMetaInfo.updateRepoBaseURL(stackName, stackVersion, osi.getOsType(),
+                  stackRepoId, baseUrl);
+        }
+      }
+    }
+   
   }
 
   protected void updateTezConfiguration() throws AmbariException {
@@ -465,5 +501,87 @@ public class UpgradeCatalog200 extends AbstractUpgradeCatalog {
   }
   protected void addMissingConfigs() throws AmbariException {
     updateConfigurationProperties("hive-site", Collections.singletonMap("hive.server2.transport.mode", "binary"), false, false);
+  }
+
+  /**
+   * Update the cluster-env configuration (in all clusters) to add missing properties and remove
+   * obsolete properties.
+   *
+   * @throws org.apache.ambari.server.AmbariException
+   */
+  protected void updateClusterEnvConfiguration() throws AmbariException {
+    AmbariManagementController ambariManagementController = injector.getInstance(AmbariManagementController.class);
+    ConfigHelper configHelper = injector.getInstance(ConfigHelper.class);
+
+    Clusters clusters = ambariManagementController.getClusters();
+
+    if (clusters != null) {
+      Map<String, Cluster> clusterMap = clusters.getClusters();
+
+      if (clusterMap != null) {
+        for (final Cluster cluster : clusterMap.values()) {
+          Config configClusterEnv = cluster.getDesiredConfigByType("cluster-env");
+
+          if (configClusterEnv != null) {
+            Map<String, String> properties = configClusterEnv.getProperties();
+
+            if (properties != null) {
+              // -----------------------------------------
+              // Add missing properties
+
+              if (!properties.containsKey("smokeuser_principal_name")) {
+                // Add smokeuser_principal_name, from cluster-env/smokeuser
+                // Ideally a realm should be added, but for now we can assume the default realm and
+                // leave it off
+                String smokeUser = properties.get("smokeuser");
+
+                if ((smokeUser == null) || smokeUser.isEmpty()) {
+                  // If the smokeuser property is not set in the current configuration set, grab
+                  // it from the stack defaults:
+                  Set<PropertyInfo> stackProperties = configHelper.getStackProperties(cluster);
+
+                  if (stackProperties != null) {
+                    for (PropertyInfo propertyInfo : stackProperties) {
+                      String filename = propertyInfo.getFilename();
+
+                      if ((filename != null) && "cluster-env".equals(ConfigHelper.fileNameToConfigType(filename))) {
+                        smokeUser = propertyInfo.getValue();
+                        break;
+                      }
+                    }
+                  }
+
+                  // If a default value for smokeuser was not found, force it to be "ambari-qa"
+                  if ((smokeUser == null) || smokeUser.isEmpty()) {
+                    smokeUser = "ambari-qa";
+                  }
+                }
+
+                properties.put("smokeuser_principal_name", smokeUser);
+              }
+
+              // Add missing properties (end)
+              // -----------------------------------------
+
+              // -----------------------------------------
+              // Remove obsolete properties
+
+              // Remove obsolete properties (end)
+              // -----------------------------------------
+
+              // -----------------------------------------
+              // Set the updated configuration
+
+              configHelper.createConfigType(cluster, ambariManagementController, "cluster-env", properties,
+                  AUTHENTICATED_USER_NAME, "Upgrading to Ambari 2.0");
+
+              // Set configuration (end)
+              // -----------------------------------------
+
+            }
+          }
+        }
+      }
+    }
   }
 }

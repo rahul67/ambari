@@ -49,6 +49,11 @@
     <description>Default directory for saving the rrd files on ganglia server</description>
   </property>
   <property>
+    <name>gmetad_root_dir</name>
+    <value>/var/lib/ganglia</value>
+    <description>Default directory for GMetaD</description>
+  </property>
+  <property>
     <name>rrdcached_timeout</name>
     <value>3600</value>
     <description>(-w) Data is written to disk every timeout seconds. If this option is not specified the default interval of 300 seconds will be used.</description>

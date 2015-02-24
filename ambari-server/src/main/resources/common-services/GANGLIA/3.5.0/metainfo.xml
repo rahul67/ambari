@@ -81,7 +81,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>ubuntu12</osFamily>
+          <osFamily>ubuntu12,ubuntu14</osFamily>
           <packages>
             <package>
               <name>python-rrdtool</name>
@@ -94,6 +94,36 @@
             </package>
             <package>
               <name>ganglia-monitor-python</name>
+            </package>
+            <package>
+              <name>rrdcached</name>
+            </package>
+          </packages>
+        </osSpecific>
+        <!-- Debian 7 (Wheezy) is represented as Ubuntu7 here -->
+        <osSpecific>
+          <osFamily>ubuntu7</osFamily>
+          <packages>
+            <package>
+              <name>libganglia1=3.3.8-1+nmu1</name>
+            </package>
+            <package>
+              <name>librrd4=1.4.7-2</name>
+            </package>
+            <package>
+              <name>ganglia-monitor=3.3.8-1+nmu1</name>
+            </package>
+            <package>
+              <name>ganglia-monitor-python=3.3.8-1+nmu1</name>
+            </package>
+            <package>
+              <name>gmetad=3.3.8-1+nmu1</name>
+            </package>
+            <package>
+              <name>python-rrdtool</name>
+            </package>
+            <package>
+              <name>ganglia-webfrontend=3.3.8-1+nmu1</name>
             </package>
             <package>
               <name>rrdcached</name>

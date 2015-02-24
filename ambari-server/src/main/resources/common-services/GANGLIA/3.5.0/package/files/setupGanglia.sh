@@ -92,7 +92,7 @@ gmondClusterName=;
 isMasterGmond=0;
 configureGmetad=0;
 owner='root';
-group='root';
+group='hadoop';
 
 while getopts ":c:mto:g:" OPTION
 do
@@ -122,8 +122,9 @@ done
 createDirectory ${GANGLIA_CONF_DIR};
 createDirectory ${GANGLIA_RUNTIME_DIR};
 # So rrdcached can drop its PID files in here.
-sudo -H -E chmod -R o+rw ${GANGLIA_RUNTIME_DIR};
+sudo -H -E chmod -R g+rw ${GANGLIA_RUNTIME_DIR};
 sudo -H -E chown ${owner}:${group} ${GANGLIA_CONF_DIR};
+sudo -H -E chown -R ${owner}:${group} ${GANGLIA_RUNTIME_DIR};
 
 if [ -n "${gmondClusterName}" ]
 then

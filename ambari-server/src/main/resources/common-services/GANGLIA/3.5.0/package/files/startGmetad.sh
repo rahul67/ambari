@@ -36,7 +36,7 @@ then
     # Only attempt to start gmetad if there's not already one running.
     if [ -f "${GMETAD_PID_FILE}" ] && [ -z "${gmetadRunningPid}" ]
     then
-      rm -f ${GMETAD_PID_FILE}; rm -f /var/lock/subsys/hdp-gmetad
+      rm -f ${GMETAD_PID_FILE}; rm -f /var/lock/hdp-gmetad
     fi
     if [ -z "${gmetadRunningPid}" ]
     then

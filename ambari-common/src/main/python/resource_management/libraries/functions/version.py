@@ -69,5 +69,7 @@ def compare_versions(version1, version2):
   :param version2: Second parameter for version
   :return: Returns -1 if version1 is before version2, 0 if they are equal, and 1 if version1 is after version2
   """
+  version1 = format_hdp_stack_version(version1)
+  version2 = format_hdp_stack_version(version2)
   max_segments = max(len(version1.split(".")), len(version2.split(".")))
   return cmp(_normalize(version1, desired_segments=max_segments), _normalize(version2, desired_segments=max_segments))

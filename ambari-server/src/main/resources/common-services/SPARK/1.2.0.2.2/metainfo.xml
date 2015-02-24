@@ -110,7 +110,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>ubuntu12</osFamily>
+          <osFamily>ubuntu7,ubuntu12,ubuntu14</osFamily>
           <packages>
             <package>
               <name>spark-2-2-.*</name>

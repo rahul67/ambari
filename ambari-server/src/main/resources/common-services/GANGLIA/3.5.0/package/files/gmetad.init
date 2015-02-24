@@ -38,7 +38,7 @@ case "$1" in
       eval "${HDP_GANLIA_GMETAD_STARTER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && touch /var/lock/subsys/hdp-gmetad
+      [ $RETVAL -eq 0 ] && touch /var/lock/hdp-gmetad
       ;;
 
   stop)
@@ -49,7 +49,7 @@ case "$1" in
       eval "${HDP_GANLIA_GMETAD_STOPPER}"
       RETVAL=$?
       echo
-      [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/hdp-gmetad
+      [ $RETVAL -eq 0 ] && rm -f /var/lock/hdp-gmetad
       ;;
 
   restart|reload)

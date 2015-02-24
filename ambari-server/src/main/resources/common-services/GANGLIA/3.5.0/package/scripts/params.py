@@ -24,6 +24,7 @@ config = Script.get_config()
 
 user_group = config['configurations']['cluster-env']["user_group"]
 ganglia_conf_dir = default("/configurations/ganglia-env/ganglia_conf_dir", "/etc/ganglia/hdp")
+gmetad_root_dir = config['configurations']['ganglia-env']['gmetad_root_dir']
 ganglia_dir = "/etc/ganglia"
 ganglia_runtime_dir = config['configurations']['ganglia-env']["ganglia_runtime_dir"]
 ganglia_shell_cmds_dir = "/usr/libexec/hdp/ganglia"
@@ -42,7 +43,7 @@ for x in gmond_app_strs:
   a,b = x.strip().split(':')
   gmond_apps.append((a.strip(),b.strip()))
 
-if System.get_instance().os_family == "ubuntu":
+if System.get_instance().os_family in ["ubuntu", "debian"]:
   gmond_service_name = "ganglia-monitor"
   modules_dir = "/usr/lib/ganglia"
 else:
@@ -149,6 +150,7 @@ if System.get_instance().os_family == "suse":
   rrd_py_path = '/srv/www/cgi-bin'
   dwoo_path = '/var/lib/ganglia-web/dwoo'
   web_user = "wwwrun"
+  webserver_group = "wwwrun"
   # for upgrade purposes as path to ganglia was changed
   if not os.path.exists(ganglia_web_path):
     ganglia_web_path='/srv/www/htdocs/ganglia'
@@ -157,8 +159,10 @@ elif  System.get_instance().os_family == "redhat":
   rrd_py_path = '/var/www/cgi-bin'
   dwoo_path = '/var/lib/ganglia/dwoo'
   web_user = "apache"
-elif  System.get_instance().os_family == "ubuntu":
+elif  System.get_instance().os_family in ["ubuntu", "debian"]:
   rrd_py_path = '/usr/lib/cgi-bin'
   ganglia_web_path = '/usr/share/ganglia-webfrontend'
   dwoo_path = '/var/lib/ganglia/dwoo'
   web_user = "www-data"
+  webserver_group = "www-data"
+  ganglia_apache_config_file = "/etc/apache2/conf-available/ganglia.conf"

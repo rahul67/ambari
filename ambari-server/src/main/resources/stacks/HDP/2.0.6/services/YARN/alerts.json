@@ -309,7 +309,7 @@
         "source": {
           "type": "WEB",
           "uri": {
-            "http": "{{yarn-site/yarn.timeline-service.webapp.address}}",
+            "http": "{{yarn-site/yarn.timeline-service.webapp.address}}/ws/v1/timeline/",
             "https": "{{yarn-site/yarn.timeline-service.webapp.https.address}}",
             "https_property": "{{yarn-site/yarn.http.policy}}",
             "https_property_value": "HTTPS_ONLY"

@@ -94,6 +94,12 @@ App.WizardStep3Controller = Em.Controller.extend({
   hasMoreRegisteredHosts: false,
 
   /**
+   * Contain data about installed packages on hosts
+   * @type {Array}
+   */
+  hostsPackagesData: [],
+
+  /**
    * List of installed hostnames
    * @type {string[]}
    */
@@ -855,7 +861,7 @@ App.WizardStep3Controller = Em.Controller.extend({
       this.getHostCheckSuccess();
     } else {
       var data = this.getDataForCheckRequest("host_resolution_check", true);
-      this.requestToPerformHostCheck(data);
+      data ? this.requestToPerformHostCheck(data) : this.stopHostCheck();
     }
   },
 
@@ -863,9 +869,19 @@ App.WizardStep3Controller = Em.Controller.extend({
     if (App.get('testMode')) {
       this.getHostInfo();
     } else {
-      var data = this.getDataForCheckRequest("last_agent_env_check", false);
-      this.requestToPerformHostCheck(data);
+      var data = this.getDataForCheckRequest("last_agent_env_check,installed_packages,existing_repos", false);
+      data ? this.requestToPerformHostCheck(data) : this.stopHostCheck();
     }
+  },
+
+  /**
+   * set all fields from which depends running host check to true value
+   * which force finish checking;
+   */
+  stopHostCheck: function() {
+    this.set('stopChecking', true);
+    this.set('isJDKWarningsLoaded', true);
+    this.set('isHostsWarningsLoaded', true);
   },
 
   getHostCheckSuccess: function(response) {
@@ -881,12 +897,12 @@ App.WizardStep3Controller = Em.Controller.extend({
    *  <code>"last_agent_env_check"<code>
    *  <code>"host_resolution_check"<code>
    * @param {boolean} addHosts - true
+   * @return {object|null}
    * @method getDataForCheckRequest
    */
   getDataForCheckRequest: function (checkExecuteList, addHosts) {
-    var hosts = (!this.get('content.installOptions.manualInstall'))
-      ? this.get('bootHosts').filterProperty('bootStatus', 'REGISTERED').getEach('name').join(",")
-      : this.get('bootHosts').getEach('name').join(",");
+    var hosts = this.get('bootHosts').filterProperty('bootStatus', 'REGISTERED').getEach('name').join(",");
+    if (hosts.length == 0) return null;
     var jdk_location = App.router.get('clusterController.ambariProperties.jdk_location');
     var RequestInfo = {
       "action": "check_host",
@@ -951,7 +967,7 @@ App.WizardStep3Controller = Em.Controller.extend({
     var requestId = this.get("requestId");
     var checker = setTimeout(function () {
       if (self.get('stopChecking') == true) {
-        clearInterval(checker);
+        clearTimeout(checker);
       } else {
         App.ajax.send({
           name: 'preinstalled.checks.tasks',
@@ -980,7 +996,13 @@ App.WizardStep3Controller = Em.Controller.extend({
     if (["FAILED", "COMPLETED", "TIMEDOUT"].contains(data.Requests.request_status)) {
       if (data.Requests.inputs.indexOf("last_agent_env_check") != -1) {
         this.set('stopChecking', true);
-         this.getHostInfo();
+        this.set('hostsPackagesData', data.tasks.map(function (task) {
+          return {
+            hostName: Em.get(task, 'Tasks.host_name'),
+            installedPackages: Em.get(task, 'Tasks.structured_out.installed_packages')
+          }
+        }));
+        this.getHostInfo();
       } else if (data.Requests.inputs.indexOf("host_resolution_check") != -1) {
         this.parseHostNameResolution(data);
         this.getGeneralHostCheck();
@@ -1414,6 +1436,7 @@ App.WizardStep3Controller = Em.Controller.extend({
       usersWarnings: {},
       alternativeWarnings: {}
     };
+    var hostsPackagesData = this.get('hostsPackagesData');
 
     data.items.sortPropertyLight('Hosts.host_name').forEach(function (_host) {
       var host = {
@@ -1448,8 +1471,9 @@ App.WizardStep3Controller = Em.Controller.extend({
       }, this);
 
       //parse all package warnings for host
-      if (_host.Hosts.last_agent_env.installedPackages) {
-        _host.Hosts.last_agent_env.installedPackages.forEach(function (_package) {
+      var hostPackagesData = hostsPackagesData.findProperty('hostName', _host.Hosts.host_name);
+      if (hostPackagesData) {
+        hostPackagesData.installedPackages.forEach(function (_package) {
           warning = warningCategories.packagesWarnings[_package.name];
           if (warning) {
             warning.hosts.push(_host.Hosts.host_name);

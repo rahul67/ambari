@@ -18,6 +18,8 @@
 
 package org.apache.ambari.server.serveraction.kerberos;
 
+import com.google.inject.Inject;
+import org.apache.ambari.server.configuration.Configuration;
 import org.apache.ambari.server.utils.ShellCommandUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +51,8 @@ public class MITKerberosOperationHandler extends KerberosOperationHandler {
 
   private final static Logger LOG = LoggerFactory.getLogger(MITKerberosOperationHandler.class);
 
+  @Inject
+  private Configuration configuration;
 
   /**
    * Prepares and creates resources to be used by this KerberosOperationHandler
@@ -227,6 +231,18 @@ public class MITKerberosOperationHandler extends KerberosOperationHandler {
   }
 
   /**
+   * Initialize this MITKerberosOperationHandler with instances of objects that should normally
+   * be injected.
+   * <p/>
+   * This should only be used for unit tests.
+   *
+   * @param configuration the Configuration to (manually) inject
+   */
+  public void init(Configuration configuration) {
+    this.configuration = configuration;
+  }
+
+  /**
    * Retrieves the current key number assigned to the identity identified by the specified principal
    *
    * @param principal a String declaring the principal to look up
@@ -307,15 +323,21 @@ public class MITKerberosOperationHandler extends KerberosOperationHandler {
           ? null
           : administratorCredentials.getPrincipal();
 
+      String pathToCommand = "";
+
+      if (configuration.getServerOsFamily().equals("redhat5")) {
+        pathToCommand = "/usr/kerberos/sbin/";
+      }
+
       if ((adminPrincipal == null) || adminPrincipal.isEmpty()) {
         // Set the kdamin interface to be kadmin.local
-        command.add("kadmin.local");
+        command.add(pathToCommand + "kadmin.local");
       } else {
         String adminPassword = administratorCredentials.getPassword();
         String adminKeyTab = administratorCredentials.getKeytab();
 
         // Set the kdamin interface to be kadmin
-        command.add("kadmin");
+        command.add(pathToCommand + "kadmin");
 
         // Add the administrative principal
         command.add("-p");

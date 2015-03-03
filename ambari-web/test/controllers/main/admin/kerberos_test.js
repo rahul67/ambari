@@ -143,4 +143,5 @@ describe('App.MainAdminKerberosController', function() {
     });
 
   });
+
 });

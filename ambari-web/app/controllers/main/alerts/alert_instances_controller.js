@@ -142,8 +142,9 @@ App.MainAlertInstancesController = Em.Controller.extend({
     var self = this;
     if (this.get('isUpdating')) {
       this.set('updateTimer', setTimeout(function () {
-        self.fetchAlertInstances();
-        self.scheduleUpdate();
+        self.fetchAlertInstances().complete(function() {
+          self.scheduleUpdate();
+        });
       }, App.get('alertInstancesUpdateInterval')));
     }
     else {
@@ -157,7 +158,7 @@ App.MainAlertInstancesController = Em.Controller.extend({
    * @method getAlertInstancesSuccessCallback
    */
   getAlertInstancesSuccessCallback: function (json) {
-    App.alertInstanceMapper.map(json);
+    App.alertInstanceMapper.map(json, true);
     this.set('isLoaded', true);
     this.set('reload', !this.get('reload'));
   },

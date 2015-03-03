@@ -19,7 +19,6 @@
 package org.apache.ambari.server.state.svccomphost;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +77,6 @@ import org.apache.ambari.server.state.fsm.SingleArcTransition;
 import org.apache.ambari.server.state.fsm.StateMachine;
 import org.apache.ambari.server.state.fsm.StateMachineFactory;
 import org.apache.ambari.server.state.stack.upgrade.RepositoryVersionHelper;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -756,30 +754,20 @@ public class ServiceComponentHostImpl implements ServiceComponentHost {
 
   @Override
   public State getState() {
-    clusterGlobalLock.readLock().lock();
-    try {
-      // there's no reason to lock around the state machine for this SCH since
-      // the state machine is synchronized
-      return stateMachine.getCurrentState();
-    } finally {
-      clusterGlobalLock.readLock().unlock();
-    }
+    // there's no reason to lock around the state machine for this SCH since
+    // the state machine is synchronized
+    return stateMachine.getCurrentState();
   }
 
   @Override
   public void setState(State state) {
-    clusterGlobalLock.readLock().lock();
+    writeLock.lock();
     try {
-      writeLock.lock();
-      try {
-        stateMachine.setCurrentState(state);
-        stateEntity.setCurrentState(state);
-        saveIfPersisted();
-      } finally {
-        writeLock.unlock();
-      }
+      stateMachine.setCurrentState(state);
+      stateEntity.setCurrentState(state);
+      saveIfPersisted();
     } finally {
-      clusterGlobalLock.readLock().unlock();
+      writeLock.unlock();
     }
   }
 
@@ -1148,20 +1136,15 @@ public class ServiceComponentHostImpl implements ServiceComponentHost {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isPersisted() {
-    clusterGlobalLock.readLock().lock();
-    try {
-      readLock.lock();
-      try {
-        return persisted;
-      } finally {
-        readLock.unlock();
-      }
-    } finally {
-      clusterGlobalLock.readLock().unlock();
-    }
-
+    // a lock around this internal state variable is not required since we
+    // have appropriate locks in the persist() method and this member is
+    // only ever false under the condition that the object is new
+    return persisted;
   }
 
   @Override
@@ -1212,8 +1195,8 @@ public class ServiceComponentHostImpl implements ServiceComponentHost {
   @Transactional
   protected void persistEntities() {
     HostEntity hostEntity = hostDAO.findByName(getHostName());
-    hostEntity.getHostComponentStateEntities().add(stateEntity);
-    hostEntity.getHostComponentDesiredStateEntities().add(desiredStateEntity);
+    hostEntity.addHostComponentStateEntity(stateEntity);
+    hostEntity.addHostComponentDesiredStateEntity(desiredStateEntity);
 
     ServiceComponentDesiredStateEntityPK dpk = new ServiceComponentDesiredStateEntityPK();
     dpk.setClusterId(serviceComponent.getClusterId());
@@ -1350,6 +1333,10 @@ public class ServiceComponentHostImpl implements ServiceComponentHost {
     desiredPK.setHostName(desiredStateEntity.getHostName());
 
     hostComponentDesiredStateDAO.removeByPK(desiredPK);
+
+    // make sure that the state entities are removed from the associated (detached) host entity
+    stateEntity.getHostEntity().removeHostComponentStateEntity(stateEntity);
+    desiredStateEntity.getHostEntity().removeHostComponentDesiredStateEntity(desiredStateEntity);
   }
 
   @Override
@@ -1518,15 +1505,18 @@ public class ServiceComponentHostImpl implements ServiceComponentHost {
     final StackId stackId = cluster.getDesiredStackVersion();
     final StackInfo stackInfo = ambariMetaInfo.getStack(stackId.getStackName(), stackId.getStackVersion());
 
-    RepositoryVersionEntity repositoryVersion = repositoryVersionDAO.findByStackAndVersion(stackId.getStackId(), version);
-    if (repositoryVersion == null) {
-      repositoryVersion = createRepositoryVersion(version, stackId, stackInfo);
-    }
+    writeLock.lock();
+    try {
+      RepositoryVersionEntity repositoryVersion = repositoryVersionDAO.findByStackAndVersion(stackId.getStackId(), version);
+      if (repositoryVersion == null) {
+        repositoryVersion = createRepositoryVersion(version, stackId, stackInfo);
+      }
 
-    final HostEntity host = hostDAO.findByName(hostName);
-    cluster.transitionHostVersionState(host, repositoryVersion, stackId);
+      final HostEntity host = hostDAO.findByName(hostName);
+      cluster.transitionHostVersionState(host, repositoryVersion, stackId);
+    } finally {
+      writeLock.unlock();
+    }
     return version;
   }
-
-
 }

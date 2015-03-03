@@ -50,7 +50,7 @@ ams_monitor_dir = "/usr/lib/python2.6/site-packages/resource_monitoring"
 ams_monitor_pid_dir = status_params.ams_monitor_pid_dir
 ams_monitor_script = "/usr/sbin/ambari-metrics-monitor"
 
-
+ams_hbase_home_dir = "/usr/lib/ams-hbase/"
 
 #hadoop params
 
@@ -149,7 +149,7 @@ hostname = config["hostname"]
 hdfs_user_keytab = config['configurations']['hadoop-env']['hdfs_user_keytab']
 hdfs_user = config['configurations']['hadoop-env']['hdfs_user']
 hdfs_principal_name = config['configurations']['hadoop-env']['hdfs_principal_name']
-kinit_path_local = functions.get_kinit_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"])
+kinit_path_local = functions.get_kinit_path()
 
 import functools
 # create partial functions with common arguments for every HdfsDirectory call

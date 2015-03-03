@@ -213,7 +213,6 @@ App.config = Em.Object.create({
    */
   identifyCategory: function (config) {
     var category = null,
-      categoryName = "",
       serviceConfigMetaData = this.get('preDefinedServiceConfigs').findProperty('serviceName', config.serviceName),
       configCategories = (serviceConfigMetaData && serviceConfigMetaData.get('configCategories')) || [];
 
@@ -730,7 +729,7 @@ App.config = Em.Object.create({
    some of the config defaults to previously user-entered data.
    **/
   tweakDynamicDefaults: function (localDB, serviceConfigProperty, config) {
-    var firstHost = null;
+    var firstHost;
     for (var host in localDB.hosts) {
       firstHost = host;
       break;
@@ -990,7 +989,8 @@ App.config = Em.Object.create({
       'smokeuser': 'Smoke Test User',
       'user_group': 'Hadoop Group',
       'mapred_user': 'MapReduce User',
-      'zk_user': 'ZooKeeper User'
+      'zk_user': 'ZooKeeper User',
+      'ignore_groupsusers_create': 'Skip group modifications during install'
     };
     if (config.property_type.contains('USER') || config.property_type.contains('GROUP')) {
       propertyData.id = "puppet var";
@@ -1000,7 +1000,7 @@ App.config = Em.Object.create({
       propertyData.isOverridable = false;
       propertyData.isReconfigurable = false;
       propertyData.displayName = nameToDisplayNameMap[config.property_name] || App.format.normalizeName(config.property_name);
-      propertyData.displayType = 'user';
+      propertyData.displayType = config.property_name == 'ignore_groupsusers_create' ? 'checkbox' : 'user';
       if (config.service_name) {
         var propertyIndex = config.service_name == 'MISC' ? 30 : App.StackService.find().mapProperty('serviceName').indexOf(config.service_name);
         propertyData.belongsToService = [config.service_name];
@@ -1234,27 +1234,30 @@ App.config = Em.Object.create({
    * @return {Object}
    */
   addUserProperty: function (stored, isAdvanced, advancedConfigs) {
-    var configData = {
-      id: stored.id,
-      name: stored.name,
-      displayName: App.format.normalizeName(stored.name),
-      serviceName: stored.serviceName,
-      value: stored.value,
-      defaultValue: stored.defaultValue,
-      displayType: stringUtils.isSingleLine(stored.value) ? 'advanced' : 'multiLine',
-      filename: stored.filename,
-      isUserProperty: stored.isUserProperty === true,
-      hasInitialValue: !!stored.hasInitialValue,
-      isOverridable: true,
-      overrides: stored.overrides,
-      isRequired: false,
-      isVisible: stored.isVisible,
-      isFinal: stored.isFinal,
-      defaultIsFinal: stored.defaultIsFinal,
-      supportsFinal: stored.supportsFinal,
-      showLabel: stored.showLabel !== false,
-      category: stored.category
-    };
+    var
+      skipChangeOfDisplayType = ['ignore_groupsusers_create'],
+      originalDispType = advancedConfigs.findProperty('name', stored.name) ? advancedConfigs.findProperty('name', stored.name).displayType : stored.displayType;
+      configData = {
+        id: stored.id,
+        name: stored.name,
+        displayName: App.format.normalizeName(stored.name),
+        serviceName: stored.serviceName,
+        value: stored.value,
+        defaultValue: stored.defaultValue,
+        displayType: skipChangeOfDisplayType.contains(stored.name) ? originalDispType : (stringUtils.isSingleLine(stored.value) ? 'advanced' : 'multiLine'),
+        filename: stored.filename,
+        isUserProperty: stored.isUserProperty === true,
+        hasInitialValue: !!stored.hasInitialValue,
+        isOverridable: true,
+        overrides: stored.overrides,
+        isRequired: false,
+        isVisible: stored.isVisible,
+        isFinal: stored.isFinal,
+        defaultIsFinal: stored.defaultIsFinal,
+        supportsFinal: stored.supportsFinal,
+        showLabel: stored.showLabel !== false,
+        category: stored.category
+      };
 
     App.get('config').calculateConfigProperties(configData, isAdvanced, advancedConfigs);
     return configData;

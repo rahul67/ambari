@@ -63,7 +63,7 @@ class TestHBaseMaster(RMFTestCase):
     )
     
     self.assertResourceCalled('Execute', '/usr/lib/hbase/bin/hbase-daemon.sh --config /etc/hbase/conf stop master',
-        on_timeout = '! ( ls /var/run/hbase/hbase-hbase-master.pid >/dev/null 2>&1 && ps -p `cat /var/run/hbase/hbase-hbase-master.pid` >/dev/null 2>&1 ) || sudo -H -E kill -9 `cat /var/run/hbase/hbase-hbase-master.pid`',
+        on_timeout = '! ( ls /var/run/hbase/hbase-hbase-master.pid >/dev/null 2>&1 && ps -p `cat /var/run/hbase/hbase-hbase-master.pid` >/dev/null 2>&1 ) || ambari-sudo.sh -H -E kill -9 `cat /var/run/hbase/hbase-hbase-master.pid`',
         timeout = 30,
         user = 'hbase',
     )
@@ -160,7 +160,7 @@ class TestHBaseMaster(RMFTestCase):
     )
 
     self.assertResourceCalled('Execute', '/usr/lib/hbase/bin/hbase-daemon.sh --config /etc/hbase/conf stop master',
-        on_timeout = '! ( ls /var/run/hbase/hbase-hbase-master.pid >/dev/null 2>&1 && ps -p `cat /var/run/hbase/hbase-hbase-master.pid` >/dev/null 2>&1 ) || sudo -H -E kill -9 `cat /var/run/hbase/hbase-hbase-master.pid`',
+        on_timeout = '! ( ls /var/run/hbase/hbase-hbase-master.pid >/dev/null 2>&1 && ps -p `cat /var/run/hbase/hbase-hbase-master.pid` >/dev/null 2>&1 ) || ambari-sudo.sh -H -E kill -9 `cat /var/run/hbase/hbase-hbase-master.pid`',
         timeout = 30,
         user = 'hbase',
     )
@@ -225,6 +225,13 @@ class TestHBaseMaster(RMFTestCase):
       conf_dir = '/etc/hbase/conf',
       configurations = self.getConfig()['configurations']['hbase-site'],
       configuration_attributes = self.getConfig()['configuration_attributes']['hbase-site']
+    )
+    self.assertResourceCalled('XmlConfig', 'core-site.xml',
+      owner = 'hbase',
+      group = 'hadoop',
+      conf_dir = '/etc/hbase/conf',
+      configurations = self.getConfig()['configurations']['core-site'],
+      configuration_attributes = self.getConfig()['configuration_attributes']['core-site']
     )
     self.assertResourceCalled('XmlConfig', 'hdfs-site.xml',
       owner = 'hbase',
@@ -335,6 +342,13 @@ class TestHBaseMaster(RMFTestCase):
       conf_dir = '/etc/hbase/conf',
       configurations = self.getConfig()['configurations']['hbase-site'],
       configuration_attributes = self.getConfig()['configuration_attributes']['hbase-site']
+    )
+    self.assertResourceCalled('XmlConfig', 'core-site.xml',
+      owner = 'hbase',
+      group = 'hadoop',
+      conf_dir = '/etc/hbase/conf',
+      configurations = self.getConfig()['configurations']['core-site'],
+      configuration_attributes = self.getConfig()['configuration_attributes']['core-site']
     )
     self.assertResourceCalled('XmlConfig', 'hdfs-site.xml',
       owner = 'hbase',
@@ -456,7 +470,12 @@ class TestHBaseMaster(RMFTestCase):
       conf_dir = '/etc/hbase/conf',
       configurations = self.getConfig()['configurations']['hbase-site'],
       configuration_attributes = self.getConfig()['configuration_attributes']['hbase-site'])
-
+    self.assertResourceCalled('XmlConfig', 'core-site.xml',
+      owner = 'hbase',
+      group = 'hadoop',
+      conf_dir = '/etc/hbase/conf',
+      configurations = self.getConfig()['configurations']['core-site'],
+      configuration_attributes = self.getConfig()['configuration_attributes']['core-site'])
     self.assertResourceCalled('XmlConfig', 'hdfs-site.xml',
       owner = 'hbase',
       group = 'hadoop',
@@ -627,7 +646,7 @@ class TestHBaseMaster(RMFTestCase):
     self.executeScript(self.COMMON_SERVICES_PACKAGE_DIR + "/scripts/hbase_master.py",
                    classname = "HbaseMaster",
                    command = "security_status",
-                   config_file="secured.json",
+                   config_file="default.json",
                    hdp_stack_version = self.STACK_VERSION,
                    target = RMFTestCase.TARGET_COMMON_SERVICES
     )

@@ -124,6 +124,9 @@ App.ReassignMasterWizardStep4Controller = App.HighAvailabilityProgressPageContro
         configs: {
           'oozie-site': {
             'oozie.base.url': 'http://<replace-value>:11000/oozie'
+          },
+          'core-site': {
+            'hadoop.proxyuser.oozie.hosts': '<replace-value>'
           }
         }
     },
@@ -188,7 +191,23 @@ App.ReassignMasterWizardStep4Controller = App.HighAvailabilityProgressPageContro
           principal: 'yarn.resourcemanager.webapp.spnego-principal'
         }
       ]
+    },
+    {
+      componentName: 'OOZIE_SERVER',
+      configs: [
+        {
+          site: 'oozie-site',
+          keytab: 'oozie.authentication.kerberos.keytab',
+          principal: 'oozie.authentication.kerberos.principal'
+        },
+        {
+          site: 'oozie-site',
+          keytab: 'oozie.service.HadoopAccessorService.keytab.file',
+          principal: 'oozie.service.HadoopAccessorService.kerberos.principal'
+        }
+      ]
     }
+
   ],
 
   /**
@@ -475,6 +494,7 @@ App.ReassignMasterWizardStep4Controller = App.HighAvailabilityProgressPageContro
         break;
       case 'OOZIE_SERVER':
         urlParams.push('(type=oozie-site&tag=' + data.Clusters.desired_configs['oozie-site'].tag + ')');
+        urlParams.push('(type=core-site&tag=' + data.Clusters.desired_configs['core-site'].tag + ')');
         break;
       case 'HIVE_SERVER':
       case 'HIVE_METASTORE':

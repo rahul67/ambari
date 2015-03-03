@@ -26,6 +26,7 @@ import tempfile
 
 from resource_management import *
 from utils import get_property_value
+from ambari_commons.os_utils import remove_file
 
 class KerberosScript(Script):
   KRB5_REALM_PROPERTIES = [
@@ -303,6 +304,8 @@ class KerberosScript(Script):
   @staticmethod
   def test_kinit(identity, user=None):
     principal = get_property_value(identity, 'principal')
+    kinit_path_local = functions.get_kinit_path()
+    kdestroy_path_local = functions.get_kdestroy_path()
 
     if principal is not None:
       keytab_file = get_property_value(identity, 'keytab_file')
@@ -311,11 +314,11 @@ class KerberosScript(Script):
 
       # If a test keytab file is available, simply use it
       if (keytab_file is not None) and (os.path.isfile(keytab_file)):
-        command = 'kinit -k -t %s %s' % (keytab_file, principal)
+        command = '%s -k -t %s %s' % (kinit_path_local, keytab_file, principal)
         Execute(command,
           user = user,
         )
-        return shell.checked_call('kdestroy')
+        return shell.checked_call(kdestroy_path_local)
 
       # If base64-encoded test keytab data is available; then decode it, write it to a temporary file
       # use it, and then remove the temporary file
@@ -325,11 +328,11 @@ class KerberosScript(Script):
         os.close(fd)
 
         try:
-          command = 'kinit -k -t %s %s' % (test_keytab_file, principal)
+          command = '%s -k -t %s %s' % (kinit_path_local, test_keytab_file, principal)
           Execute(command,
             user = user,
           )
-          return shell.checked_call('kdestroy')
+          return shell.checked_call(kdestroy_path_local)
         except:
           raise
         finally:
@@ -338,13 +341,13 @@ class KerberosScript(Script):
 
       # If no keytab data is available and a password was supplied, simply use it.
       elif password is not None:
-        process = subprocess.Popen(['kinit', principal], stdin=subprocess.PIPE)
+        process = subprocess.Popen([kinit_path_local, principal], stdin=subprocess.PIPE)
         stdout, stderr = process.communicate(password)
         if process.returncode:
           err_msg = Logger.filter_text("Execution of kinit returned %d. %s" % (process.returncode, stderr))
           raise Fail(err_msg)
         else:
-          return shell.checked_call('kdestroy')
+          return shell.checked_call(kdestroy_path_local)
       else:
         return 0, ''
     else:
@@ -403,3 +406,25 @@ class KerberosScript(Script):
               curr_content['keytabs'][principal.replace("_HOST", params.hostname)] = keytab_file_path
 
               self.put_structured_out(curr_content)
+
+  def delete_keytab_file(self):
+    import params
+
+    if params.kerberos_command_params is not None:
+      for item in params.kerberos_command_params:
+        keytab_file_path = get_property_value(item, 'keytab_file_path')
+        if (keytab_file_path is not None) and (len(keytab_file_path) > 0):
+
+          # Delete the keytab file
+          File(keytab_file_path, action="delete")
+
+          principal = get_property_value(item, 'principal')
+          if principal is not None:
+            curr_content = Script.structuredOut
+
+            if "keytabs" not in curr_content:
+              curr_content['keytabs'] = {}
+
+            curr_content['keytabs'][principal.replace("_HOST", params.hostname)] = '_REMOVED_'
+
+            self.put_structured_out(curr_content)

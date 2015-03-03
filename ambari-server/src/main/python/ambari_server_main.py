@@ -160,7 +160,8 @@ def generate_child_process_param_list(ambari_user, current_user, java_exe, class
       jvm_args,
       conf_dir,
       suspend_mode)
-  return command
+  environ = os.environ.copy()
+  return (command, environ)
 
 @OsFamilyFuncImpl(OsFamilyImpl.DEFAULT)
 def generate_child_process_param_list(ambari_user, current_user, java_exe, class_path, debug_start, suspend_mode):
@@ -239,7 +240,7 @@ def generate_child_process_param_list(ambari_user, current_user, java_exe, class
     cmd = "{ulimit_cmd} ; {command}".format(ulimit_cmd=ulimit_cmd, command=command)
     
   param_list.append(cmd)
-  return param_list
+  return (param_list, environ)
 
 @OsFamilyFuncImpl(OSConst.WINSRV_FAMILY)
 def wait_for_server_start(pidFile, scmStatus):
@@ -267,7 +268,8 @@ def wait_for_server_start(pidFile, scmStatus):
     raise FatalException(-1, AMBARI_SERVER_DIE_MSG.format(exitcode, configDefaults.SERVER_OUT_FILE))
   else:
     save_main_pid_ex(pids, pidFile, [locate_file('sh', '/bin'),
-                                     locate_file('bash', '/bin')], True)
+                                     locate_file('bash', '/bin'),
+                                     locate_file('dash', '/bin')], True)
 
 
 def server_process_main(options, scmStatus=None):
@@ -330,13 +332,12 @@ def server_process_main(options, scmStatus=None):
   suspend_start = (debug_mode & 2) or SUSPEND_START_MODE
   suspend_mode = 'y' if suspend_start else 'n'
 
-  param_list = generate_child_process_param_list(ambari_user, current_user,
+  (param_list, environ) = generate_child_process_param_list(ambari_user, current_user,
                                                  java_exe, class_path, debug_start, suspend_mode)
 
   if not os.path.exists(configDefaults.PID_DIR):
     os.makedirs(configDefaults.PID_DIR, 0755)
 
-  environ = os.environ.copy()
   print_info_msg("Running server: " + str(param_list))
   procJava = subprocess.Popen(param_list, env=environ)
 

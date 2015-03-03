@@ -28,15 +28,17 @@
           {{#if view.isAlertEmptyList}}
             <div class="alert-list-wrap">{{t alerts.fastAccess.popup.body.noalerts}}</div>
           {{else}}
-            {{#each alertInstance in view.contents}}
+            {{#each alertInstance in view.pageContent}}
               <div class="alert-list-wrap">
                 <div class="alert-list-line-cursor">
                   <div class="service-text"><a href="#" {{action "gotoService" alertInstance.service target="view"}}>{{alertInstance.service.displayName}}</a>
-                    {{#if alertInstance.host.hostName}}
+                    {{#if alertInstance.hostName}}
                       {{#if alertInstance.service.displayName}}
                         &nbsp;/&nbsp;
                       {{/if}}
-                      <a {{action "goToHostAlerts" alertInstance.host target="view"}} href="#">{{alertInstance.host.hostName}}</a>
+                      <a {{action "goToHostAlerts" alertInstance.host target="view"}} href="#">
+                        {{alertInstance.hostName}}
+                      </a>
                     {{/if}}
                   </div>
                   <div class="name-text">
@@ -59,6 +61,20 @@
         {{/if}}
       </div>
     </div>
+    {{#if view.isPaginate}}
+      <div class="page-bar pull-right no-borders mtm">
+        <div class="items-on-page">
+          <label>{{t common.show}}: {{view view.rowsPerPageSelectView selectionBinding="view.displayLength"}}</label>
+        </div>
+        <div class="info">{{view.paginationInfo}}</div>
+        <div class="paging_two_button">
+          {{view view.paginationFirst}}
+          {{view view.paginationLeft}}
+          {{view view.paginationRight}}
+          {{view view.paginationLast}}
+        </div>
+      </div>
+    {{/if}}
   {{else}}
     <div class="spinner"></div>
   {{/if}}

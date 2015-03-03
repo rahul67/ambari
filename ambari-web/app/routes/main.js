@@ -48,7 +48,13 @@ module.exports = Em.Route.extend(App.RouterRedirections, {
                     var currentClusterStatus = App.clusterStatus.get('value');
                     if (currentClusterStatus) {
                       if (self.get('installerStatuses').contains(currentClusterStatus.clusterState)) {
-                        self.redirectToInstaller(router, currentClusterStatus, false);
+                        if (App.isAccessible('ADMIN')) {
+                          self.redirectToInstaller(router, currentClusterStatus, false);
+                        } else {
+                          Em.run.next(function () {
+                            App.router.transitionTo('main.views.index');
+                          });
+                        }
                       }
                     }
                   });
@@ -234,7 +240,12 @@ module.exports = Em.Route.extend(App.RouterRedirections, {
       stackVersions: Em.Route.extend({
         route: '/stackVersions',
         connectOutlets: function (router, context) {
-          router.get('mainHostDetailsController').connectOutlet('mainHostStackVersions');
+          if (App.get('stackVersionsAvailable')) {
+            router.get('mainHostDetailsController').connectOutlet('mainHostStackVersions');
+          }
+          else {
+            router.transitionTo('summary');
+          }
         }
       }),
 
@@ -556,15 +567,16 @@ module.exports = Em.Route.extend(App.RouterRedirections, {
         Em.run.next(function () {
           var controller = router.get('mainController');
           controller.dataLoading().done(function () {
-            var service = router.get('mainServiceItemController.content');
-            if (!service || !service.get('isLoaded')) {
-              service = App.Service.find().objectAt(0); // getting the first service to display
-            }
-            if (router.get('mainServiceItemController').get('routeToConfigs')) {
-              router.transitionTo('service.configs', service);
-            }
-            else {
-              router.transitionTo('service.summary', service);
+            if (router.currentState.parentState.name === 'services' && router.currentState.name === 'index') {
+              var service = router.get('mainServiceItemController.content');
+              if (!service || !service.get('isLoaded')) {
+                service = App.Service.find().objectAt(0); // getting the first service to display
+              }
+              if (router.get('mainServiceItemController').get('routeToConfigs')) {
+                router.transitionTo('service.configs', service);
+              } else {
+                router.transitionTo('service.summary', service);
+              }
             }
           });
         });

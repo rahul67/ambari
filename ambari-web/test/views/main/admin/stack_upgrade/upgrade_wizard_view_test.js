@@ -139,7 +139,13 @@ describe('App.upgradeWizardView', function () {
 
   describe("#doPolling()", function () {
     beforeEach(function () {
-      sinon.stub(view.get('controller'), 'loadUpgradeData', Em.K);
+      sinon.stub(view.get('controller'), 'loadUpgradeData', function () {
+        return {
+          done: function (callback) {
+            callback();
+          }
+        }
+      });
       sinon.spy(view, 'doPolling');
       this.clock = sinon.useFakeTimers();
     });
@@ -210,11 +216,18 @@ describe('App.upgradeWizardView', function () {
   });
 
   describe("#isManualProceedDisabled", function () {
-    it("", function () {
+    it("requestInProgress is false", function () {
       view.set('isManualDone', true);
+      view.set('controller.requestInProgress', false);
       view.propertyDidChange('isManualProceedDisabled');
       expect(view.get('isManualProceedDisabled')).to.be.false;
     });
+    it("requestInProgress is true", function () {
+      view.set('controller.requestInProgress', true);
+      view.propertyDidChange('isManualProceedDisabled');
+      expect(view.get('isManualProceedDisabled')).to.be.true;
+    });
+
   });
 
   describe("#failedItem", function () {

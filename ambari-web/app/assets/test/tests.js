@@ -94,6 +94,7 @@ var files = ['test/init_model_test',
   'test/controllers/main/service/reassign/step2_controller_test',
   'test/controllers/main/service/reassign/step4_controller_test',
   'test/controllers/main/service/reassign/step6_controller_test',
+  'test/controllers/main/service/reassign/step7_controller_test',
   'test/controllers/main/dashboard_test',
   'test/controllers/main/host_test',
   'test/controllers/main/service/item_test',
@@ -178,6 +179,7 @@ var files = ['test/init_model_test',
   'test/views/main/admin/stack_upgrade/upgrade_wizard_view_test',
   'test/views/main/admin/stack_upgrade/version_view_test',
   'test/views/main/admin/stack_upgrade/services_view_test',
+  'test/views/main/admin/stack_upgrade/menu_view_test',
   'test/views/main/dashboard/config_history_view_test',
   'test/views/main/dashboard/widget_test',
   'test/views/main/dashboard/widgets_test',
@@ -196,6 +198,7 @@ var files = ['test/init_model_test',
   'test/views/main/dashboard/widgets/namenode_cpu_test',
   'test/views/main/host/details_test',
   'test/views/main/host/summary_test',
+  'test/views/main/host/menu_test',
   'test/views/main/host/stack_versions_view_test',
   'test/views/main/host/details/host_component_view_test',
   'test/views/main/host/details/host_component_views/decommissionable_test',
@@ -207,6 +210,7 @@ var files = ['test/init_model_test',
   'test/views/main/service/item_test',
   'test/views/main/service/info/config_test',
   'test/views/main/service/info/summary_test',
+  'test/views/main/service/info/metrics/ambari_metrics/regionserver_base_test',
   'test/views/main/service/services/ranger_test',
   'test/views/main/admin/highAvailability/nameNode/step1_view_test',
   'test/views/main/admin/highAvailability/nameNode/step3_view_test',
@@ -262,8 +266,8 @@ var files = ['test/init_model_test',
   'test/routes/views_test',
   //contains test with fake timers that affect Date
   'test/utils/lazy_loading_test'
-
 ];
+
 App.initialize();
 describe('Ambari Web Unit tests', function() {
 

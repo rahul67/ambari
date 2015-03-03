@@ -1409,62 +1409,6 @@ describe('App.WizardStep3Controller', function () {
           ])
         },
         {
-          m: 'parse installedPackages',
-          tests: Em.A([
-            {
-              items: [
-                {Hosts: {host_name: 'c1', last_agent_env: {installedPackages: []}}}
-              ],
-              m: 'empty installedPackages',
-              e: {
-                warnings: [],
-                warningsByHost: [0]
-              }
-            },
-            {
-              items: [
-                {Hosts: {host_name: 'c1', last_agent_env: {installedPackages: [
-                  {name: 'n1'}
-                ]}}}
-              ],
-              m: 'not empty installedPackages',
-              e: {
-                warnings: [
-                  {
-                    name: 'n1',
-                    hosts: ['c1'],
-                    onSingleHost: true,
-                    category: 'packages'
-                  }
-                ],
-                warningsByHost: [1]
-              }
-            },
-            {
-              items: [
-                {Hosts: {host_name: 'c1', last_agent_env: {installedPackages: [
-                  {name: 'n1'}
-                ]}}},
-                {Hosts: {host_name: 'c2', last_agent_env: {installedPackages: [
-                  {name: 'n1'}
-                ]}}}
-              ],
-              m: 'not empty installedPackages on two hosts',
-              e: {
-                warnings: [
-                  {
-                    name: 'n1',
-                    hosts: ['c1', 'c2'],
-                    onSingleHost: false,
-                    category: 'packages'
-                  }
-                ],
-                warningsByHost: [1]
-              }
-            }
-          ])
-        },
-        {
           m: 'parse hostHealth.liveServices',
           tests: Em.A([
             {
@@ -2523,13 +2467,124 @@ describe('App.WizardStep3Controller', function () {
       Requests: {
         request_status: "COMPLETED",
         inputs: "last_agent_env_check"
-      }
+      },
+      tasks: [
+        {
+          Tasks: {
+            host_name: 'h1',
+            structured_out: {
+              "installed_packages": [
+                {
+                  "version": "b1",
+                  "name": "n1",
+                  "repoName": "r1"
+                },
+                {
+                  "version": "b2",
+                  "name": "n2",
+                  "repoName": "r2"
+                }
+              ]
+            }
+          }
+        }
+      ]
     };
     it('run getHostInfo', function() {
       c.getHostCheckTasksSuccess(lastAgentEnvCheckComplete);
       expect(c.get('stopChecking')).to.be.true;
       expect(c.getHostInfo.calledOnce).to.be.true;
+      expect(c.get('hostsPackagesData')).eql([
+        {
+          hostName: 'h1',
+          installedPackages: [
+            {
+              "version": "b1",
+              "name": "n1",
+              "repoName": "r1"
+            },
+            {
+              "version": "b2",
+              "name": "n2",
+              "repoName": "r2"
+            }
+          ]
+        }
+      ]);
     });
 
+  });
+
+  describe('#getDataForCheckRequest', function() {
+    var tests = [
+      {
+        bootHosts: [
+          Em.Object.create({'bootStatus': 'REGISTERED', 'name': 'h1'}),
+          Em.Object.create({'bootStatus': 'FAILED', 'name': 'h2'})
+        ],
+        addHosts: true,
+        rez: {
+          RequestInfo: {
+            "action": "check_host",
+            "context": "Check host",
+            "parameters": {
+              "check_execute_list": 'checkExecuteList',
+              "jdk_location" : "jdk_location",
+              "threshold": "20",
+              "hosts": "h1"
+            }
+          },
+          resource_filters: {
+              "hosts": "h1"
+          }
+        },
+        m: 'with add host param'
+      },
+      {
+        bootHosts: [
+          Em.Object.create({'bootStatus': 'REGISTERED', 'name': 'h1'}),
+          Em.Object.create({'bootStatus': 'FAILED', 'name': 'h2'})
+        ],
+        addHosts: false,
+        rez: {
+          RequestInfo: {
+            "action": "check_host",
+            "context": "Check host",
+            "parameters": {
+              "check_execute_list": 'checkExecuteList',
+              "jdk_location" : "jdk_location",
+              "threshold": "20"
+            }
+          },
+          resource_filters: {
+            "hosts": "h1"
+          }
+        },
+        m: 'without add host param'
+      },
+      {
+        bootHosts: [
+          Em.Object.create({'bootStatus': 'FAILED', 'name': 'h1'}),
+          Em.Object.create({'bootStatus': 'FAILED', 'name': 'h2'})
+        ],
+        rez: null,
+        m: 'with all hosts failed'
+      }
+    ];
+
+    beforeEach(function() {
+      sinon.stub(App.get('router'), 'get' , function(p) {
+        return p === 'clusterController.ambariProperties.jdk_location' ? 'jdk_location' : Em.get(App.get('router'), p);
+      })
+    });
+    afterEach(function() {
+      App.get('router').get.restore();
+    });
+    tests.forEach(function(t) {
+      it(t.m, function() {
+        c.set('bootHosts', t.bootHosts);
+        expect(c.getDataForCheckRequest('checkExecuteList', t.addHosts)).to.be.eql(t.rez);
+      });
+    })
   });
 });

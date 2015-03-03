@@ -299,15 +299,11 @@ describe('App.MainAdminStackAndUpgradeController', function() {
         value: '2.2',
         label: 'HDP-2.2'
       });
-      expect(App.ajax.send.getCall(0).args[0]).to.eql({
-        name: 'admin.upgrade.start',
-        sender: controller,
-        data: {
-          value: '2.2',
-          label: 'HDP-2.2'
-        },
-        success: 'upgradeSuccessCallback'
-      });
+      expect(App.ajax.send.getCall(0).args[0].data).to.eql({"value": '2.2', "label": 'HDP-2.2'});
+      expect(App.ajax.send.getCall(0).args[0].name).to.eql('admin.upgrade.start');
+      expect(App.ajax.send.getCall(0).args[0].sender).to.eql(controller);
+      expect(App.ajax.send.getCall(0).args[0].success).to.eql('upgradeSuccessCallback');
+      expect(App.ajax.send.getCall(0).args[0].callback).to.be.called;
       expect(controller.setDBProperty.calledWith('currentVersion', {
         repository_version: '2.2'
       })).to.be.true;
@@ -369,12 +365,7 @@ describe('App.MainAdminStackAndUpgradeController', function() {
             group_id: 1,
             upgradeItems: [
               Em.Object.create({
-                stage_id: 1,
-                tasks: [
-                  Em.Object.create({
-                    id: 1
-                  })
-                ]
+                stage_id: 1
               })
             ]
           })
@@ -397,15 +388,7 @@ describe('App.MainAdminStackAndUpgradeController', function() {
                   stage_id: 1,
                   status: 'COMPLETED',
                   progress_percent: 100
-                },
-                tasks: [
-                  {
-                    Tasks: {
-                      id: 1,
-                      status: 'COMPLETED'
-                    }
-                  }
-                ]
+                }
               }
             ]
           }
@@ -417,7 +400,6 @@ describe('App.MainAdminStackAndUpgradeController', function() {
       expect(controller.get('upgradeData.upgradeGroups')[0].get('progress_percent')).to.equal(100);
       expect(controller.get('upgradeData.upgradeGroups')[0].get('upgradeItems')[0].get('status')).to.equal('COMPLETED');
       expect(controller.get('upgradeData.upgradeGroups')[0].get('upgradeItems')[0].get('progress_percent')).to.equal(100);
-      expect(controller.get('upgradeData.upgradeGroups')[0].get('upgradeItems')[0].get('tasks')[0].get('status')).to.equal('COMPLETED');
     });
   });
 
@@ -436,26 +418,12 @@ describe('App.MainAdminStackAndUpgradeController', function() {
               {
                 UpgradeItem: {
                   stage_id: 1
-                },
-                tasks: [
-                  {
-                    Tasks: {
-                      id: 1
-                    }
-                  }
-                ]
+                }
               },
               {
                 UpgradeItem: {
                   stage_id: 2
-                },
-                tasks: [
-                  {
-                    Tasks: {
-                      id: 2
-                    }
-                  }
-                ]
+                }
               }
             ]
           },
@@ -463,9 +431,7 @@ describe('App.MainAdminStackAndUpgradeController', function() {
             UpgradeGroup: {
               group_id: 2
             },
-            upgrade_items: [
-
-            ]
+            upgrade_items: []
           }
         ]
       };
@@ -475,7 +441,6 @@ describe('App.MainAdminStackAndUpgradeController', function() {
       expect(controller.get('upgradeData.upgradeGroups')[1].get('group_id')).to.equal(1);
       expect(controller.get('upgradeData.upgradeGroups')[1].get('upgradeItems')[0].get('stage_id')).to.equal(2);
       expect(controller.get('upgradeData.upgradeGroups')[1].get('upgradeItems')[1].get('stage_id')).to.equal(1);
-      expect(controller.get('upgradeData.upgradeGroups')[1].get('upgradeItems')[0].get('tasks')[0].get('id')).to.equal(2);
     });
   });
 
@@ -562,16 +527,11 @@ describe('App.MainAdminStackAndUpgradeController', function() {
         repository_name: 'HDP-2.2'
       }), {context: 'context'});
       expect(controller.abortUpgrade.calledOnce).to.be.true;
-      expect(App.ajax.send.getCall(0).args[0]).to.eql({
-        name: 'admin.downgrade.start',
-        sender: controller,
-        data: {
-          value: '2.2',
-          label: 'HDP-2.2',
-          isDowngrade: true
-        },
-        success: 'upgradeSuccessCallback'
-      });
+      expect(App.ajax.send.getCall(0).args[0].data).to.eql({"value": '2.2', "label": 'HDP-2.2', isDowngrade: true});
+      expect(App.ajax.send.getCall(0).args[0].name).to.eql('admin.downgrade.start');
+      expect(App.ajax.send.getCall(0).args[0].sender).to.eql(controller);
+      expect(App.ajax.send.getCall(0).args[0].success).to.eql('upgradeSuccessCallback');
+      expect(App.ajax.send.getCall(0).args[0].callback).to.be.called;
     });
   });
 
@@ -651,16 +611,10 @@ describe('App.MainAdminStackAndUpgradeController', function() {
         group_id: 1
       });
       controller.setUpgradeItemStatus(item, 'PENDING');
-      expect(App.ajax.send.getCall(0).args[0]).to.eql({
-        name: 'admin.upgrade.upgradeItem.setState',
-        sender: controller,
-        data: {
-          upgradeId: 1,
-          itemId: 1,
-          groupId: 1,
-          status: 'PENDING'
-        }
-      });
+      expect(App.ajax.send.getCall(0).args[0].data).to.eql({upgradeId: 1, itemId: 1, groupId: 1, status: 'PENDING'});
+      expect(App.ajax.send.getCall(0).args[0].name).to.eql('admin.upgrade.upgradeItem.setState');
+      expect(App.ajax.send.getCall(0).args[0].sender).to.eql(controller);
+      expect(App.ajax.send.getCall(0).args[0].callback).to.be.called;
       expect(item.get('status')).to.equal('PENDING');
     });
   });

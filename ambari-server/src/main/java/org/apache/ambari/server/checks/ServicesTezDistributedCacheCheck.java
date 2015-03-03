@@ -17,6 +17,10 @@
  */
 package org.apache.ambari.server.checks;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.ambari.server.AmbariException;
 import org.apache.ambari.server.ServiceNotFoundException;
 import org.apache.ambari.server.controller.PrereqCheckRequest;
@@ -25,14 +29,18 @@ import org.apache.ambari.server.state.Config;
 import org.apache.ambari.server.state.DesiredConfig;
 import org.apache.ambari.server.state.stack.PrereqCheckStatus;
 import org.apache.ambari.server.state.stack.PrerequisiteCheck;
-import org.apache.ambari.server.state.stack.PrereqCheckType;
-
-import java.util.Map;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Checks that Tez jobs reference hadoop libraries from the distributed cache.
  */
 public class ServicesTezDistributedCacheCheck extends AbstractCheckDescriptor {
+
+  static final String KEY_LIB_URI_MISSING = "tez_lib_uri_missing";
+  static final String KEY_USE_HADOOP_LIBS = "tez_use_hadoop_libs";
+  static final String KEY_LIB_NOT_DFS = "lib_not_dfs";
+  static final String KEY_LIB_NOT_TARGZ = "lib_not_targz";
+  static final String KEY_USE_HADOOP_LIBS_FALSE = "tez_use_hadoop_libs_false";
 
   @Override
   public boolean isApplicable(PrereqCheckRequest request)
@@ -43,6 +51,12 @@ public class ServicesTezDistributedCacheCheck extends AbstractCheckDescriptor {
     } catch (ServiceNotFoundException ex) {
       return false;
     }
+
+    PrereqCheckStatus ha = request.getResult(CheckDescription.SERVICES_NAMENODE_HA);
+    if (null != ha && ha == PrereqCheckStatus.FAIL) {
+      return false;
+    }
+
     return true;
   }
 
@@ -50,36 +64,57 @@ public class ServicesTezDistributedCacheCheck extends AbstractCheckDescriptor {
    * Constructor.
    */
   public ServicesTezDistributedCacheCheck() {
-    super("SERVICES_TEZ_DISTRIBUTED_CACHE", PrereqCheckType.SERVICE, "TEZ should reference hadoop libraries from the distributed cache");
+    super(CheckDescription.SERVICES_TEZ_DISTRIBUTED_CACHE);
   }
 
   @Override
   public void perform(PrerequisiteCheck prerequisiteCheck, PrereqCheckRequest request) throws AmbariException {
     final String clusterName = request.getClusterName();
     final Cluster cluster = clustersProvider.get().getCluster(clusterName);
-    final String configType = "tez-site";
+    final String tezConfigType = "tez-site";
+    final String coreSiteConfigType = "core-site";
     final Map<String, DesiredConfig> desiredConfigs = cluster.getDesiredConfigs();
-    final DesiredConfig desiredConfig = desiredConfigs.get(configType);
-    final Config config = cluster.getConfig(configType, desiredConfig.getTag());
-    final String libUris = config.getProperties().get("tez.lib.uris");
-    final String useHadoopLibs = config.getProperties().get("tez.use.cluster.hadoop-libs");
-    if (libUris == null || useHadoopLibs == null) {
+
+    final DesiredConfig tezDesiredConfig = desiredConfigs.get(tezConfigType);
+    final Config tezConfig = cluster.getConfig(tezConfigType, tezDesiredConfig.getTag());
+    final DesiredConfig coreSiteDesiredConfig = desiredConfigs.get(coreSiteConfigType);
+    final Config coreSiteConfig = cluster.getConfig(coreSiteConfigType, coreSiteDesiredConfig.getTag());
+    final String libUris = tezConfig.getProperties().get("tez.lib.uris");
+    final String useHadoopLibs = tezConfig.getProperties().get("tez.use.cluster.hadoop-libs");
+    final String defaultFS = coreSiteConfig.getProperties().get("fs.defaultFS");
+
+    List<String> errorMessages = new ArrayList<String>();
+    if (libUris == null || libUris.isEmpty()) {
+      errorMessages.add(getFailReason(KEY_LIB_URI_MISSING, prerequisiteCheck, request));
+    }
+
+    if (useHadoopLibs == null || useHadoopLibs.isEmpty()) {
+      errorMessages.add(getFailReason(KEY_USE_HADOOP_LIBS, prerequisiteCheck, request));
+    }
+
+    if (!errorMessages.isEmpty()) {
       prerequisiteCheck.getFailedOn().add("TEZ");
       prerequisiteCheck.setStatus(PrereqCheckStatus.FAIL);
-      prerequisiteCheck.setFailReason("tez-site should have properties tez.lib.uris and tez.use.cluster.hadoop-libs");
+      prerequisiteCheck.setFailReason(StringUtils.join(errorMessages, " "));
       return;
     }
-    if (!libUris.startsWith("hdfs:/") || !libUris.contains("tar.gz")) {
-      prerequisiteCheck.getFailedOn().add("TEZ");
-      prerequisiteCheck.setStatus(PrereqCheckStatus.FAIL);
-      prerequisiteCheck.setFailReason("tez-site property tez.lib.uris should point to hdfs:/... url with .tar.gz archive of TEZ binaries");
-      return;
+
+    if (!libUris.matches("^[^:]*dfs:.*") && (defaultFS == null || !defaultFS.matches("^[^:]*dfs:.*"))) {
+      errorMessages.add(getFailReason(KEY_LIB_NOT_DFS, prerequisiteCheck, request));
     }
+
+    if (!libUris.contains("tar.gz")) {
+      errorMessages.add(getFailReason(KEY_LIB_NOT_TARGZ, prerequisiteCheck, request));
+    }
+
     if (Boolean.parseBoolean(useHadoopLibs)) {
+      errorMessages.add(getFailReason(KEY_USE_HADOOP_LIBS_FALSE, prerequisiteCheck, request));
+    }
+
+    if (!errorMessages.isEmpty()) {
       prerequisiteCheck.getFailedOn().add("TEZ");
       prerequisiteCheck.setStatus(PrereqCheckStatus.FAIL);
-      prerequisiteCheck.setFailReason("tez-site property tez.use.cluster.hadoop-libs should be set to false");
-      return;
+      prerequisiteCheck.setFailReason(StringUtils.join(errorMessages, " "));
     }
   }
 }

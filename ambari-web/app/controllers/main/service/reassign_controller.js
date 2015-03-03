@@ -288,9 +288,11 @@ App.ReassignMasterController = App.WizardController.extend({
     var databaseType = this.getDBProperty('databaseType');
     this.set('content.databaseType', databaseType);
 
-    if (this.get('content.hasCheckDBStep') && databaseType !== 'derby') {
+    if (this.get('content.hasCheckDBStep') && databaseType && databaseType !== 'derby') {
+      // components with manual commands
+      var manual = App.router.reassignMasterController.get('content.componentsWithManualCommands').without('OOZIE_SERVER');
       App.router.reassignMasterController.set('content.hasManualSteps', false);
-      App.router.reassignMasterController.get('content.componentsWithManualCommands').splice(2,1);
+      App.router.reassignMasterController.set('content.componentsWithManualCommands', manual);
     }
   },
 
@@ -331,6 +333,15 @@ App.ReassignMasterController = App.WizardController.extend({
     this.clearInstallOptions();
     // clear temporary information stored during the install
     this.set('content.cluster', this.getCluster());
+  },
+
+  setCurrentStep: function (currentStep, completed) {
+    this._super(currentStep, completed);
+    App.clusterStatus.setClusterStatus({
+      clusterName: this.get('content.cluster.name'),
+      wizardControllerName: 'reassignMasterController',
+      localdb: App.db.data
+    });
   },
 
   /**

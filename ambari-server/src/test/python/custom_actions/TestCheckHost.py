@@ -40,7 +40,7 @@ else:
 
 
 class TestCheckHost(TestCase):
-
+  @patch.object(OSCheck, "os_distribution", new = MagicMock(return_value = os_distro_value))
   @patch("os.path.isfile")
   @patch.object(Script, 'get_config')
   @patch.object(Script, 'get_tmp_dir')
@@ -55,7 +55,8 @@ class TestCheckHost(TestCase):
     checkHost = CheckHost()
     checkHost.actionexecute(None)
 
-    self.assertEquals(os_isfile_mock.call_args[0][0], 'test_java_home/bin/java')
+    print os_isfile_mock.call_args
+    self.assertEquals(os_isfile_mock.call_args[0][0], '/tmp/ambari-agent/hostcheck_custom_actions.result')
     self.assertEquals(structured_out_mock.call_args[0][0], {'java_home_check': {'message': 'Java home exists!',
                                                                                 'exit_code': 0}})
     # test, java home doesn't exist
@@ -64,11 +65,11 @@ class TestCheckHost(TestCase):
 
     checkHost.actionexecute(None)
 
-    self.assertEquals(os_isfile_mock.call_args[0][0], 'test_java_home/bin/java')
+    self.assertEquals(os_isfile_mock.call_args[0][0], '/tmp/ambari-agent/hostcheck_custom_actions.result')
     self.assertEquals(structured_out_mock.call_args[0][0], {'java_home_check': {"message": "Java home doesn't exist!",
                                                                                 "exit_code" : 1}})
 
-
+  @patch.object(OSCheck, "os_distribution", new = MagicMock(return_value = os_distro_value))
   @patch.object(Script, 'get_config')
   @patch.object(Script, 'get_tmp_dir')
   @patch("check_host.download_file")
@@ -178,7 +179,7 @@ class TestCheckHost(TestCase):
             'available on host. Please install it. Java home should be the same as on server. \n', 'exit_code': 1}})
 
 
-
+  @patch.object(OSCheck, "os_distribution", new = MagicMock(return_value = os_distro_value))
   @patch("socket.gethostbyname")
   @patch.object(Script, 'get_config')
   @patch.object(Script, 'get_tmp_dir')
@@ -218,7 +219,8 @@ class TestCheckHost(TestCase):
                     {'cause': (), 'host': u'!!!', 'type': 'FORWARD_LOOKUP'}], 
        'message': 'There were 5 host(s) that could not resolve to an IP address.', 
        'failed_count': 5, 'success_count': 0, 'exit_code': 0}})
-    
+
+  @patch.object(OSCheck, "os_distribution", new = MagicMock(return_value = os_distro_value))
   @patch.object(Script, 'get_config')
   @patch.object(Script, 'get_tmp_dir')
   @patch("resource_management.libraries.script.Script.put_structured_out")
@@ -282,8 +284,6 @@ class TestCheckHost(TestCase):
     self.assertTrue('alternatives' in last_agent_env_check_result['last_agent_env_check'])
     self.assertTrue('umask' in last_agent_env_check_result['last_agent_env_check'])
     self.assertTrue('stackFoldersAndFiles' in last_agent_env_check_result['last_agent_env_check'])
-    self.assertTrue('existingRepos' in last_agent_env_check_result['last_agent_env_check'])
-    self.assertTrue('installedPackages' in last_agent_env_check_result['last_agent_env_check'])
     self.assertTrue('existingUsers' in last_agent_env_check_result['last_agent_env_check'])
 
     # try it now with errors

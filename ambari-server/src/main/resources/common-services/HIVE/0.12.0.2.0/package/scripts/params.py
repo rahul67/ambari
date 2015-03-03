@@ -18,6 +18,7 @@ limitations under the License.
 
 """
 
+from ambari_commons.constants import AMBARI_SUDO_BINARY
 from resource_management.libraries.functions.version import format_hdp_stack_version, compare_versions
 from resource_management.libraries.functions.default import default
 from resource_management import *
@@ -27,6 +28,7 @@ import os
 # server configurations
 config = Script.get_config()
 tmp_dir = Script.get_tmp_dir()
+sudo = AMBARI_SUDO_BINARY
 
 stack_name = default("/hostLevelParams/stack_name", None)
 
@@ -159,7 +161,7 @@ smokeuser_principal = config['configurations']['cluster-env']['smokeuser_princip
 fs_root = config['configurations']['core-site']['fs.defaultFS']
 security_enabled = config['configurations']['cluster-env']['security_enabled']
 
-kinit_path_local = functions.get_kinit_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"])
+kinit_path_local = functions.get_kinit_path()
 hive_metastore_keytab_path =  config['configurations']['hive-site']['hive.metastore.kerberos.keytab.file']
 
 hive_server2_keytab = config['configurations']['hive-site']['hive.server2.authentication.kerberos.keytab']
@@ -292,10 +294,10 @@ hive_exclude_packages = []
 # There are other packages that contain /usr/share/java/mysql-connector-java.jar (like libmysql-java),
 # trying to install mysql-connector-java upon them can cause packages to conflict.
 if hive_use_existing_db:
-  hive_exclude_packages = ['mysql-connector-java','mysql','mysql-server']
+  hive_exclude_packages = ['mysql-connector-java', 'mysql', 'mysql-server']
 else:
   if 'role' in config and config['role'] != "MYSQL_SERVER":
-    hive_exclude_packages = ['mysql','mysql-server']
+    hive_exclude_packages = ['mysql', 'mysql-server']
   if os.path.exists(mysql_jdbc_driver_jar):
     hive_exclude_packages.append('mysql-connector-java')
 

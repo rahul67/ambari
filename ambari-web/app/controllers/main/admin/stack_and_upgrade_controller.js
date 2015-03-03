@@ -65,6 +65,10 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
   targetVersions: [],
 
   /**
+   * @type {boolean} true if some request that should disable actions is in progress
+   */
+  requestInProgress: false,
+  /**
    * properties that stored to localStorage to resume wizard progress
    */
   wizardStorageProperties: ['upgradeId', 'upgradeVersion', 'currentVersion', 'isDowngrade'],
@@ -135,6 +139,7 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
     this.loadUpgradeData(true).done(function() {
       self.loadStackVersionsToModel(true).done(function () {
         self.loadRepoVersionsToModel().done(function() {
+          self.set('requestInProgress', false);
           var currentVersion = App.StackVersion.find().findProperty('state', 'CURRENT');
           if (currentVersion) {
             self.set('currentVersion', {
@@ -204,9 +209,6 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
         groupsMap[newGroup.UpgradeGroup.group_id] = newGroup.UpgradeGroup;
         newGroup.upgrade_items.forEach(function (item) {
           itemsMap[item.UpgradeItem.stage_id] = item.UpgradeItem;
-          item.tasks.forEach(function (task) {
-            tasksMap[task.Tasks.id] = task.Tasks;
-          });
         })
       });
 
@@ -217,9 +219,6 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
         oldGroup.upgradeItems.forEach(function (item) {
           item.set('status', itemsMap[item.get('stage_id')].status);
           item.set('progress_percent', itemsMap[item.get('stage_id')].progress_percent);
-          item.tasks.forEach(function (task) {
-            task.set('status', tasksMap[task.get('id')].status);
-          });
         })
       });
       oldData.set('Upgrade', newData.Upgrade);
@@ -242,9 +241,6 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
       newGroup.upgrade_items.forEach(function (item) {
         var oldItem = App.upgradeEntity.create({type: 'ITEM'}, item.UpgradeItem);
         var tasks = [];
-        item.tasks.forEach(function (task) {
-          tasks.pushObject(App.upgradeEntity.create({type: 'TASK'}, task.Tasks));
-        });
         oldItem.set('tasks', tasks);
         upgradeItems.pushObject(oldItem);
       });
@@ -283,6 +279,7 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
    * @param {object} event
    */
   downgrade: function (currentVersion, event) {
+    this.set('requestInProgress', true);
     this.abortUpgrade();
     App.ajax.send({
       name: 'admin.downgrade.start',
@@ -292,7 +289,10 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
         label: currentVersion.repository_name,
         isDowngrade: true
       },
-      success: 'upgradeSuccessCallback'
+      success: 'upgradeSuccessCallback',
+      callback: function() {
+        this.sender.set('requestInProgress', false);
+      }
     });
   },
 
@@ -314,11 +314,15 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
    * @param {object} version
    */
   upgrade: function (version) {
+    this.set('requestInProgress', true);
     App.ajax.send({
       name: 'admin.upgrade.start',
       sender: this,
       data: version,
-      success: 'upgradeSuccessCallback'
+      success: 'upgradeSuccessCallback',
+      callback: function() {
+        this.sender.set('requestInProgress', false);
+      }
     });
     this.setDBProperty('currentVersion', this.get('currentVersion'));
   },
@@ -424,6 +428,7 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
    * @method installRepoVersion
    */
   installRepoVersion: function (repo) {
+    this.set('requestInProgress', true);
     var data = {
       ClusterStackVersions: {
         stack: repo.get('stackVersionType'),
@@ -436,7 +441,10 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
       name: 'admin.stack_version.install.repo_version',
       sender: this,
       data: data,
-      success: 'installRepoVersionSuccess'
+      success: 'installRepoVersionSuccess',
+      callback: function() {
+        this.sender.set('requestInProgress', false);
+      }
     });
   },
 
@@ -662,6 +670,7 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
    * @param status
    */
   setUpgradeItemStatus: function(item, status) {
+    this.set('requestInProgress', true);
     return App.ajax.send({
       name: 'admin.upgrade.upgradeItem.setState',
       sender: this,
@@ -670,6 +679,9 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
         itemId: item.get('stage_id'),
         groupId: item.get('group_id'),
         status: status
+      },
+      callback: function() {
+        this.sender.set('requestInProgress', false);
       }
     }).done(function () {
       item.set('status', status);
@@ -681,5 +693,60 @@ App.MainAdminStackAndUpgradeController = Em.Controller.extend(App.LocalStorage, 
     var currentVersionObject = App.RepositoryVersion.find().findProperty('status', 'CURRENT');
     var versionName = currentVersionObject && currentVersionObject.get('stackVersionType');
     App.set('isStormMetricsSupported', versionName != 'HDP' || stringUtils.compareVersions(versionNumber, '2.2.2') > -1 || !versionNumber);
-  }.observes('currentVersion.repository_version')
+  }.observes('currentVersion.repository_version'),
+
+  /**
+   * get the installed repositories of HDP from server
+   */
+  loadRepositories: function () {
+    if (App.router.get('clusterController.isLoaded')) {
+      var nameVersionCombo = App.get('currentStackVersion');
+      var stackName = nameVersionCombo.split('-')[0];
+      var stackVersion = nameVersionCombo.split('-')[1];
+      App.ajax.send({
+        name: 'cluster.load_repositories',
+        sender: this,
+        data: {
+          stackName: stackName,
+          stackVersion: stackVersion
+        },
+        success: 'loadRepositoriesSuccessCallback',
+        error: 'loadRepositoriesErrorCallback'
+      });
+    }
+  }.observes('App.router.clusterController.isLoaded'),
+
+  loadRepositoriesSuccessCallback: function (data) {
+    var allRepos = [];
+    data.items.forEach(function (os) {
+      os.repositories.forEach(function (repository) {
+        var osType = repository.Repositories.os_type;
+        var repo = Em.Object.create({
+          baseUrl: repository.Repositories.base_url,
+          osType: osType,
+          repoId: repository.Repositories.repo_id,
+          repoName : repository.Repositories.repo_name,
+          stackName : repository.Repositories.stack_name,
+          stackVersion : repository.Repositories.stack_version,
+          isFirst: false
+        });
+        var group = allRepos.findProperty('name', osType);
+        if (!group) {
+          group = {
+            name: osType,
+            repositories: []
+          };
+          repo.set('isFirst', true);
+          allRepos.push(group);
+        }
+        group.repositories.push(repo);
+      });
+    }, this);
+    allRepos.stackVersion = App.get('currentStackVersionNumber');
+    this.set('allRepos', allRepos);
+  },
+
+  loadRepositoriesErrorCallback: function (request, ajaxOptions, error) {
+    console.log('Error message is: ' + request.responseText);
+  }
 });

@@ -20,6 +20,7 @@ limitations under the License.
 
 from resource_management import *
 import sys
+import os
 from ambari_commons import OSConst
 from ambari_commons.os_family_impl import OsFamilyFuncImpl, OsFamilyImpl
 
@@ -55,15 +56,27 @@ class KnoxServiceCheck(Script):
           content=StaticFile(validateKnoxFileName),
           mode=0755
           )
-
-        Execute(smoke_cmd,
-          tries=3,
-          try_sleep=5,
-          path='/usr/sbin:/sbin:/usr/local/bin:/bin:/usr/bin',
-          user=params.smokeuser,
-          timeout=5,
-          logoutput=True
-        )
+        oldmask = os.umask (022)
+        os.umask (oldmask)
+        if oldmask == 027:
+          Execute(smoke_cmd,
+            tries=3,
+            try_sleep=5,
+            path='/usr/sbin:/sbin:/usr/local/bin:/bin:/usr/bin',
+            user=params.smokeuser,
+            timeout=5,
+            logoutput=True,
+            sudo=True
+          )
+        else:  
+          Execute(smoke_cmd,
+            tries=3,
+            try_sleep=5,
+            path='/usr/sbin:/sbin:/usr/local/bin:/bin:/usr/bin',
+            user=params.smokeuser,
+            timeout=5,
+            logoutput=True
+          )
 
 if __name__ == "__main__":
     KnoxServiceCheck().execute()

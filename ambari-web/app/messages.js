@@ -664,7 +664,7 @@ Em.I18n.translations = {
     '<li>Execute the following command on the Ambari Server host. Replace <code>database-type</code> with <strong>mysql</strong> or <strong>oracle</strong> and <code>/jdbc/driver/path</code> based on the location of the MySQL or Oracle JDBC driver:' +
     '<pre>ambari-server setup --jdbc-db={database-type} --jdbc-driver={/jdbc/driver/path}</pre></li></ol>',
   'installer.step4.rangerRequirements.popup.body.confirmation': 'I have met all the requirements above.',
-  'installer.step4.sparkWarning.popup.body': 'Spark requires HDP 2.2.1 or later. Attempting to install Spark to a HDP 2.2.0 cluster will fail. Confirm you are using HDP 2.2.1 or later packages. Are you sure you want to proceed?',
+  'installer.step4.sparkWarning.popup.body': 'Spark requires HDP 2.2.2 or later. Attempting to install Spark to a HDP 2.2.0 cluster will fail. Confirm you are using HDP 2.2.2 or later packages. Are you sure you want to proceed?',
 
   'installer.step5.header':'Assign Masters',
   'installer.step5.reassign.header':'Select Target Host',
@@ -983,8 +983,9 @@ Em.I18n.translations = {
   'admin.kerberos.regenerate_keytabs.checkbox.label': ' Only regenerate keytabs for missing hosts and components',
 
   'admin.kerberos.disable.step1.task0.title': 'Stop Services',
-  'admin.kerberos.disable.step1.task1.title': 'Remove Kerberos',
-  'admin.kerberos.disable.step1.task2.title': 'Start Services',
+  'admin.kerberos.disable.step1.task1.title': 'Unkerberize Cluster',
+  'admin.kerberos.disable.step1.task2.title': 'Remove Kerberos',
+  'admin.kerberos.disable.step1.task3.title': 'Start Services',
   'admin.kerberos.disable.unkerberize.header': 'Unkerberize cluster',
   'admin.kerberos.disable.unkerberize.message': 'You cannot quit wizard while cluster is being unkerberized',
   'admin.kerberos.disable.inProgress': 'Please wait while cluster is being unkerberized',
@@ -1462,6 +1463,19 @@ Em.I18n.translations = {
   'services.service.summary.alerts.alertsExist': '{0} alerts',
   'services.service.summary.alerts.popup.header': 'Alerts for {0}',
 
+  'services.service.info.metrics.ambariMetrics.master.averageLoad': 'Average load',
+  'services.service.info.metrics.ambariMetrics.master.displayNames.averageLoad': 'Average load',
+  'services.service.info.metrics.ambariMetrics.regionServer.storeFiles': 'Number of StoreFiles',
+  'services.service.info.metrics.ambariMetrics.regionServer.displayNames.storeFilesCount': 'Number of StoreFiles',
+  'services.service.info.metrics.ambariMetrics.regionServer.regions': 'Number of Regions',
+  'services.service.info.metrics.ambariMetrics.regionServer.displayNames.regionsCount': 'Number of Regions',
+  'services.service.info.metrics.ambariMetrics.regionServer.requests': 'Total Request Count',
+  'services.service.info.metrics.ambariMetrics.regionServer.displayNames.requestCount': 'Total Request Count',
+  'services.service.info.metrics.ambariMetrics.regionServer.blockCacheHitPercent': 'Block Cache Hit Percent',
+  'services.service.info.metrics.ambariMetrics.regionServer.displayNames.blockCacheHitPercent': 'Block Cache Hit Percent',
+  'services.service.info.metrics.ambariMetrics.regionServer.compactionQueueSize': 'Compaction Queue Size',
+  'services.service.info.metrics.ambariMetrics.regionServer.displayNames.compactionQueueSize': 'Compaction Queue Size',
+
   'services.service.info.metrics.flume.channelFillPercent':'Channel Fill Percentage',
   'services.service.info.metrics.flume.channelSize':'Channel Size',
   'services.service.info.metrics.flume.sinkDrainSuccess':'Sink Event Drain Count',
@@ -1784,7 +1798,15 @@ Em.I18n.translations = {
       '</div>',
   'services.reassign.step5.body.oozie_server':
     '<div class="alert alert-info">' +
-    'Copy the contents of <b>/hadoop/oozie/data/oozie-db</b> on the source host <b>{1}</b> to <b>/hadoop/oozie/data/oozie-db</b> on the target host <b>{2}</b>.' +
+    '<ol>' +
+    '<li>On <b>{1}</b> copy the contents of' +
+    '<div class="code-snippet"><b>/hadoop/oozie/data/oozie-db</b></div></li>' +
+    '<li>To the target host <b>{2}</b></li>' +
+    '<li>If the directory doesn\'t exists you can create by running' +
+    '<div class="code-snippet">mkdir -p /hadoop/oozie/data/oozie-db</div></li>' +
+    '<li>Update directory permissions by running' +
+    '<div class="code-snippet">chown -R oozie:{5} /hadoop/oozie/data</div></li>' +
+    '</ol>' +
     '</div>',
   'services.reassign.step5.body.mysql_server':
     '<div class="alert alert-info">' +

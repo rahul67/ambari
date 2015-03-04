@@ -52,17 +52,7 @@ App.MainHostView = App.TableView.extend(App.TableServerViewMixin, {
    * List of hosts in cluster
    * @type {Array}
    */
-  content: function () {
-    var controllerName = this.get('controller.name');
-    var selectedHosts = App.db.getSelectedHosts(controllerName);
-    if (this.get('controller')) {
-      return this.get('controller.content').filter(function (host) {
-        host.set('selected', selectedHosts.contains(host.get('hostName')));
-        return true;
-      });
-    }
-    return [];
-  }.property('controller.content'),
+  contentBinding: 'controller.content',
 
   onRequestErrorHandler: function() {
     this.set('requestError', null);
@@ -808,6 +798,15 @@ App.MainHostView = App.TableView.extend(App.TableServerViewMixin, {
         this.get('parentView').updateFilter(category.get('column'), category.get('filterValue'), category.get('type'));
       }
     },
+
+    /**
+     * set value
+     * @param {string} value
+     */
+    setValue: function (value) {
+      this.set('value', value);
+    },
+
     clearFilter: function() {
       this.get('categories').setEach('isActive', false);
       this.set('value', '');

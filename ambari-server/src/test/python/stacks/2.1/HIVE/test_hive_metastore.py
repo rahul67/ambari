@@ -45,11 +45,12 @@ class TestHiveMetastore(RMFTestCase):
     )
 
     self.assert_configure_default()
-    self.assertResourceCalled('Execute', 'env HADOOP_HOME=/usr JAVA_HOME=/usr/jdk64/jdk1.7.0_45 /tmp/start_metastore_script /var/log/hive/hive.out /var/log/hive/hive.log /var/run/hive/hive.pid /etc/hive/conf.server /var/log/hive',
-                              not_if = 'ls /var/run/hive/hive.pid >/dev/null 2>&1 && ps -p `cat /var/run/hive/hive.pid` >/dev/null 2>&1',
-                              environment = {'HADOOP_HOME': '/usr'},
-                              path = ["/bin:/usr/lib/hive/bin:/usr/bin"],
-                              user = 'hive'
+
+    self.assertResourceCalled('Execute', '/tmp/start_metastore_script /var/log/hive/hive.out /var/log/hive/hive.log /var/run/hive/hive.pid /etc/hive/conf.server /var/log/hive',
+        environment = {'HADOOP_HOME': '/usr', 'JAVA_HOME': u'/usr/jdk64/jdk1.7.0_45'},
+        not_if = 'ls /var/run/hive/hive.pid >/dev/null 2>&1 && ps -p `cat /var/run/hive/hive.pid` >/dev/null 2>&1',
+        user = 'hive',
+        path = ['/bin:/usr/lib/hive/bin:/usr/bin'],
     )
 
     self.assertResourceCalled('Execute', '/usr/jdk64/jdk1.7.0_45/bin/java -cp /usr/lib/ambari-agent/DBConnectionVerification.jar:/usr/lib/hive/lib//mysql-connector-java.jar org.apache.ambari.server.DBConnectionVerification \'jdbc:mysql://c6402.ambari.apache.org/hive?createDatabaseIfNotExist=true\' hive aaa com.mysql.jdbc.Driver',
@@ -72,22 +73,13 @@ class TestHiveMetastore(RMFTestCase):
     )
 
     self.assert_configure_default()
-    self.assertResourceCalled('Execute', (u'env',
-                                          u'HADOOP_HOME=/usr',
-                                          u'JAVA_HOME=/usr/jdk64/jdk1.7.0_45',
-                                          u'/tmp/start_metastore_script',
-                                          u'/var/log/hive/hive.out',
-                                          u'/var/log/hive/hive.log',
-                                          u'/var/run/hive/hive.pid',
-                                          u'/etc/hive/conf.server',
-                                          u'/var/log/hive'),
-                              environment = {'HADOOP_HOME': '/usr'},
-                              not_if = 'ls /var/run/hive/hive.pid >/dev/null 2>&1 && ps -p `cat /var/run/hive/hive.pid` >/dev/null 2>&1',
-                              sudo = True,
-                              user = 'hive',
-                              path = ['/bin:/usr/lib/hive/bin:/usr/bin'],
-                              )
 
+    self.assertResourceCalled('Execute', '/tmp/start_metastore_script /var/log/hive/hive.out /var/log/hive/hive.log /var/run/hive/hive.pid /etc/hive/conf.server /var/log/hive',
+        environment = {'HADOOP_HOME': '/usr', 'JAVA_HOME': u'/usr/jdk64/jdk1.7.0_45'},
+        not_if = 'ls /var/run/hive/hive.pid >/dev/null 2>&1 && ps -p `cat /var/run/hive/hive.pid` >/dev/null 2>&1',
+        user = 'hive',
+        path = ['/bin:/usr/lib/hive/bin:/usr/bin'],
+    )
     self.assertResourceCalled('Execute', '/usr/jdk64/jdk1.7.0_45/bin/java -cp /usr/lib/ambari-agent/DBConnectionVerification.jar:/usr/lib/hive/lib//mysql-connector-java.jar org.apache.ambari.server.DBConnectionVerification \'jdbc:mysql://c6402.ambari.apache.org/hive?createDatabaseIfNotExist=true\' hive aaa com.mysql.jdbc.Driver',
                               path = ['/usr/sbin:/sbin:/usr/local/bin:/bin:/usr/bin'],
                               tries = 5,
@@ -144,11 +136,12 @@ class TestHiveMetastore(RMFTestCase):
     self.assertResourceCalled('Execute', '/usr/bin/kinit -kt /etc/security/keytabs/hive.service.keytab hive/c6401.ambari.apache.org@EXAMPLE.COM; ',
                               user = 'hive',
                               )
-    self.assertResourceCalled('Execute', 'env HADOOP_HOME=/usr JAVA_HOME=/usr/jdk64/jdk1.7.0_45 /tmp/start_metastore_script /var/log/hive/hive.out /var/log/hive/hive.log /var/run/hive/hive.pid /etc/hive/conf.server /var/log/hive',
-                              not_if = 'ls /var/run/hive/hive.pid >/dev/null 2>&1 && ps -p `cat /var/run/hive/hive.pid` >/dev/null 2>&1',
-                              environment = {'HADOOP_HOME' : '/usr'},
-                              path = ["/bin:/usr/lib/hive/bin:/usr/bin"],
-                              user = 'hive'
+
+    self.assertResourceCalled('Execute', '/tmp/start_metastore_script /var/log/hive/hive.out /var/log/hive/hive.log /var/run/hive/hive.pid /etc/hive/conf.server /var/log/hive',
+        environment = {'HADOOP_HOME': '/usr', 'JAVA_HOME': u'/usr/jdk64/jdk1.7.0_45'},
+        not_if = 'ls /var/run/hive/hive.pid >/dev/null 2>&1 && ps -p `cat /var/run/hive/hive.pid` >/dev/null 2>&1',
+        user = 'hive',
+        path = ['/bin:/usr/lib/hive/bin:/usr/bin'],
     )
 
     self.assertResourceCalled('Execute', '/usr/jdk64/jdk1.7.0_45/bin/java -cp /usr/lib/ambari-agent/DBConnectionVerification.jar:/usr/lib/hive/lib//mysql-connector-java.jar org.apache.ambari.server.DBConnectionVerification \'jdbc:mysql://c6402.ambari.apache.org/hive?createDatabaseIfNotExist=true\' hive asd com.mysql.jdbc.Driver',
@@ -244,18 +237,21 @@ class TestHiveMetastore(RMFTestCase):
                               group = 'hadoop',
                               mode = 0755,
                               recursive = True,
+                              cd_access = 'a',
                               )
     self.assertResourceCalled('Directory', '/var/log/hive',
                               owner = 'hive',
                               group = 'hadoop',
                               mode = 0755,
                               recursive = True,
+                              cd_access = 'a',
                               )
     self.assertResourceCalled('Directory', '/var/lib/hive',
                               owner = 'hive',
                               group = 'hadoop',
                               mode = 0755,
                               recursive = True,
+                              cd_access = 'a',
                               )
 
   def assert_configure_secured(self):
@@ -321,18 +317,21 @@ class TestHiveMetastore(RMFTestCase):
                               group = 'hadoop',
                               mode = 0755,
                               recursive = True,
+                              cd_access = 'a',
                               )
     self.assertResourceCalled('Directory', '/var/log/hive',
                               owner = 'hive',
                               group = 'hadoop',
                               mode = 0755,
                               recursive = True,
+                              cd_access = 'a',
                               )
     self.assertResourceCalled('Directory', '/var/lib/hive',
                               owner = 'hive',
                               group = 'hadoop',
                               mode = 0755,
                               recursive = True,
+                              cd_access = 'a',
                               )
 
   @patch("resource_management.libraries.functions.security_commons.build_expectations")
@@ -342,7 +341,6 @@ class TestHiveMetastore(RMFTestCase):
   @patch("resource_management.libraries.script.Script.put_structured_out")
   def test_security_status(self, put_structured_out_mock, cached_kinit_executor_mock, validate_security_config_mock, get_params_mock, build_exp_mock):
     # Test that function works when is called with correct parameters
-    import status_params
 
     security_params = {
       'hive-site': {
@@ -378,16 +376,16 @@ class TestHiveMetastore(RMFTestCase):
                        target = RMFTestCase.TARGET_COMMON_SERVICES
     )
 
-    get_params_mock.assert_called_with(status_params.hive_conf_dir, {'hive-site.xml': "XML"})
+    get_params_mock.assert_called_with("/etc/hive/conf", {'hive-site.xml': "XML"})
     build_exp_mock.assert_called_with('hive-site', props_value_check, props_empty_check, props_read_check)
     put_structured_out_mock.assert_called_with({"securityState": "SECURED_KERBEROS"})
     self.assertTrue(cached_kinit_executor_mock.call_count, 2)
-    cached_kinit_executor_mock.assert_called_with(status_params.kinit_path_local,
-                                                  status_params.hive_user,
+    cached_kinit_executor_mock.assert_called_with('/usr/bin/kinit',
+                                                  self.config_dict['configurations']['hive-env']['hive_user'],
                                                   security_params['hive-site']['hive.metastore.kerberos.keytab.file'],
                                                   security_params['hive-site']['hive.metastore.kerberos.principal'],
-                                                  status_params.hostname,
-                                                  status_params.tmp_dir)
+                                                  self.config_dict['hostname'],
+                                                  '/tmp')
 
     # Testing that the exception throw by cached_executor is caught
     cached_kinit_executor_mock.reset_mock()
@@ -421,8 +419,9 @@ class TestHiveMetastore(RMFTestCase):
     put_structured_out_mock.assert_called_with({"securityIssuesFound": "Keytab file or principal are not set property."})
 
     # Testing with not empty result_issues
-    result_issues_with_params = {}
-    result_issues_with_params['hive-site']="Something bad happened"
+    result_issues_with_params = {
+      'hive-site': "Something bad happened"
+    }
 
     validate_security_config_mock.reset_mock()
     get_params_mock.reset_mock()

@@ -34,13 +34,13 @@ import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.SCRIPT_TY
 import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.SERVICE_PACKAGE_FOLDER;
 import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.SERVICE_REPO_INFO;
 import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.USER_LIST;
+import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.VERSION;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
+import com.google.gson.reflect.TypeToken;
 import org.apache.ambari.server.AmbariException;
 import org.apache.ambari.server.ClusterNotFoundException;
 import org.apache.ambari.server.DuplicateResourceException;
@@ -85,6 +86,7 @@ import org.apache.ambari.server.customactions.ActionDefinition;
 import org.apache.ambari.server.metadata.ActionMetadata;
 import org.apache.ambari.server.metadata.RoleCommandOrder;
 import org.apache.ambari.server.orm.dao.RepositoryVersionDAO;
+import org.apache.ambari.server.orm.entities.ClusterVersionEntity;
 import org.apache.ambari.server.orm.entities.OperatingSystemEntity;
 import org.apache.ambari.server.orm.entities.RepositoryEntity;
 import org.apache.ambari.server.orm.entities.RepositoryVersionEntity;
@@ -1214,6 +1216,15 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
         } else {
           isConfigurationCreationNeeded = true;
         }
+        if (requestConfigProperties == null || requestConfigProperties.isEmpty()) {
+          Config existingConfig = cluster.getConfig(desiredConfig.getType(), desiredConfig.getVersionTag());
+          if (existingConfig != null) {
+            if (!StringUtils.equals(existingConfig.getTag(), clusterConfig.getTag())) {
+              isConfigurationCreationNeeded = true;
+              break;
+            }
+          }
+        }
         if (requestConfigProperties != null && clusterConfigProperties != null) {
           if (requestConfigProperties.size() != clusterConfigProperties.size()) {
             isConfigurationCreationNeeded = true;
@@ -1681,6 +1692,10 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
       if (script != null) {
         commandParams.put(SCRIPT, script.getScript());
         commandParams.put(SCRIPT_TYPE, script.getScriptType().toString());
+        ClusterVersionEntity currentClusterVersion = cluster.getCurrentClusterVersion();
+        if (currentClusterVersion != null) {
+         commandParams.put(VERSION, currentClusterVersion.getRepositoryVersion().getVersion());
+        }
         if (script.getTimeout() > 0) {
           scriptCommandTimeout = String.valueOf(script.getTimeout());
         }
@@ -2902,23 +2917,30 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
         actionManager,
         actionRequest);
 
+    ExecuteCommandJson jsons = customCommandExecutionHelper.getCommandJson(actionExecContext, cluster);
+    String commandParamsForStage = jsons.getCommandParamsForStage();
+
     // If the request is to perform the Kerberos service check, set up the stages to
     // ensure that the (cluster-level) smoke user principal and keytab is available on all hosts
-    if (Role.KERBEROS_SERVICE_CHECK.name().equals(actionRequest.getCommandName())) {
+    boolean kerberosServiceCheck = Role.KERBEROS_SERVICE_CHECK.name().equals(actionRequest.getCommandName());
+    if (kerberosServiceCheck) {
+      // Parse the command parameters into a map so that additional values may be added to it
+      Map<String, String> commandParamsStage = gson.fromJson(commandParamsForStage,
+          new TypeToken<Map<String, String>>() {
+          }.getType());
+
       try {
-        requestStageContainer = kerberosHelper.ensureIdentities(cluster,
-            Collections.<String, Collection<String>>singletonMap(Service.Type.KERBEROS.name(), null),
-            Collections.singleton("/smokeuser"), requestStageContainer);
+        requestStageContainer = kerberosHelper.createTestIdentity(cluster, commandParamsStage, requestStageContainer);
       } catch (KerberosOperationException e) {
         throw new IllegalArgumentException(e.getMessage(), e);
       }
+
+      // Recreate commandParamsForStage with the added values
+      commandParamsForStage = gson.toJson(commandParamsStage);
     }
 
-    ExecuteCommandJson jsons = customCommandExecutionHelper.getCommandJson(
-        actionExecContext, cluster);
-
     Stage stage = createNewStage(requestStageContainer.getLastStageId(), cluster, requestId, requestContext,
-        jsons.getClusterHostInfo(), jsons.getCommandParamsForStage(), jsons.getHostParamsForStage());
+        jsons.getClusterHostInfo(), commandParamsForStage, jsons.getHostParamsForStage());
 
     if (actionRequest.isCommand()) {
       customCommandExecutionHelper.addExecutionCommandsToStage(actionExecContext, stage, requestProperties, false);
@@ -2938,18 +2960,28 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
     List<Stage> stages = rg.getStages();
 
     if (stages != null && !stages.isEmpty()) {
+      // If this is a Kerberos service check, set the service check stage(s) to be skip-able so that
+      // the clean up stages will still be triggered in the event of a failure.
+      if (kerberosServiceCheck) {
+        for (Stage s : stages) {
+          s.setSkippable(true);
+        }
+      }
+
       requestStageContainer.addStages(stages);
     }
 
-    // If the request is to perform the Kerberos service check and (Kerberos) security is not enabled,
-    // delete that the (cluster-level) smoke user principal and keytab that was created for the
-    // service check
-    if (Role.KERBEROS_SERVICE_CHECK.name().equals(actionRequest.getCommandName()) &&
-        !kerberosHelper.isClusterKerberosEnabled(cluster)) {
+    // If the request is to perform the Kerberos service check, delete the test-specific principal
+    // and keytab that was created for this service check
+    if (kerberosServiceCheck) {
+      // Parse the command parameters into a map so that existing values may be accessed and
+      // additional values may be added to it.
+      Map<String, String> commandParamsStage = gson.fromJson(commandParamsForStage,
+          new TypeToken<Map<String, String>>() {
+          }.getType());
+
       try {
-        requestStageContainer = kerberosHelper.deleteIdentities(cluster,
-            Collections.<String, Collection<String>>singletonMap(Service.Type.KERBEROS.name(), null),
-            Collections.singleton("/smokeuser"), requestStageContainer);
+        requestStageContainer = kerberosHelper.deleteTestIdentity(cluster, commandParamsStage, requestStageContainer);
       } catch (KerberosOperationException e) {
         throw new IllegalArgumentException(e.getMessage(), e);
       }

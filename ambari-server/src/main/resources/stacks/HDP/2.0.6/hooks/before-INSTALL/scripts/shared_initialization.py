@@ -20,6 +20,7 @@ limitations under the License.
 import os
 
 from resource_management import *
+import getpass
 
 def setup_java():
   """
@@ -44,10 +45,10 @@ def setup_java():
 
   if params.jdk_name.endswith(".bin"):
     chmod_cmd = ("chmod", "+x", jdk_curl_target)
-    install_cmd = format("mkdir -p {tmp_java_dir} && cd {tmp_java_dir} && echo A | {jdk_curl_target} -noregister && {sudo} cp -r {tmp_java_dir}/* {java_dir}")
+    install_cmd = format("mkdir -p {tmp_java_dir} && cd {tmp_java_dir} && echo A | {jdk_curl_target} -noregister && {sudo} cp -rp {tmp_java_dir}/* {java_dir}")
   elif params.jdk_name.endswith(".gz"):
     chmod_cmd = ("chmod","a+x", java_dir)
-    install_cmd = format("mkdir -p {tmp_java_dir} && cd {tmp_java_dir} && tar -xf {jdk_curl_target} && {sudo} cp -r {tmp_java_dir}/* {java_dir}")
+    install_cmd = format("mkdir -p {tmp_java_dir} && cd {tmp_java_dir} && tar -xf {jdk_curl_target} && {sudo} cp -rp {tmp_java_dir}/* {java_dir}")
 
   Directory(java_dir
   )
@@ -62,6 +63,9 @@ def setup_java():
   )
   
   Execute(("chgrp","-R", params.user_group, params.java_home),
+          sudo = True,          
+  )
+  Execute(("chown","-R", getpass.getuser(), params.java_home),
           sudo = True,          
   )
 

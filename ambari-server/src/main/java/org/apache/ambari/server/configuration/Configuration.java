@@ -234,6 +234,8 @@ public class Configuration {
   public static final String KDC_PORT_KEY_DEFAULT = "88";
   public static final String KDC_CONNECTION_CHECK_TIMEOUT_KEY = "kdcserver.connection.check.timeout";
   public static final String KDC_CONNECTION_CHECK_TIMEOUT_DEFAULT = "10000";
+  public static final String KERBEROS_KEYTAB_CACHE_DIR_KEY = "kerberos.keytab.cache.dir";
+  public static final String KERBEROS_KEYTAB_CACHE_DIR_DEFAULT = "/var/lib/ambari-server/data/cache";
   /**
    * This key defines whether stages of parallel requests are executed in
    * parallel or sequentally. Only stages from different requests
@@ -1324,6 +1326,16 @@ public class Configuration {
   }
 
   /**
+   * Gets the directory where Ambari is to store cached keytab files.
+   *
+   * @return a File containing the path to the directory to use to store cached keytab files
+   */
+  public File getKerberosKeytabCacheDir() {
+    String fileName = properties.getProperty(KERBEROS_KEYTAB_CACHE_DIR_KEY, KERBEROS_KEYTAB_CACHE_DIR_DEFAULT);
+    return new File(fileName);
+  }
+
+  /**
    * Gets the type of database by examining the {@link #getDatabaseUrl()} JDBC
    * URL.
    *
@@ -1343,6 +1355,8 @@ public class Configuration {
       databaseType = DatabaseType.MYSQL;
     } else if (dbUrl.contains(DatabaseType.DERBY.getName())) {
       databaseType = DatabaseType.DERBY;
+    } else if (dbUrl.contains(DatabaseType.SQL_SERVER.getName())) {
+      databaseType = DatabaseType.SQL_SERVER;
     } else {
       throw new RuntimeException(
           "The database type could be not determined from the JDBC URL "

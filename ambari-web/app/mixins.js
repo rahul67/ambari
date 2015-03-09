@@ -31,6 +31,7 @@ require('mixins/wizard/wizardProgressPageController');
 require('mixins/wizard/wizardDeployProgressController');
 require('mixins/wizard/wizardProgressPageView');
 require('mixins/wizard/wizardDeployProgressView');
+require('mixins/wizard/wizardEnableDone');
 require('mixins/wizard/selectHost');
 require('mixins/wizard/addSecurityConfigs');
 require('mixins/wizard/wizard_menu_view');

@@ -47,7 +47,7 @@ class TestWebHCatServer(RMFTestCase):
     )
 
     self.assert_configure_default()
-    self.assertResourceCalled('Execute', 'env HADOOP_HOME=/usr /usr/lib/hcatalog/sbin/webhcat_server.sh start',
+    self.assertResourceCalled('Execute', 'cd /var/run/webhcat ; env HADOOP_HOME=/usr /usr/lib/hcatalog/sbin/webhcat_server.sh start',
                               not_if = 'ls /var/run/webhcat/webhcat.pid >/dev/null 2>&1 && ps -p `cat /var/run/webhcat/webhcat.pid` >/dev/null 2>&1',
                               user = 'hcat'
     )
@@ -92,7 +92,7 @@ class TestWebHCatServer(RMFTestCase):
     )
 
     self.assert_configure_secured()
-    self.assertResourceCalled('Execute', 'env HADOOP_HOME=/usr /usr/lib/hcatalog/sbin/webhcat_server.sh start',
+    self.assertResourceCalled('Execute', 'cd /var/run/webhcat ; env HADOOP_HOME=/usr /usr/lib/hcatalog/sbin/webhcat_server.sh start',
                               not_if = 'ls /var/run/webhcat/webhcat.pid >/dev/null 2>&1 && ps -p `cat /var/run/webhcat/webhcat.pid` >/dev/null 2>&1',
                               user = 'hcat'
     )
@@ -212,6 +212,9 @@ class TestWebHCatServer(RMFTestCase):
                               owner = 'hcat',
                               group = 'hadoop',
                               )
+    self.assertResourceCalled('Directory', '/etc/hive-webhcat/conf',
+        cd_access = 'a',
+    )
     self.assertResourceCalled('File', '/etc/hcatalog/conf/webhcat-log4j.properties',
                               content = 'log4jproperties\nline2',
                               owner = 'hcat',
@@ -320,6 +323,9 @@ class TestWebHCatServer(RMFTestCase):
                               owner = 'hcat',
                               group = 'hadoop',
                               )
+    self.assertResourceCalled('Directory', '/etc/hive-webhcat/conf',
+        cd_access = 'a',
+    )
     self.assertResourceCalled('File', '/etc/hcatalog/conf/webhcat-log4j.properties',
                               content = 'log4jproperties\nline2',
                               owner = 'hcat',

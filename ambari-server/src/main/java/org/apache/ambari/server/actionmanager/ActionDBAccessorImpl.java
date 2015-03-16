@@ -18,15 +18,13 @@
 package org.apache.ambari.server.actionmanager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.ambari.server.AmbariException;
@@ -143,8 +141,13 @@ public class ActionDBAccessorImpl implements ActionDBAccessor {
   }
 
   @Override
+  public RequestEntity getRequestEntity(long requestId) {
+    return requestDAO.findByPK(requestId);
+  }
+
+  @Override
   public Request getRequest(long requestId) {
-    RequestEntity requestEntity = requestDAO.findByPK(requestId);
+    RequestEntity requestEntity = getRequestEntity(requestId);
     if (requestEntity != null) {
       return requestFactory.createExisting(requestEntity);
     } else {
@@ -311,7 +314,7 @@ public class ActionDBAccessorImpl implements ActionDBAccessor {
 
   @Override
   public void startRequest(long requestId) {
-    RequestEntity requestEntity = requestDAO.findByPK(requestId);
+    RequestEntity requestEntity = getRequestEntity(requestId);
     if (requestEntity != null && requestEntity.getStartTime() == -1L) {
       requestEntity.setStartTime(System.currentTimeMillis());
       requestDAO.merge(requestEntity);
@@ -320,7 +323,7 @@ public class ActionDBAccessorImpl implements ActionDBAccessor {
 
   @Override
   public void endRequest(long requestId) {
-    RequestEntity requestEntity = requestDAO.findByPK(requestId);
+    RequestEntity requestEntity = getRequestEntity(requestId);
     if (requestEntity != null && requestEntity.getEndTime() == -1L) {
       requestEntity.setEndTime(System.currentTimeMillis());
       requestDAO.merge(requestEntity);
@@ -601,26 +604,26 @@ public class ActionDBAccessorImpl implements ActionDBAccessor {
   public List<Long> getRequestsByStatus(RequestStatus status, int maxResults,
     boolean ascOrder) {
 
-    boolean match = true;
-    boolean checkAllTasks = false;
-    Set<HostRoleStatus> statuses = new HashSet<HostRoleStatus>();
-    if (status == RequestStatus.IN_PROGRESS) {
-      statuses.addAll(Arrays.asList(HostRoleStatus.PENDING,
-          HostRoleStatus.IN_PROGRESS, HostRoleStatus.QUEUED,
-          HostRoleStatus.HOLDING, HostRoleStatus.HOLDING_FAILED, HostRoleStatus.HOLDING_TIMEDOUT));
-    } else if (status == RequestStatus.COMPLETED) {
-      match = false;
-      checkAllTasks = true;
-      statuses.addAll(Arrays.asList(HostRoleStatus.PENDING,
-          HostRoleStatus.IN_PROGRESS, HostRoleStatus.QUEUED,
-          HostRoleStatus.ABORTED, HostRoleStatus.FAILED,
-          HostRoleStatus.TIMEDOUT));
-    } else if (status == RequestStatus.FAILED) {
-      statuses.addAll(Arrays.asList(HostRoleStatus.ABORTED,
-          HostRoleStatus.FAILED, HostRoleStatus.TIMEDOUT));
+    if (null == status) {
+      return requestDAO.findAllRequestIds(maxResults, ascOrder);
     }
-    return hostRoleCommandDAO.getRequestsByTaskStatus(statuses, match,
-      checkAllTasks, maxResults, ascOrder);
+
+    EnumSet<HostRoleStatus> taskStatuses = null;
+    switch( status ){
+      case IN_PROGRESS:
+        taskStatuses = HostRoleStatus.IN_PROGRESS_STATUSES;
+        break;
+      case FAILED:
+        taskStatuses = HostRoleStatus.FAILED_STATUSES;
+        break;
+      case COMPLETED:
+        // !!! COMPLETED is special as all tasks in the request must be
+        // completed
+        return hostRoleCommandDAO.getCompletedRequests(maxResults, ascOrder);
+    }
+
+    return hostRoleCommandDAO.getRequestsByTaskStatus(taskStatuses, maxResults,
+        ascOrder);
   }
 
   @Override

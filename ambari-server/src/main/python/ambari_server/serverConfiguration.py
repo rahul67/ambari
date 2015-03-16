@@ -81,10 +81,10 @@ JDK_NAME_PROPERTY = "jdk.name"
 JCE_NAME_PROPERTY = "jce.name"
 
 DEFAULT_JDK16_LOCATION = "/usr/jdk64/jdk1.6.0_31"
-JDK_NAMES = ["jdk-7u67-linux-x64.tar.gz", "jdk-6u31-linux-x64.bin"]
+JDK_NAMES = ["jdk-8u40-linux-x64.tar.gz", "jdk-7u67-linux-x64.tar.gz", "jdk-6u31-linux-x64.bin"]
 
 #JCE Policy files
-JCE_POLICY_FILENAMES = ["UnlimitedJCEPolicyJDK7.zip", "jce_policy-6.zip"]
+JCE_POLICY_FILENAMES = ["jce_policy-8.zip", "UnlimitedJCEPolicyJDK7.zip", "jce_policy-6.zip"]
 
 # JDBC
 JDBC_PATTERNS = {"oracle": "*ojdbc*.jar", "mysql": "*mysql*.jar"}
@@ -137,7 +137,6 @@ SERVICE_PASSWORD_KEY = "TMP_AMBARI_PASSWORD"
 
 # resources repo configuration
 RESOURCES_DIR_PROPERTY = "resources.dir"
-RESOURCES_DIR_DEFAULT = "resources"
 
 # stack repo upgrade
 STACK_LOCATION_KEY = 'metadata.path'
@@ -318,7 +317,7 @@ class ServerConfigDefaultsLinux(ServerConfigDefaults):
       ("/etc/ambari-server/conf/password.dat", "640", "{0}", False),
       ("/var/lib/ambari-server/keys/pass.txt", "600", "{0}", False),
       ("/etc/ambari-server/conf/ldap-password.dat", "640", "{0}", False),
-      ("/var/run/ambari-server/stack-recommendations/", "644", "{0}", True),
+      ("/var/run/ambari-server/stack-recommendations/", "744", "{0}", True),
       ("/var/run/ambari-server/stack-recommendations/", "755", "{0}", False),
       ("/var/lib/ambari-server/data/tmp/", "644", "{0}", True),
       ("/var/lib/ambari-server/data/tmp/", "755", "{0}", False),
@@ -343,7 +342,7 @@ class ServerConfigDefaultsLinux(ServerConfigDefaults):
     self.MESSAGE_ERROR_SETUP_NOT_ROOT = "Ambari-server setup should be run with root-level privileges"
     self.MESSAGE_ERROR_RESET_NOT_ROOT = "Ambari-server reset should be run with root-level privileges"
     self.MESSAGE_ERROR_UPGRADE_NOT_ROOT = "Ambari-server upgrade must be run with root-level privileges"
-    self.MESSAGE_CHECK_FIREWALL = "Checking iptables..."
+    self.MESSAGE_CHECK_FIREWALL = "Checking firewall status..."
 
 configDefaults = ServerConfigDefaults()
 
@@ -813,10 +812,10 @@ def update_ambari_properties():
 
     isJDK16Installed = new_properties.get_property(JAVA_HOME_PROPERTY) == DEFAULT_JDK16_LOCATION
     if not JDK_NAME_PROPERTY in new_properties.keys() and isJDK16Installed:
-      new_properties.process_pair(JDK_NAME_PROPERTY, JDK_NAMES[1])
+      new_properties.process_pair(JDK_NAME_PROPERTY, JDK_NAMES[2])
 
     if not JCE_NAME_PROPERTY in new_properties.keys() and isJDK16Installed:
-      new_properties.process_pair(JCE_NAME_PROPERTY, JCE_POLICY_FILENAMES[1])
+      new_properties.process_pair(JCE_NAME_PROPERTY, JCE_POLICY_FILENAMES[2])
 
     if not OS_FAMILY_PROPERTY in new_properties.keys():
       new_properties.process_pair(OS_FAMILY_PROPERTY, OS_FAMILY + OS_VERSION)
@@ -1102,9 +1101,27 @@ def get_java_exe_path():
 
 
 #
+# Server resource files location
+#
+def get_resources_location(properties):
+  err = 'Invalid directory'
+  try:
+    resources_dir = properties[RESOURCES_DIR_PROPERTY]
+    if not resources_dir:
+      resources_dir = configDefaults.SERVER_RESOURCES_DIR
+  except (KeyError), e:
+    err = 'Property ' + str(e) + ' is not defined at ' + properties.fileName
+    resources_dir = configDefaults.SERVER_RESOURCES_DIR
+
+  if not os.path.exists(os.path.abspath(resources_dir)):
+    msg = 'Resources dir ' + resources_dir + ' is incorrectly configured: ' + err
+    raise FatalException(1, msg)
+
+  return resources_dir
+
+#
 # Stack upgrade
 #
-
 def get_stack_location(properties):
   stack_location = properties[STACK_LOCATION_KEY]
   if stack_location is None:

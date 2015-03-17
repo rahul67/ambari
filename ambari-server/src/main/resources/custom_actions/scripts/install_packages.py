@@ -47,7 +47,7 @@ class InstallPackages(Script):
   For now, repositories are installed into individual files.
   """
 
-  UBUNTU_REPO_COMPONENTS_POSTFIX = ["main"]
+  DEFAULT_UBUNTU_REPO_COMPONENTS_POSTFIX = "main"
   REPO_FILE_NAME_PREFIX = 'HDP-'
   STACK_TO_ROOT_FOLDER = {"HDP": "/usr/hdp"}
   
@@ -354,6 +354,11 @@ class InstallPackages(Script):
 
     ubuntu_components = [url_info['name']] + self.UBUNTU_REPO_COMPONENTS_POSTFIX
     file_name = self.REPO_FILE_NAME_PREFIX + self.repository_version
+    if not 'repoComponents' in url_info:
+      repo['repoComponents'] = self.DEFAULT_UBUNTU_REPO_COMPONENTS_POSTFIX
+    
+    ubuntu_components = [url_info['name']] + repo['repoComponents'].split()
+    file_name = self.REPO_FILE_NAME_PREFIX + repository_version
 
     Repository(repo['repoName'],
       action = "create",

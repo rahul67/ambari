@@ -373,20 +373,24 @@ var urls = {
     'real': '/clusters/{clusterName}/alert_definitions?fields=*',
     'mock': 'data/alerts/alertDefinitions.json'
   },
-  'alerts.instances': {
-    'real': '/clusters/{clusterName}/alerts?fields=*',
-    'mock': '/data/alerts/alert_instances.json'
-  },
   'alerts.notifications': {
     'real': '/alert_targets?fields=*',
     'mock': '/data/alerts/alertNotifications.json'
   },
+  'alerts.instances': {
+    'real': '/clusters/{clusterName}/alerts?fields=*',
+    'mock': '/data/alerts/alert_instances.json'
+  },
+  'alerts.instances.unhealthy': {
+    'real': '/clusters/{clusterName}/alerts?fields=*&Alert/state.in(CRITICAL,WARNING)&{paginationInfo}',
+    'mock': '/data/alerts/alert_instances.json'
+  },
   'alerts.instances.by_definition': {
-    'real': '/clusters/{clusterName}/alerts?fields=*&(Alert/definition_id={definitionId}|Alert/state.in(CRITICAL,WARNING))',
+    'real': '/clusters/{clusterName}/alerts?fields=*&Alert/definition_id={definitionId}',
     'mock': '/data/alerts/alert_instances.json'
   },
   'alerts.instances.by_host': {
-    'real': '/clusters/{clusterName}/alerts?fields=*&(Alert/host_name={hostName}|Alert/state.in(CRITICAL,WARNING))',
+    'real': '/clusters/{clusterName}/alerts?fields=*&Alert/host_name={hostName}',
     'mock': '/data/alerts/alert_instances.json'
   },
   'alerts.update_alert_definition': {
@@ -630,7 +634,28 @@ var urls = {
   },
 
   /*************************CONFIG VERSIONS*************************************/
-    //TODO
+
+  'configs.config_versions.load.all.min': {
+    'real': '/clusters/{clusterName}/configurations/service_config_versions?fields=service_config_version,user,hosts,group_id,group_name,is_current,createtime,service_name,service_config_version_note&minimal_response=true',
+    'mock': '/data/configurations/config_versions.json'
+  },
+
+  'configs.config_versions.load.service.min': {
+    'real': '/clusters/{clusterName}/configurations/service_config_versions?service_name={serviceName}&fields=service_config_version,user,hosts,group_id,group_name,is_current,createtime,service_name,service_config_version_note&minimal_response=true',
+    'mock': '/data/configurations/config_versions.json'
+  },
+
+  'configs.config_versions.load': {
+    'real': '/clusters/{clusterName}/configurations/service_config_versions?service_name={serviceName}&service_config_version={configVersion}&fields=*',
+    'mock': '/data/configurations/config_versions.json'
+  },
+
+  'configs.config_versions.load.group': {
+    'real': '/clusters/{clusterName}/configurations/service_config_versions?service_name={serviceName}&group_id={configGroupId}&fields=*',
+    'mock': '/data/configurations/config_versions.json'
+  },
+
+
 
   'service.load_config_groups': {
     'real': '/clusters/{clusterName}/config_groups?ConfigGroup/tag={serviceName}&fields=*',

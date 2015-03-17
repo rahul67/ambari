@@ -53,34 +53,22 @@ describe('App.MainAlertDefinitionsController', function() {
 
   });
 
-  describe('#showPopup', function () {
+  describe('#isCriticalAlerts', function () {
 
-    describe('#bodyClass', function () {
+    beforeEach(function () {
+      controller.set('content', Em.A([
+        Em.Object.create({summary: {CRITICAL: {count: 0}}}),
+        Em.Object.create({summary: {CRITICAL: {}}})
+      ]));
+    });
 
-      var bodyView;
+    it('if summary is undefined, 0 should be used', function () {
+      expect(controller.get('isCriticalAlerts')).to.be.false;
+    });
 
-      beforeEach(function () {
-        controller.reopen({unhealthyAlertInstances: [
-          App.AlertInstance.createRecord({state: 'CRITICAL'}),
-          App.AlertInstance.createRecord({state: 'WARNING'}),
-          App.AlertInstance.createRecord({state: 'WARNING'}),
-          App.AlertInstance.createRecord({state: 'CRITICAL'})
-        ]});
-        bodyView = controller.showPopup().get('bodyClass').create();
-      });
-
-      it('#content', function () {
-        expect(bodyView.get('content.length')).to.equal(4);
-      });
-
-      it('#isLoaded', function () {
-        expect(bodyView.get('isLoaded')).to.be.true;
-      });
-
-      it('#isAlertEmptyList', function () {
-        expect(bodyView.get('isAlertEmptyList')).to.be.false;
-      });
-
+    it('should be true, if some CRITICAL count is greater than 0', function () {
+      controller.get('content').pushObject(Em.Object.create({summary: {CRITICAL: {count: 1}}}));
+      expect(controller.get('isCriticalAlerts')).to.be.true;
     });
 
   });

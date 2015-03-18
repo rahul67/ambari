@@ -16,59 +16,59 @@
    limitations under the License.
 -->
 <reposinfo>
-  <os type="debian7">
+  <os family="debian7">
     <repo>
       <baseurl>http://archive.cloudera.com/cdh5/debian/wheezy/amd64/cdh</baseurl>
       <repoid>wheezy-cdh5</repoid>
       <reponame>wheezy-cdh5</reponame>
-      <repobranch>contrib</repobranch>
+      <repocomponents>contrib</repocomponents>
     </repo>
     <repo>
       <baseurl>http://archive.cloudera.com/gplextras/debian/squeeze/amd64/gplextras</baseurl>
       <repoid>squeeze-gplextras4</repoid>
       <reponame>squeeze-gplextras4</reponame>
-      <repobranch>contrib</repobranch>
+      <repocomponents>contrib</repocomponents>
     </repo>
     <repo>
       <baseurl>http://debian.datastax.com/community</baseurl>
-      <repoid>stable</repoid>
-      <reponame>datastax</reponame>
-      <repobranch>main</repobranch>
+      <repoid>datastax</repoid>
+      <reponame>stable</reponame>
+      <repocomponents>main</repocomponents>
     </repo>
     <repo>
       <baseurl>http://public-repo-1.hortonworks.com/HDP-UTILS-1.1.0.17/repos/ubuntu12</baseurl>
-      <repoid>HDP-UTILS</repoid>
-      <reponame>HDP-TEZ</reponame>
-      <repobranch>main</repobranch>
+      <repoid>HDP-TEZ</repoid>
+      <reponame>HDP-UTILS</reponame>
+      <repocomponents>main</repocomponents>
     </repo>
   </os>
-  <os type="ubuntu7">
+  <os family="ubuntu7">
     <repo>
       <baseurl>http://archive.cloudera.com/cdh5/debian/wheezy/amd64/cdh</baseurl>
       <repoid>wheezy-cdh5</repoid>
       <reponame>wheezy-cdh5</reponame>
-      <repobranch>contrib</repobranch>
+      <repocomponents>contrib</repocomponents>
     </repo>
     <repo>
       <baseurl>http://archive.cloudera.com/gplextras/debian/squeeze/amd64/gplextras</baseurl>
       <repoid>squeeze-gplextras4</repoid>
       <reponame>squeeze-gplextras4</reponame>
-      <repobranch>contrib</repobranch>
+      <repocomponents>contrib</repocomponents>
     </repo>
     <repo>
       <baseurl>http://debian.datastax.com/community</baseurl>
       <repoid>stable</repoid>
       <reponame>datastax</reponame>
-      <repobranch>main</repobranch>
+      <repocomponents>main</repocomponents>
     </repo>
     <repo>
       <baseurl>http://public-repo-1.hortonworks.com/HDP-UTILS-1.1.0.17/repos/ubuntu12</baseurl>
       <repoid>HDP-UTILS</repoid>
-      <reponame>HDP-TEZ</reponame>
-      <repobranch>main</repobranch>
+      <reponame>HDP-UTILS</reponame>
+      <repocomponents>main</repocomponents>
     </repo>
   </os>
-<!--   <os type="redhat6"> -->
+<!--   <os family="redhat6"> -->
 <!--     <repo> -->
 <!--       <baseurl>http://public-repo-1.hortonworks.com/HDP/centos6/2.x/updates/2.0.6.1</baseurl> -->
 <!--       <repoid>HDP-2.0.6</repoid> -->
@@ -80,7 +80,7 @@
 <!--       <reponame>HDP-UTILS</reponame> -->
 <!--     </repo> -->
 <!--   </os> -->
-<!--   <os type="redhat5"> -->
+<!--   <os family="redhat5"> -->
 <!--     <repo> -->
 <!--       <baseurl>http://public-repo-1.hortonworks.com/HDP/centos5/2.x/updates/2.0.6.1</baseurl> -->
 <!--       <repoid>HDP-2.0.6</repoid> -->
@@ -92,7 +92,7 @@
 <!--       <reponame>HDP-UTILS</reponame> -->
 <!--     </repo> -->
 <!--   </os> -->
-<!--   <os type="suse11"> -->
+<!--   <os family="suse11"> -->
 <!--     <repo> -->
 <!--       <baseurl>http://public-repo-1.hortonworks.com/HDP/suse11/2.x/updates/2.0.6.1</baseurl> -->
 <!--       <repoid>HDP-2.0.6</repoid> -->

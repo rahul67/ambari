@@ -20,7 +20,15 @@
 var App = require('app');
 
 App.ConfigVersion = App.ServiceConfigVersion.extend({
-  configProperties: DS.hasMany('App.ConfigProperty')
+  configProperties: DS.hasMany('App.ConfigProperty'),
+
+  /**
+   * this flag is true when we compare some version with
+   * this config version
+   * this flag make influence on displaying properties
+   * @property {boolean} [isForCompare=false]
+   */
+  isForCompare: DS.attr('boolean', {defaultValue: false})
 });
 
 App.ConfigVersion.FIXTURES = [];

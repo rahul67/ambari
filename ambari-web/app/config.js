@@ -71,7 +71,10 @@ App.supports = {
   automatedKerberos: true,
   customizeAgentUserAccount: false,
   installGanglia: false,
-  opsDuringRollingUpgrade: false
+  opsDuringRollingUpgrade: false,
+  customizedWidgets: false,
+  enhancedConfigs: false,
+  setRackId: false
 };
 
 if (App.enableExperimental) {

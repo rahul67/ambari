@@ -46,15 +46,14 @@ module.exports = Em.Route.extend(App.RouterRedirections, {
                 Em.run.next(function () {
                   App.clusterStatus.updateFromServer().complete(function () {
                     var currentClusterStatus = App.clusterStatus.get('value');
-                    if (currentClusterStatus) {
-                      if (self.get('installerStatuses').contains(currentClusterStatus.clusterState)) {
-                        if (App.isAccessible('ADMIN')) {
-                          self.redirectToInstaller(router, currentClusterStatus, false);
-                        } else {
-                          Em.run.next(function () {
-                            App.router.transitionTo('main.views.index');
-                          });
-                        }
+                    if (router.get('currentState.parentState.name') !== 'views'
+                        && currentClusterStatus && self.get('installerStatuses').contains(currentClusterStatus.clusterState)) {
+                      if (App.isAccessible('ADMIN')) {
+                        self.redirectToInstaller(router, currentClusterStatus, false);
+                      } else {
+                        Em.run.next(function () {
+                          App.router.transitionTo('main.views.index');
+                        });
                       }
                     }
                   });
@@ -142,7 +141,10 @@ module.exports = Em.Route.extend(App.RouterRedirections, {
       heatmap: Em.Route.extend({
         route: '/heatmap',
         connectOutlets: function (router, context) {
-          router.get('mainChartsController').connectOutlet('mainChartsHeatmap');
+          router.get('mainController').dataLoading().done(function () {
+            router.get('mainChartsHeatmapController').loadRacks();
+            router.get('mainChartsController').connectOutlet('mainChartsHeatmap');
+          });
         }
       }),
       horizon_chart: Em.Route.extend({

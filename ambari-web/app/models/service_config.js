@@ -191,7 +191,6 @@ App.ServiceConfigProperty = Em.Object.extend({
   restartRequiredMessage: 'Restart required',
   index: null, //sequence number in category
   editDone: false, //Text field: on focusOut: true, on focusIn: false
-  serviceValidator: null,
   isNotSaved: false, // user property was added but not saved
   hasInitialValue: false, //if true then property value is defined and saved to server
   isHiddenByFilter: false, //if true then hide this property (filtered out)
@@ -313,6 +312,10 @@ App.ServiceConfigProperty = Em.Object.extend({
         this.setDefaultValue(hostWithPrefix,'://' + nnHost);
         break;
       case 'hbase.rootdir':
+        var nnHost = masterComponentHostsInDB.filterProperty('component', 'NAMENODE').mapProperty('hostName');
+        this.setDefaultValue(hostWithPrefix,'://' + nnHost);
+        break;
+      case 'instance.volumes':
         var nnHost = masterComponentHostsInDB.filterProperty('component', 'NAMENODE').mapProperty('hostName');
         this.setDefaultValue(hostWithPrefix,'://' + nnHost);
         break;
@@ -556,6 +559,7 @@ App.ServiceConfigProperty = Em.Object.extend({
       case 'templeton.zookeeper.hosts':
       case 'hadoop.registry.zk.quorum':
       case 'hive.cluster.delegation.token.store.zookeeper.connectString':
+      case 'instance.zookeeper.host': // for accumulo
         var zkHosts = masterComponentHostsInDB.filterProperty('component', 'ZOOKEEPER_SERVER').mapProperty('hostName');
         var zkHostPort = zkHosts;
         var regex = "\\w*:(\\d+)";   //regex to fetch the port
@@ -777,6 +781,7 @@ App.ServiceConfigProperty = Em.Object.extend({
 
       mountPointsPerHost = mountPointsPerHost.filter(function (mPoint) {
         return !(['/', '/home'].contains(mPoint.mountpoint)
+        || ['/etc/resolv.conf', '/etc/hostname', '/etc/hosts'].contains(mPoint.mountpoint) // docker specific mount points
         || mPoint.mountpoint && (mPoint.mountpoint.startsWith('/boot') || mPoint.mountpoint.startsWith('/mnt'))
         || ['devtmpfs', 'tmpfs', 'vboxsf', 'CDFS'].contains(mPoint.type)
         || mPoint.available == 0);

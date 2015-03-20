@@ -1871,7 +1871,7 @@ a:focus {
   }
 }
 
-.services, #summary-info {
+.services, .summary-info {
   .tab-marker-position {
     background-position:  0px 3px;
     background-repeat: no-repeat;
@@ -1916,7 +1916,7 @@ a:focus {
   }
 }
 
-#summary-info {
+.summary-info {
   border-top: none;
   border-collapse: collapse;
   color: #666;
@@ -2310,9 +2310,15 @@ a:focus {
     }
   }
 }
+.host-rack-id-popup {
+  .control-label {
+    width: 100px;
+    margin-right: 10px;
+  }
+}
 
 .service-content {
-  #summary-info {
+  .summary-info {
     margin-bottom: 0;
   }
 }
@@ -2863,6 +2869,10 @@ table.graphs {
     }
 	thead {
       background: none repeat scroll 0 0 #F8F8F8;
+    }
+
+    .set-rack-id {
+      text-decoration: none;
     }
   }
 
@@ -5531,4 +5541,13 @@ input[type="checkbox"].align-checkbox {
 
 .bottom-border {
   border-bottom: 1px solid #dddddd;
+}
+
+.progress-counter {
+  position: relative;
+  .counters-label {
+    font-weight: bold;
+    left: 45%;
+    position: absolute;
+  }
 }

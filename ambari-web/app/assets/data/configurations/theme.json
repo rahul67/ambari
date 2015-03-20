@@ -1,6 +1,7 @@
 {
   "Theme": {
     "name": "default",
+    "service_name": "YARN",
     "description": "Default theme for YARN service",
     "configuration": {
       "layouts": [
@@ -18,6 +19,7 @@
                     "name": "section-nm-sizing",
                     "display-name": "NM Sizing",
                     "row-index": "0",
+                    "column-span": "1",
                     "column-index": "0",
                     "row-span": "1",
                     "section-columns": "1",

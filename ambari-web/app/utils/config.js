@@ -122,18 +122,13 @@ App.config = Em.Object.create({
     return require('data/HDP2/site_properties').configProperties;
   }.property('App.isHadoop22Stack', 'App.currentStackName'),
 
-  preDefinedCustomConfigs: require('data/HDP2/custom_configs'),
-
-  preDefinedConfigFile: function (file) {
+  preDefinedConfigFile: function(file) {
     try {
       return require('data/{0}/{1}'.format(App.get('currentStackName'), file));
     } catch (err) {
       // the file doesn't exist, which might be expected.
     }
   },
-  //categories which contain custom configs
-  categoriesWithCustom: ['CapacityScheduler'],
-
 
   /**
    * Create array of service properties for Log4j files
@@ -181,7 +176,7 @@ App.config = Em.Object.create({
    * @param siteNames {String|Array}
    * @returns {Array}
    */
-  getBySitename: function (siteNames) {
+  getBySiteName: function (siteNames) {
     var computedConfigs = this.get('configMapping').computed();
     var siteProperties = [];
     if (typeof siteNames === "string") {
@@ -354,7 +349,7 @@ App.config = Em.Object.create({
         }
 
         this.tweakConfigVisibility(serviceConfigObj, properties);
-        if (!this.getBySitename(serviceConfigObj.get('filename')).someProperty('name', index)) {
+        if (!this.getBySiteName(serviceConfigObj.get('filename')).someProperty('name', index)) {
           if (configsPropertyDef) {
             if (configsPropertyDef.isRequiredByAgent === false) {
               continue;
@@ -628,15 +623,6 @@ App.config = Em.Object.create({
         }
       }, this);
     }
-  },
-  /**
-   * Render a custom conf-site box for entering properties that will be written in *-site.xml files of the services
-   */
-  addCustomConfigs: function (configs) {
-    var preDefinedCustomConfigs = $.extend(true, [], this.get('preDefinedCustomConfigs'));
-    var stored = configs.filter(function (_config) {
-      return this.get('categoriesWithCustom').contains(_config.category);
-    }, this);
   },
 
   miscConfigVisibleProperty: function (configs, serviceToShow) {
@@ -1002,27 +988,29 @@ App.config = Em.Object.create({
       'zk_user': 'ZooKeeper User',
       'ignore_groupsusers_create': 'Skip group modifications during install'
     };
-    if (config.property_type.contains('USER') || config.property_type.contains('GROUP')) {
-      propertyData.id = "puppet var";
-      propertyData.category = 'Users and Groups';
-      propertyData.isVisible = !App.get('isHadoopWindowsStack');
-      propertyData.serviceName = 'MISC';
-      propertyData.isOverridable = false;
-      propertyData.isReconfigurable = false;
-      propertyData.displayName = nameToDisplayNameMap[config.property_name] || App.format.normalizeName(config.property_name);
-      propertyData.displayType = config.property_name == 'ignore_groupsusers_create' ? 'checkbox' : 'user';
-      if (config.service_name) {
-        var propertyIndex = config.service_name == 'MISC' ? 30 : App.StackService.find().mapProperty('serviceName').indexOf(config.service_name);
-        propertyData.belongsToService = [config.service_name];
-        propertyData.index = propertyIndex;
-      } else {
-        propertyData.index = 30;
+    if (Em.isArray(config.property_type)) {
+      if (config.property_type.contains('USER') || config.property_type.contains('GROUP')) {
+        propertyData.id = "puppet var";
+        propertyData.category = 'Users and Groups';
+        propertyData.isVisible = !App.get('isHadoopWindowsStack');
+        propertyData.serviceName = 'MISC';
+        propertyData.isOverridable = false;
+        propertyData.isReconfigurable = false;
+        propertyData.displayName = nameToDisplayNameMap[config.property_name] || App.format.normalizeName(config.property_name);
+        propertyData.displayType = config.property_name == 'ignore_groupsusers_create' ? 'checkbox' : 'user';
+        if (config.service_name) {
+          var propertyIndex = config.service_name == 'MISC' ? 30 : App.StackService.find().mapProperty('serviceName').indexOf(config.service_name);
+          propertyData.belongsToService = [config.service_name];
+          propertyData.index = propertyIndex;
+        } else {
+          propertyData.index = 30;
+        }
+        if (config.property_name == 'proxyuser_group') propertyData.belongsToService = proxyUserGroupServices;
       }
-      if (config.property_name == 'proxyuser_group') propertyData.belongsToService = proxyUserGroupServices;
-    }
 
-    if (config.property_type.contains('PASSWORD')) {
-      propertyData.displayType = "password";
+      if (config.property_type.contains('PASSWORD')) {
+        propertyData.displayType = "password";
+      }
     }
 
     return propertyData;
@@ -1910,38 +1898,37 @@ App.config = Em.Object.create({
 
   /**
    * load config groups
-   * @param {String} serviceName
-   * @param {Number} configGroupId
+   * @param {string} [serviceName=null]
+   * @param {number} [configGroupId=null]
+   * @param {number} [configVersion=null]
+   * @param {boolean} [isForCompare=false]
    * @returns {$.ajax}
    * @method loadConfigGroups
    */
-  loadConfigVersions: function (serviceName, configGroupId, configVersion) {
-    var info = this.generateAjaxDataForVersions(serviceName, configGroupId, configVersion);
-    return App.ajax.send({
-      name: info.name,
-      sender: this,
-      data: info.data,
-      success: 'saveConfigVersionsToModel'
-    });
+  loadConfigVersions: function (serviceName, configGroupId, configVersion, isForCompare) {
+    var info = this.generateAjaxDataForVersions(serviceName, configGroupId, configVersion, isForCompare);
+    return App.ajax.send($.extend({sender: this, success: 'saveConfigVersionsToModel'}, info));
   },
 
   /**
    * generate ajax info
-   * @param serviceName
-   * @param configGroupId
-   * @param configVersion
+   * @param {string} [serviceName=null]
+   * @param {number} [configGroupId=null]
+   * @param {number} [configVersion=null]
+   * @param {boolean} [isForCompare=false]
    * @returns {{name: string, data: {}}}
    */
-  generateAjaxDataForVersions: function (serviceName, configGroupId, configVersion) {
+  generateAjaxDataForVersions: function (serviceName, configGroupId, configVersion, isForCompare) {
     var result = {
       name: 'configs.config_versions.load.all.min',
       data: {}
-    }
+    };
     if (serviceName) {
       result.data.serviceName = serviceName;
       if (configVersion) {
         result.name = 'configs.config_versions.load';
-        result.data.configVersion = configVersion
+        result.data.configVersion = configVersion;
+        result.data.isForCompare = isForCompare;
       } else if (configGroupId) {
         result.name = 'configs.config_versions.load.group';
         result.data.configGroupId = configGroupId;
@@ -1958,7 +1945,31 @@ App.config = Em.Object.create({
    * @param opt
    * @param params
    */
-  saveConfigVersionsToModel: function (data) {
-    App.configVersionsMapper.map(data);
+  saveConfigVersionsToModel: function (data, opt, params) {
+    App.configVersionsMapper.map(data, params.isForCompare);
+  },
+
+  /**
+   * load config themes
+   * @param {string} serviceName
+   * @returns {$.ajax}
+   */
+  loadConfigTheme: function(serviceName) {
+    return App.ajax.send({
+      name: 'configs.theme',
+      sender: this,
+      data: {
+        serviceName: serviceName
+      },
+      success: 'saveThemeToModel'
+    });
+  },
+
+  /**
+   * runs <code>themeMapper<code>
+   * @param data
+   */
+  saveThemeToModel: function(data) {
+    App.themesMapper.map(data);
   }
 });

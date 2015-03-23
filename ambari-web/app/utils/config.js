@@ -989,7 +989,7 @@ App.config = Em.Object.create({
       'ignore_groupsusers_create': 'Skip group modifications during install'
     };
     if (Em.isArray(config.property_type)) {
-      if (config.property_type.contains('USER') || config.property_type.contains('GROUP')) {
+      if (config.property_type.contains('USER') || config.property_type.contains('ADDITIONAL_USER_PROPERTY') || config.property_type.contains('GROUP')) {
         propertyData.id = "puppet var";
         propertyData.category = 'Users and Groups';
         propertyData.isVisible = !App.get('isHadoopWindowsStack');
@@ -1336,7 +1336,7 @@ App.config = Em.Object.create({
   textareaIntoFileConfigs: function (configs, filename) {
     var complexConfigName = this.get('complexConfigsTemplate').findProperty('filename', filename).name;
     var configsTextarea = configs.findProperty('name', complexConfigName);
-    if (configsTextarea) {
+    if (configsTextarea && !App.get('testMode')) {
       var properties = configsTextarea.get('value').split('\n');
 
       properties.forEach(function (_property) {
@@ -1910,6 +1910,22 @@ App.config = Em.Object.create({
     return App.ajax.send($.extend({sender: this, success: 'saveConfigVersionsToModel'}, info));
   },
 
+  /**
+   *
+   * @param serviceNames
+   * @returns {$.ajax}
+   */
+  loadConfigCurrentVersions: function (serviceNames) {
+    Em.assert('serviceNames should be not empty array', Em.isArray(serviceNames) && serviceNames.length > 0);
+    return App.ajax.send({
+      name: 'configs.config_versions.load.current_versions',
+      sender: this,
+      data: {
+        serviceNames: serviceNames.join(",")
+      },
+      success: 'saveConfigVersionsToModel'
+    });
+  },
   /**
    * generate ajax info
    * @param {string} [serviceName=null]

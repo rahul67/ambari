@@ -249,6 +249,12 @@ Em.I18n.translations = {
   'common.dismiss': "Dismiss",
   'common.stdout': "stdout",
   'common.stderr': "stderr",
+  'common.fileName': 'File name',
+  'common.days': "Days",
+  'common.hours': "Hours",
+  'common.minutes': "Minutes",
+  'common.seconds': "Seconds",
+  'common.milliseconds': "Milliseconds",
 
   'models.alert_instance.tiggered.verbose': "Occured on {0} <br> Checked on {1}",
   'models.alert_definition.triggered.verbose': "Occured on {0}",

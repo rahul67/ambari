@@ -40,9 +40,9 @@ public interface Validable {
   
   public void setErrors(String error);
   
-  public void setErrors(Collection error);
+  public void setErrors(Collection<String> error);
   
-  public Collection getErrors();
+  public Collection<String> getErrors();
   
   
 }

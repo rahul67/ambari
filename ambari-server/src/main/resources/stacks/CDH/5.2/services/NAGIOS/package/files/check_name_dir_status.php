@@ -22,7 +22,7 @@
  * check_jmx -H hostaddress -p port -k keytab path -r principal name -t kinit path -s security enabled
  */
  
-  include "hdp_nagios_init.php";
+  include "hadoop_nagios_init.php";
 
   $options = getopt("h:p:e:k:r:t:s:");
   //Check only for mandatory options

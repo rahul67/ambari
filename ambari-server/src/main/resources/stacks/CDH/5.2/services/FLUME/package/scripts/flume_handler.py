@@ -17,94 +17,79 @@ limitations under the License.
 
 """
 
-from resource_management import *
+import flume_upgrade
+
 from flume import flume
-from flume import flume_status
-from flume import find_expected_agent_names
 from flume import get_desired_state
 
+from resource_management import *
+from resource_management.libraries.functions.flume_agent_helper import find_expected_agent_names
+from resource_management.libraries.functions.flume_agent_helper import get_flume_status
+from resource_management.libraries.functions.version import compare_versions, format_hdp_stack_version
+import service_mapping
+from ambari_commons import OSConst
+from ambari_commons.os_family_impl import OsFamilyFuncImpl, OsFamilyImpl
+
 class FlumeHandler(Script):
+
+  @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
+  def get_stack_to_component(self):
+    return {"CDH": "flume-server"}
+
+  @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
   def install(self, env):
     import params
-
     self.install_packages(env)
     env.set_params(params)
 
-  def start(self, env):
-    import params
-
-    env.set_params(params)
+  @OsFamilyFuncImpl(os_family=OSConst.WINSRV_FAMILY)
+  def install(self, env):
+    if not check_windows_service_exists(service_mapping.flume_win_service_name):
+      self.install_packages(env)
     self.configure(env)
 
+  @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
+  def start(self, env, rolling_restart=False):
+    import params
+    env.set_params(params)
+    self.configure(env)
     flume(action='start')
 
+  @OsFamilyFuncImpl(os_family=OSConst.WINSRV_FAMILY)
+  def start(self, env):
+    import params
+    env.set_params(params)
+    self.configure(env)
+    Service(service_mapping.flume_win_service_name, action="start")
+    # flume(action='start')
+
+  @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
+  def stop(self, env, rolling_restart=False):
+    import params
+    env.set_params(params)
+    flume(action='stop')
+    if rolling_restart:
+      flume_upgrade.post_stop_backup()
+
+  @OsFamilyFuncImpl(os_family=OSConst.WINSRV_FAMILY)
   def stop(self, env):
     import params
-
-    env.set_params(params)
-
-    flume(action='stop')
+    Service(service_mapping.flume_win_service_name, action="stop")
 
   def configure(self, env):
     import params
-
     env.set_params(params)
-
     flume(action='config')
 
+  @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
   def status(self, env):
     import params
-
     env.set_params(params)
-
-    processes = flume_status()
-    expected_agents = find_expected_agent_names()
+    processes = get_flume_status(params.flume_conf_dir, params.flume_run_dir)
+    expected_agents = find_expected_agent_names(params.flume_conf_dir)
 
     json = {}
     json['processes'] = processes
-    json['alerts'] = []
-
-    alert = {}
-    alert['name'] = 'flume_agent'
-    alert['label'] = 'Flume Agent process'
-
-    if len(processes) == 0 and len(expected_agents) == 0:
-      alert['state'] = 'OK'
-
-      if not params.hostname is None:
-        alert['text'] = 'No agents defined on ' + params.hostname
-      else:
-        alert['text'] = 'No agents defined'
-
-    else:
-      crit = []
-      ok = []
-
-      for proc in processes:
-        if not proc.has_key('status') or proc['status'] == 'NOT_RUNNING':
-          crit.append(proc['name'])
-        else:
-          ok.append(proc['name'])
-
-      text_arr = []
-
-      if len(crit) > 0:
-        text_arr.append("{0} {1} NOT running".format(", ".join(crit),
-          "is" if len(crit) == 1 else "are"))
-
-      if len(ok) > 0:
-        text_arr.append("{0} {1} running".format(", ".join(ok),
-          "is" if len(ok) == 1 else "are"))
-
-      plural = len(crit) > 1 or len(ok) > 1
-      alert['text'] = "Agent{0} {1} {2}".format(
-        "s" if plural else "",
-        " and ".join(text_arr),
-        "" if params.hostname is None else "on " + str(params.hostname))
-
-      alert['state'] = 'CRITICAL' if len(crit) > 0 else 'OK'
-
-    json['alerts'].append(alert)
     self.put_structured_out(json)
 
     # only throw an exception if there are agents defined and there is a 
@@ -116,6 +101,25 @@ class FlumeHandler(Script):
           raise ComponentIsNotRunning()
     elif len(expected_agents) == 0 and 'INSTALLED' == get_desired_state():
       raise ComponentIsNotRunning()
+
+  @OsFamilyFuncImpl(os_family=OSConst.WINSRV_FAMILY)
+  def status(self, env):
+    import params
+    check_windows_service_status(service_mapping.flume_win_service_name)
+
+  @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
+  def pre_rolling_restart(self, env):
+    import params
+    env.set_params(params)
+
+    # this function should not execute if the version can't be determined or
+    # is not at least HDP 2.2.0.0
+    if not params.version or compare_versions(format_hdp_stack_version(params.version), '5.2') < 0:
+      return
+
+    Logger.info("Executing Flume Rolling Upgrade pre-restart")
+    Execute(format("hdp-select set flume-server {version}"))
+    flume_upgrade.pre_start_restore()
 
 if __name__ == "__main__":
   FlumeHandler().execute()

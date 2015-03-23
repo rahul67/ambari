@@ -18,35 +18,32 @@ limitations under the License.
 
 """
 
-"""
 from resource_management.libraries.functions.version import format_hdp_stack_version, compare_versions
-"""
 from resource_management import *
 
 # server configurations
 config = Script.get_config()
 
-"""
-# This is expected to be of the form #.#.#.#
-hdp_stack_version = str(config['hostLevelParams']['stack_version'])
-hdp_stack_version = format_hdp_stack_version(hdp_stack_version)
-stack_is_hdp22_or_further = hdp_stack_version != "" and compare_versions(hdp_stack_version, '2.2') >= 0
+stack_name = default("/hostLevelParams/stack_name", None)
 
-if stack_is_hdp22_or_further:
-  hadoop_bin_dir = "/usr/hdp/current/hadoop-client/bin"
-else:
-  hadoop_bin_dir = "/usr/bin"
-"""
-hadoop_bin_dir="/usr/bin"
+# This is expected to be of the form #.#.#.#
+stack_version_unformatted = str(config['hostLevelParams']['stack_version'])
+cluster_stack_version = format_hdp_stack_version(stack_version_unformatted)
+
+# New Cluster Stack Version that is defined during the RESTART of a Rolling Upgrade
+version = default("/commandParams/version", None)
+
+hadoop_bin_dir = "/usr/bin"
 hadoop_conf_dir = "/etc/hadoop/conf"
 
-kinit_path_local = functions.get_kinit_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"])
+kinit_path_local = functions.get_kinit_path()
 security_enabled = config['configurations']['cluster-env']['security_enabled']
 hdfs_user = config['configurations']['hadoop-env']['hdfs_user']
 hdfs_principal_name = config['configurations']['hadoop-env']['hdfs_principal_name']
 hdfs_user_keytab = config['configurations']['hadoop-env']['hdfs_user_keytab']
 
-config_dir = "/etc/tez/conf"
+config_dir_prefix = "/etc/tez"
+config_dir = format("{config_dir_prefix}/conf")
 
 hadoop_home = '/usr'
 java64_home = config['hostLevelParams']['java_home']
@@ -62,7 +59,7 @@ import functools
 HdfsDirectory = functools.partial(
   HdfsDirectory,
   conf_dir=hadoop_conf_dir,
-  hdfs_user=hdfs_principal_name if security_enabled else hdfs_user,
+  hdfs_user=hdfs_user,
   security_enabled=security_enabled,
   keytab=hdfs_user_keytab,
   kinit_path_local=kinit_path_local,

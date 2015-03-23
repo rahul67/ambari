@@ -60,18 +60,41 @@ def yarn(name = None):
     )
     params.HdfsDirectory(None, action="create")
 
-  Directory([params.yarn_pid_dir, params.yarn_log_dir],
+  if name == "nodemanager":
+    Directory(params.nm_local_dirs.split(',') + params.nm_log_dirs.split(','),
+              owner=params.yarn_user,
+              group=params.user_group,
+              recursive=True,
+              cd_access="a",
+              ignore_failures=True,
+              mode=0775
+              )
+
+    Execute(('chown', '-R', params.yarn_user, params.nm_local_dirs),
+            only_if=format("test -d {nm_local_dirs}"),
+            sudo=True)
+
+
+    if params.security_enabled:
+      smokeuser_directories = [os.path.join(dir, 'usercache' ,params.smokeuser)
+                               for dir in params.nm_local_dirs.split(',')]
+      for directory in smokeuser_directories:
+        Execute(('chown', '-R', params.smokeuser, directory),
+                only_if=format("test -d {directory}"),
+                sudo=True,
+        )
+  Directory([params.yarn_pid_dir_prefix, params.yarn_pid_dir, params.yarn_log_dir],
             owner=params.yarn_user,
             group=params.user_group,
             recursive=True
   )
 
-  Directory([params.mapred_pid_dir, params.mapred_log_dir],
+  Directory([params.mapred_pid_dir_prefix, params.mapred_pid_dir, params.mapred_log_dir_prefix, params.mapred_log_dir],
             owner=params.mapred_user,
             group=params.user_group,
             recursive=True
   )
-  Directory(params.nm_local_dirs.split(',')+params.nm_log_dirs.split(',')+[params.yarn_log_dir_prefix],
+  Directory([params.yarn_log_dir_prefix],
             owner=params.yarn_user,
             recursive=True,
             ignore_failures=True,
@@ -118,11 +141,19 @@ def yarn(name = None):
        owner=params.yarn_user,
        group=params.user_group
     )
+    if params.node_labels_dir:
+      params.HdfsDirectory(params.node_labels_dir,
+                           action="create",
+                           owner=params.yarn_user,
+                           group=params.user_group,
+                           mode=0700
+      )
   elif name == 'apptimelineserver':
     Directory(params.ats_leveldb_dir,
        owner=params.yarn_user,
        group=params.user_group,
-       recursive=True
+       recursive=True,
+       cd_access="a",
     )
 
   File(params.rm_nodes_exclude_path,

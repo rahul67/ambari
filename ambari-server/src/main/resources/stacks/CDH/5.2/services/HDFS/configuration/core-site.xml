@@ -22,6 +22,12 @@
 
 <configuration supports_final="true" xmlns:xi="http://www.w3.org/2001/XInclude">
 
+  <property>
+    <name>ha.failover-controller.active-standby-elector.zk.op.retries</name>
+    <value>120</value>
+    <description>ZooKeeper Failover Controller retries setting for your environment</description>
+  </property>
+
 <!-- i/o properties -->
 
   <property>
@@ -42,7 +48,7 @@
 
   <property>
     <name>io.compression.codecs</name>
-    <value>org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec</value>
+    <value>org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.SnappyCodec</value>
     <description>A list of the compression codec classes that can be used
                  for compression/decompression.</description>
   </property>
@@ -130,11 +136,6 @@
   <property>
     <name>hadoop.security.auth_to_local</name>
     <value>
-        RULE:[2:$1@$0]([rn]m@.*)s/.*/yarn/
-        RULE:[2:$1@$0](jhs@.*)s/.*/mapred/
-        RULE:[2:$1@$0]([nd]n@.*)s/.*/hdfs/
-        RULE:[2:$1@$0](hm@.*)s/.*/hbase/
-        RULE:[2:$1@$0](rs@.*)s/.*/hbase/
         DEFAULT
     </value>
 <description>The mapping from kerberos principal names to local OS mapreduce.job.user.names.
@@ -174,16 +175,6 @@ If you want to treat all principals from APACHE.ORG with /admin as "admin", your
 
 RULE[2:$1%$2@$0](.%admin@APACHE.ORG)s/./admin/
 DEFAULT
-    </description>
-  </property>
-
-  <property>
-    <name>dfs.http.policy</name>
-    <value>HTTP_ONLY</value>
-    <description>
-      Decide if HTTPS(SSL) is supported on HDFS This configures the HTTP endpoint for HDFS daemons:
-      The following values are supported: - HTTP_ONLY : Service is provided only on http - HTTPS_ONLY :
-      Service is provided only on https - HTTP_AND_HTTPS : Service is provided both on http and https
     </description>
   </property>
 

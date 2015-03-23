@@ -19,7 +19,8 @@ Ambari Agent
 
 """
 import os
-
+from resource_management.libraries.functions.version import format_hdp_stack_version, compare_versions
+from resource_management.libraries.functions.default import default
 from resource_management import *
 import status_params
 
@@ -27,28 +28,26 @@ import status_params
 config = Script.get_config()
 tmp_dir = Script.get_tmp_dir()
 
-#RPM versioning support
-rpm_version = default("/configurations/hadoop-env/rpm_version", None)
+stack_name = default("/hostLevelParams/stack_name", None)
+
+# This is expected to be of the form #.#.#.#
+stack_version_unformatted = str(config['hostLevelParams']['stack_version'])
+cluster_stack_version = format_hdp_stack_version(stack_version_unformatted)
+
+# New Cluster Stack Version that is defined during the RESTART of a Rolling Upgrade
+version = default("/commandParams/version", None)
+
+hostname = config['hostname']
 
 #hadoop params
-if rpm_version is not None:
-  hadoop_libexec_dir = "/usr/hdp/current/hadoop/libexec"
-  hadoop_bin = "/usr/hdp/current/hadoop/sbin"
-  hadoop_bin_dir = "/usr/hdp/current/hadoop/bin"
-  hadoop_yarn_home = '/usr/hdp/current/hadoop-yarn'
-  hadoop_mapred2_jar_location = '/usr/hdp/current/hadoop-mapreduce'
-  mapred_bin = '/usr/hdp/current/hadoop-mapreduce/sbin'
-  yarn_bin = '/usr/hdp/current/hadoop-yarn/sbin'
-  yarn_container_bin = '/usr/hdp/current/hadoop-yarn/bin'
-else:
-  hadoop_libexec_dir = "/usr/lib/hadoop/libexec"
-  hadoop_bin = "/usr/lib/hadoop/sbin"
-  hadoop_bin_dir = "/usr/bin"
-  hadoop_yarn_home = '/usr/lib/hadoop-yarn'
-  hadoop_mapred2_jar_location = "/usr/lib/hadoop-mapreduce"
-  mapred_bin = "/usr/lib/hadoop-mapreduce/sbin"
-  yarn_bin = "/usr/lib/hadoop-yarn/sbin"
-  yarn_container_bin = "/usr/lib/hadoop-yarn/bin"
+hadoop_libexec_dir = "/usr/lib/hadoop/libexec"
+hadoop_bin = "/usr/lib/hadoop/sbin"
+hadoop_bin_dir = "/usr/bin"
+hadoop_yarn_home = '/usr/lib/hadoop-yarn'
+hadoop_mapred2_jar_location = "/usr/lib/hadoop-mapreduce"
+mapred_bin = "/usr/lib/hadoop-mapreduce/sbin"
+yarn_bin = "/usr/lib/hadoop-yarn/sbin"
+yarn_container_bin = "/usr/lib/hadoop-yarn/bin"
 
 hadoop_conf_dir = "/etc/hadoop/conf"
 limits_conf_dir = "/etc/security/limits.d"
@@ -61,10 +60,11 @@ yarn_user = status_params.yarn_user
 hdfs_user = config['configurations']['hadoop-env']['hdfs_user']
 
 smokeuser = config['configurations']['cluster-env']['smokeuser']
+smokeuser_principal = config['configurations']['cluster-env']['smokeuser_principal_name']
 security_enabled = config['configurations']['cluster-env']['security_enabled']
 smoke_user_keytab = config['configurations']['cluster-env']['smokeuser_keytab']
 yarn_executor_container_group = config['configurations']['yarn-site']['yarn.nodemanager.linux-container-executor.group']
-kinit_path_local = functions.get_kinit_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"])
+kinit_path_local = functions.get_kinit_path()
 rm_hosts = config['clusterHostInfo']['rm_host']
 rm_host = rm_hosts[0]
 rm_port = config['configurations']['yarn-site']['yarn.resourcemanager.webapp.address'].split(':')[-1]
@@ -97,6 +97,9 @@ else:
 
 nm_webui_address = config['configurations']['yarn-site']['yarn.nodemanager.webapp.address']
 hs_webui_address = config['configurations']['mapred-site']['mapreduce.jobhistory.webapp.address']
+nm_address = config['configurations']['yarn-site']['yarn.nodemanager.address']  # still contains 0.0.0.0
+if hostname and nm_address and nm_address.startswith("0.0.0.0:"):
+  nm_address = nm_address.replace("0.0.0.0", hostname)
 
 nm_local_dirs = config['configurations']['yarn-site']['yarn.nodemanager.local-dirs']
 nm_log_dirs = config['configurations']['yarn-site']['yarn.nodemanager.log-dirs']
@@ -113,29 +116,40 @@ mapred_job_summary_log = format("{mapred_log_dir_prefix}/{mapred_user}/hadoop-ma
 yarn_job_summary_log = format("{yarn_log_dir_prefix}/{yarn_user}/hadoop-mapreduce.jobsummary.log")
 
 user_group = config['configurations']['cluster-env']['user_group']
-yarn_group = config['configurations']['yarn-env']['yarn_group']
 
 #exclude file
 exclude_hosts = default("/clusterHostInfo/decom_nm_hosts", [])
 exclude_file_path = default("/configurations/yarn-site/yarn.resourcemanager.nodes.exclude-path","/etc/hadoop/conf/yarn.exclude")
 
-hostname = config['hostname']
+ats_host = set(default("/clusterHostInfo/app_timeline_server_hosts", []))
+has_ats = not len(ats_host) == 0
+
+# default kinit commands
+rm_kinit_cmd = ""
+yarn_timelineservice_kinit_cmd = ""
+nodemanager_kinit_cmd = ""
 
 if security_enabled:
   _rm_principal_name = config['configurations']['yarn-site']['yarn.resourcemanager.principal']
-  _rm_keytab = config['configurations']['yarn-site']['yarn.resourcemanager.keytab']
   _rm_principal_name = _rm_principal_name.replace('_HOST',hostname.lower())
-  
+  _rm_keytab = config['configurations']['yarn-site']['yarn.resourcemanager.keytab']
   rm_kinit_cmd = format("{kinit_path_local} -kt {_rm_keytab} {_rm_principal_name};")
 
   # YARN timeline security options are only available in HDP Champlain
-  _yarn_timelineservice_principal_name = config['configurations']['yarn-site']['yarn.timeline-service.principal']
-  _yarn_timelineservice_principal_name = _yarn_timelineservice_principal_name.replace('_HOST', hostname.lower())
-  _yarn_timelineservice_keytab = config['configurations']['yarn-site']['yarn.timeline-service.keytab']
-  yarn_timelineservice_kinit_cmd = format("{kinit_path_local} -kt {_yarn_timelineservice_keytab} {_yarn_timelineservice_principal_name};")
-else:
-  rm_kinit_cmd = ""
-  yarn_timelineservice_kinit_cmd = ""
+  if has_ats:
+    _yarn_timelineservice_principal_name = config['configurations']['yarn-site']['yarn.timeline-service.principal']
+    _yarn_timelineservice_principal_name = _yarn_timelineservice_principal_name.replace('_HOST', hostname.lower())
+    _yarn_timelineservice_keytab = config['configurations']['yarn-site']['yarn.timeline-service.keytab']
+    yarn_timelineservice_kinit_cmd = format("{kinit_path_local} -kt {_yarn_timelineservice_keytab} {_yarn_timelineservice_principal_name};")
+
+  if 'yarn.nodemanager.principal' in config['configurations']['yarn-site']:
+    _nodemanager_principal_name = default('/configurations/yarn-site/yarn.nodemanager.principal', None)
+    if _nodemanager_principal_name:
+      _nodemanager_principal_name = _nodemanager_principal_name.replace('_HOST', hostname.lower())
+
+    _nodemanager_keytab = config['configurations']['yarn-site']['yarn.nodemanager.keytab']
+    nodemanager_kinit_cmd = format("{kinit_path_local} -kt {_nodemanager_keytab} {_nodemanager_principal_name};")
+
 
 yarn_log_aggregation_enabled = config['configurations']['yarn-site']['yarn.log-aggregation-enable']
 yarn_nm_app_log_dir =  config['configurations']['yarn-site']['yarn.nodemanager.remote-app-log-dir']
@@ -144,11 +158,8 @@ mapreduce_jobhistory_done_dir = config['configurations']['mapred-site']['mapredu
 jobhistory_heapsize = default("/configurations/mapred-env/jobhistory_heapsize", "900")
 
 #for create_hdfs_directory
-hostname = config["hostname"]
 hdfs_user_keytab = config['configurations']['hadoop-env']['hdfs_user_keytab']
-hdfs_user = config['configurations']['hadoop-env']['hdfs_user']
 hdfs_principal_name = config['configurations']['hadoop-env']['hdfs_principal_name']
-kinit_path_local = functions.get_kinit_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"])
 import functools
 #create partial functions with common arguments for every HdfsDirectory call
 #to create hdfs directory we need to call params.HdfsDirectory in code
@@ -161,7 +172,7 @@ HdfsDirectory = functools.partial(
   kinit_path_local = kinit_path_local,
   bin_dir = hadoop_bin_dir
 )
-update_exclude_file_only = config['commandParams']['update_exclude_file_only']
+update_exclude_file_only = default("/commandParams/update_exclude_file_only",False)
 
 mapred_tt_group = default("/configurations/mapred-site/mapreduce.tasktracker.group", user_group)
 
@@ -171,3 +182,5 @@ mapred_local_dir = "/tmp/hadoop-mapred/mapred/local"
 hdfs_log_dir_prefix = config['configurations']['hadoop-env']['hdfs_log_dir_prefix']
 min_user_id = config['configurations']['yarn-env']['min_user_id']
 
+# Node labels
+node_labels_dir = default("/configurations/yarn-site/yarn.node-labels.fs-store.root-dir", None)

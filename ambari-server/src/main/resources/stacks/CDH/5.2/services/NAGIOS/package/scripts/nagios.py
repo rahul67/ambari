@@ -72,8 +72,8 @@ def nagios():
     content = StaticFile(params.ambarinagios_php_filename),
   )
 
-  File( params.hdp_mon_nagios_addons_path,
-    content = StaticFile("hdp_mon_nagios_addons.conf"),
+  File( params.hadoop_mon_nagios_addons_path,
+    content = StaticFile("hadoop_mon_nagios_addons.conf"),
   )
 
   File(format("{nagios_var_dir}/ignore.dat"),

@@ -30,17 +30,27 @@ class HiveServiceCheck(Script):
     import params
     env.set_params(params)
 
-    address=format("{hive_server_host}")
-    port=int(format("{hive_server_port}"))
-    s = socket.socket()
+    address_list = params.hive_server_hosts
+    port = int(format("{hive_server_port}"))
     print "Test connectivity to hive server"
-    try:
-      s.connect((address, port))
-      print "Successfully connected to %s on port %s" % (address, port)
-      s.close()
-    except socket.error, e:
-      print "Connection to %s on port %s failed: %s" % (address, port, e)
-      sys.exit(1)
+    if params.security_enabled:
+      kinitcmd=format("{kinit_path_local} -kt {smoke_user_keytab} {smokeuser_principal}; ")
+    else:
+      kinitcmd=None
+
+    workable_server_available = False
+    for address in address_list:
+      try:
+        check_thrift_port_sasl(address, port, params.hive_server2_authentication,
+                               params.hive_server_principal, kinitcmd, params.smokeuser,
+                               transport_mode=params.hive_transport_mode)
+        print "Successfully connected to %s on port %s" % (address, port)
+        workable_server_available = True
+      except:
+        print "Connection to %s on port %s failed" % (address, port)
+
+    if not workable_server_available:
+      exit(1)
 
     hcat_service_check()
     webhcat_service_check()

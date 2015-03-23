@@ -26,6 +26,10 @@ def hbase(name=None # 'master' or 'regionserver' or 'client'
               ):
   import params
 
+  Directory( params.hbase_conf_dir_prefix,
+      mode=0755
+  )
+
   Directory( params.hbase_conf_dir,
       owner = params.hbase_user,
       group = params.user_group,
@@ -34,6 +38,15 @@ def hbase(name=None # 'master' or 'regionserver' or 'client'
 
   Directory (params.tmp_dir,
              owner = params.hbase_user,
+             mode=0775,
+             recursive = True,
+             cd_access="a",
+  )
+
+  Directory (params.local_dir,
+             owner = params.hbase_user,
+             group = params.user_group,
+             mode=0775,
              recursive = True
   )
 
@@ -52,21 +65,30 @@ def hbase(name=None # 'master' or 'regionserver' or 'client'
             group = params.user_group
   )
 
-  XmlConfig( "hdfs-site.xml",
+  XmlConfig( "core-site.xml",
+             conf_dir = params.hbase_conf_dir,
+             configurations = params.config['configurations']['core-site'],
+             configuration_attributes=params.config['configuration_attributes']['core-site'],
+             owner = params.hbase_user,
+             group = params.user_group
+  )
+
+  if 'hdfs-site' in params.config['configurations']:
+    XmlConfig( "hdfs-site.xml",
             conf_dir = params.hbase_conf_dir,
             configurations = params.config['configurations']['hdfs-site'],
             configuration_attributes=params.config['configuration_attributes']['hdfs-site'],
             owner = params.hbase_user,
             group = params.user_group
-  )
+    )
 
-  XmlConfig("hdfs-site.xml",
+    XmlConfig("hdfs-site.xml",
             conf_dir=params.hadoop_conf_dir,
             configurations=params.config['configurations']['hdfs-site'],
             configuration_attributes=params.config['configuration_attributes']['hdfs-site'],
             owner=params.hdfs_user,
             group=params.user_group
-  )
+    )
 
   if 'hbase-policy' in params.config['configurations']:
     XmlConfig( "hbase-policy.xml",

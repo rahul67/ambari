@@ -28,11 +28,19 @@ def zookeeper_service(action='start'):
 
   if action == 'start':
     daemon_cmd = format("source {config_dir}/zookeeper-env.sh ; {cmd} start")
-    no_op_test = format("ls {zk_pid_file} >/dev/null 2>&1 && ps `cat {zk_pid_file}` >/dev/null 2>&1")
+    no_op_test = format("ls {zk_pid_file} >/dev/null 2>&1 && ps -p `cat {zk_pid_file}` >/dev/null 2>&1")
     Execute(daemon_cmd,
             not_if=no_op_test,
             user=params.zk_user
     )
+
+    if params.security_enabled:
+      kinit_cmd = format("{kinit_path_local} -kt {smoke_user_keytab} {smokeuser_principal};")
+
+      Execute(kinit_cmd,
+              user=params.smokeuser
+      )
+
   elif action == 'stop':
     daemon_cmd = format("source {config_dir}/zookeeper-env.sh ; {cmd} stop")
     rm_pid = format("rm -f {zk_pid_file}")

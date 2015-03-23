@@ -18,19 +18,19 @@
  */
 
 /** Constants. */
-define("HDP_MON_RESPONSE_OPTION_KEY__PROPERTIES", "Properties");
-define("HDP_MON_RESPONSE_OPTION_KEY__TYPE", "Type");
+define("HADOOP_MON_RESPONSE_OPTION_KEY__PROPERTIES", "Properties");
+define("HADOOP_MON_RESPONSE_OPTION_KEY__TYPE", "Type");
 
-define("HDP_MON_RESPONSE_OPTION_VALUE__PROPERTIES_UNCACHEABLE", "Uncacheable");
-define("HDP_MON_RESPONSE_OPTION_VALUE__TYPE_JSON", "JSON");
-define("HDP_MON_RESPONSE_OPTION_VALUE__TYPE_JAVASCRIPT", "JAVASCRIPT");
+define("HADOOP_MON_RESPONSE_OPTION_VALUE__PROPERTIES_UNCACHEABLE", "Uncacheable");
+define("HADOOP_MON_RESPONSE_OPTION_VALUE__TYPE_JSON", "JSON");
+define("HADOOP_MON_RESPONSE_OPTION_VALUE__TYPE_JAVASCRIPT", "JAVASCRIPT");
 
-define("HDP_MON_QUERY_ARG__JSONP", "jsonp");
+define("HADOOP_MON_QUERY_ARG__JSONP", "jsonp");
 
 /** Spits out appropriate response headers, as per the options passed in. */
-function hdp_mon_generate_response_headers( $response_options )
+function hadoop_mon_generate_response_headers( $response_options )
 {
-  if( $response_options[HDP_MON_RESPONSE_OPTION_KEY__PROPERTIES] == HDP_MON_RESPONSE_OPTION_VALUE__PROPERTIES_UNCACHEABLE )
+  if( $response_options[HADOOP_MON_RESPONSE_OPTION_KEY__PROPERTIES] == HADOOP_MON_RESPONSE_OPTION_VALUE__PROPERTIES_UNCACHEABLE )
   {
     // Make the response uncache-able.
     header("Expires: Mon, 26 Jul 1997 05:00:00 GMT"); // Date in the past
@@ -39,15 +39,15 @@ function hdp_mon_generate_response_headers( $response_options )
     header("Pragma: no-cache"); // HTTP/1.0
   }
 
-  switch( $response_options[HDP_MON_RESPONSE_OPTION_KEY__TYPE] )
+  switch( $response_options[HADOOP_MON_RESPONSE_OPTION_KEY__TYPE] )
   {
-    case HDP_MON_RESPONSE_OPTION_VALUE__TYPE_JSON:
+    case HADOOP_MON_RESPONSE_OPTION_VALUE__TYPE_JSON:
       {
         header('Content-type: application/json');
       }
       break;
 
-    case HDP_MON_RESPONSE_OPTION_VALUE__TYPE_JAVASCRIPT:
+    case HADOOP_MON_RESPONSE_OPTION_VALUE__TYPE_JAVASCRIPT:
       {
         header('Content-type: application/javascript');
       }
@@ -60,19 +60,19 @@ function hdp_mon_generate_response_headers( $response_options )
  *  followed by the response body (that is either plain ol' $response_data,
  *  or a JSONP wrapper around it).
  */
-function hdp_mon_generate_response( $response_data )
+function hadoop_mon_generate_response( $response_data )
 {
   $jsonpFunctionName = NULL;
-  if (isset($_GET[HDP_MON_QUERY_ARG__JSONP])) {
-    $jsonpFunctionName = $_GET[HDP_MON_QUERY_ARG__JSONP];
+  if (isset($_GET[HADOOP_MON_QUERY_ARG__JSONP])) {
+    $jsonpFunctionName = $_GET[HADOOP_MON_QUERY_ARG__JSONP];
   }
 
-  hdp_mon_generate_response_headers( array
-  ( HDP_MON_RESPONSE_OPTION_KEY__PROPERTIES => HDP_MON_RESPONSE_OPTION_VALUE__PROPERTIES_UNCACHEABLE,
-  HDP_MON_RESPONSE_OPTION_KEY__TYPE =>
+  hadoop_mon_generate_response_headers( array
+  ( HADOOP_MON_RESPONSE_OPTION_KEY__PROPERTIES => HADOOP_MON_RESPONSE_OPTION_VALUE__PROPERTIES_UNCACHEABLE,
+  HADOOP_MON_RESPONSE_OPTION_KEY__TYPE =>
   isset( $jsonpFunctionName )  && $jsonpFunctionName != "" ?
-  HDP_MON_RESPONSE_OPTION_VALUE__TYPE_JAVASCRIPT :
-  HDP_MON_RESPONSE_OPTION_VALUE__TYPE_JSON ) );
+  HADOOP_MON_RESPONSE_OPTION_VALUE__TYPE_JAVASCRIPT :
+  HADOOP_MON_RESPONSE_OPTION_VALUE__TYPE_JSON ) );
 
   if( isset( $jsonpFunctionName ) )
   {
@@ -148,9 +148,9 @@ function hdp_mon_generate_response( $response_data )
 
   /* Return results */
   if ($indent == "true") {
-    hdp_mon_generate_response(indent(json_encode($result)));
+    hadoop_mon_generate_response(indent(json_encode($result)));
   } else {
-    hdp_mon_generate_response(json_encode($result));
+    hadoop_mon_generate_response(json_encode($result));
   }
 
   # Functions

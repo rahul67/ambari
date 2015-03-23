@@ -226,7 +226,7 @@
           <osFamily>ubuntu12,ubuntu7</osFamily>
           <packages>
             <package>
-              <name>libmysql-java</name>
+              <name>mysql-connector-java</name>
             </package>
             <package>
               <name>hive-hcatalog</name>

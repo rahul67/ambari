@@ -68,7 +68,7 @@ def nagios_server_config():
   nagios_server_check( 'check_nodemanager_health.sh')
   nagios_server_check( 'check_namenodes_ha.sh')
   nagios_server_check( 'check_wrapper.sh')
-  nagios_server_check( 'hdp_nagios_init.php')
+  nagios_server_check( 'hadoop_nagios_init.php')
   nagios_server_check( 'check_checkpoint_time.py' )
   nagios_server_check( 'sys_logger.py' )
   nagios_server_check( 'check_ambari_alerts.py' )

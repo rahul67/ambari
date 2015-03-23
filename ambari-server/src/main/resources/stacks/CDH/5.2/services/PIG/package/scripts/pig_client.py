@@ -25,6 +25,17 @@ from pig import pig
 
 
 class PigClient(Script):
+
+  def get_stack_to_component(self):
+    return {"HDP": "hadoop-client"}
+
+  def pre_rolling_restart(self, env):
+    import params
+    env.set_params(params)
+
+    if params.version and compare_versions(format_hdp_stack_version(params.version), '2.2.0.0') >= 0:
+      Execute(format("hdp-select set hadoop-client {version}"))
+
   def install(self, env):
     self.install_packages(env)
     self.configure(env)

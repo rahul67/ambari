@@ -23,17 +23,19 @@ from resource_management import *
 from hcat import hcat
 
 class HCatClient(Script):
+
+  def get_stack_to_component(self):
+    return {"HDP": "hadoop-client"}
+
   def install(self, env):
-    self.install_packages(env)
+    import params
+    self.install_packages(env, exclude_packages=params.hive_exclude_packages)
     self.configure(env)
 
   def configure(self, env):
     import params
-
     env.set_params(params)
-
     hcat()
-
 
   def status(self, env):
     raise ClientComponentHasNoStatus()

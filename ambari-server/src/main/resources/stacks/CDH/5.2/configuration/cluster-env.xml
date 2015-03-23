@@ -53,9 +53,14 @@
         <property-type>GROUP</property-type>
         <description>Hadoop user group.</description>
     </property>
+    <property>
+        <name>hadoop_home</name>
+        <value>/usr/lib/hadoop</value>
+        <description>Hadoop Home Environment Variable.</description>
+    </property>
 
   <!-- The properties that end in tar_source describe the pattern of where the tar.gz files come from.
-  They will replace {{ hdp_stack_version }} with the "#.#.#.#" value followed by -* (which is the build number in HDP 2.2).
+  They will replace {{ cluster_stack_version }} with the "#.#.#.#" value followed by -* (which is the build number in HDP 2.2).
   When copying those tarballs, Ambari will look up the corresponding tar_destination_folder property to know where it
   should be copied to.
   All of the destination folders must begin with hdfs://
@@ -72,7 +77,7 @@
   </property>
   <property>
     <name>tez_tar_destination_folder</name>
-    <value>hdfs:///hdp/apps/{{ hdp_stack_version }}/tez/</value>
+    <value>hdfs:///apps/{{ cluster_stack_version }}/tez/</value>
     <description>Destination HDFS folder for the file.</description>
   </property>
 
@@ -84,7 +89,7 @@
   </property>
   <property>
     <name>hive_tar_destination_folder</name>
-    <value>hdfs:///hdp/apps/{{ hdp_stack_version }}/hive/</value>
+    <value>hdfs:///apps/{{ cluster_stack_version }}/hive/</value>
     <description>Destination HDFS folder for the file.</description>
   </property>
 
@@ -96,7 +101,7 @@
   </property>
   <property>
     <name>pig_tar_destination_folder</name>
-    <value>hdfs:///hdp/apps/{{ hdp_stack_version }}/pig/</value>
+    <value>hdfs:///apps/{{ cluster_stack_version }}/pig/</value>
     <description>Destination HDFS folder for the file.</description>
   </property>
 
@@ -108,7 +113,7 @@
   </property>
   <property>
     <name>hadoop-streaming_tar_destination_folder</name>
-    <value>hdfs:///hdp/apps/{{ hdp_stack_version }}/mapreduce/</value>
+    <value>hdfs:///apps/{{ cluster_stack_version }}/mapreduce/</value>
     <description>Destination HDFS folder for the file.</description>
   </property>
 
@@ -120,7 +125,7 @@
   </property>
   <property>
     <name>sqoop_tar_destination_folder</name>
-    <value>hdfs:///hdp/apps/{{ hdp_stack_version }}/sqoop/</value>
+    <value>hdfs:///apps/{{ cluster_stack_version }}/sqoop/</value>
     <description>Destination HDFS folder for the file.</description>
   </property>
 
@@ -132,7 +137,7 @@
   </property>
   <property>
     <name>mapreduce_tar_destination_folder</name>
-    <value>hdfs:///hdp/apps/{{ hdp_stack_version }}/mapreduce/</value>
+    <value>hdfs:///apps/{{ cluster_stack_version }}/mapreduce/</value>
     <description>Destination HDFS folder for the file.</description>
   </property>
   

@@ -27,18 +27,18 @@ config = Script.get_config()
 rpm_version = default("/configurations/hadoop-env/rpm_version", None)
 
 #hadoop params
-if rpm_version is not None:
+if System.get_instance().os_family in ["ubuntu", "debian"]:
+  mapreduce_libs_path = "/usr/lib/hadoop-mapreduce/*"
+  hadoop_libexec_dir = "/usr/lib/hadoop/libexec"
+  hadoop_lib_home = "/usr/lib/hadoop/lib"
+  hadoop_bin = "/usr/lib/hadoop/sbin"
+  hadoop_home = '/usr/lib/hadoop'
+else:
   mapreduce_libs_path = "/usr/hdp/current/hadoop-mapreduce/*"
   hadoop_libexec_dir = "/usr/hdp/current/hadoop/libexec"
   hadoop_lib_home = "/usr/hdp/current/hadoop/lib"
   hadoop_bin = "/usr/hdp/current/hadoop/sbin"
   hadoop_home = '/usr/hdp/current/hadoop'
-else:
-  mapreduce_libs_path = "/usr/lib/hadoop-mapreduce/*"
-  hadoop_libexec_dir = "/usr/lib/hadoop/libexec"
-  hadoop_lib_home = "/usr/lib/hadoop/lib"
-  hadoop_bin = "/usr/lib/hadoop/sbin"
-  hadoop_home = '/usr'
 
 hadoop_conf_dir = "/etc/hadoop/conf"
 #security params
@@ -133,6 +133,8 @@ hadoop_heapsize = config['configurations']['hadoop-env']['hadoop_heapsize']
 namenode_heapsize = config['configurations']['hadoop-env']['namenode_heapsize']
 namenode_opt_newsize =  config['configurations']['hadoop-env']['namenode_opt_newsize']
 namenode_opt_maxnewsize =  config['configurations']['hadoop-env']['namenode_opt_maxnewsize']
+namenode_opt_permsize = config['configurations']['hadoop-env']['namenode_opt_permsize']
+namenode_opt_maxpermsize = config['configurations']['hadoop-env']['namenode_opt_maxpermsize']
 
 jtnode_opt_newsize = "200m"
 jtnode_opt_maxnewsize = "200m"

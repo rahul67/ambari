@@ -20,24 +20,29 @@ limitations under the License.
 from resource_management import *
 from utils import service
 from utils import hdfs_directory
-from hdfs_namenode import create_name_dirs
 
 
 def snamenode(action=None, format=False):
   import params
 
   if action == "configure":
-    create_name_dirs(params.fs_checkpoint_dir)
-    Directory(params.fs_checkpoint_dir,
-              recursive=True,
-              mode=0755,
-              owner=params.hdfs_user,
-              group=params.user_group)
+    for fs_checkpoint_dir in params.fs_checkpoint_dirs:
+      Directory(fs_checkpoint_dir,
+                recursive=True,
+                cd_access="a",
+                mode=0755,
+                owner=params.hdfs_user,
+                group=params.user_group)
     File(params.exclude_file_path,
          content=Template("exclude_hosts_list.j2"),
          owner=params.hdfs_user,
          group=params.user_group)
   elif action == "start" or action == "stop":
+    Directory(params.hadoop_pid_dir_prefix,
+              mode=0755,
+              owner=params.hdfs_user,
+              group=params.user_group
+    )
     service(
       action=action,
       name="secondarynamenode",

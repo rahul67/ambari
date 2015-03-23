@@ -171,12 +171,6 @@
   </property>
 
   <property>
-    <name>mapreduce.jobhistory.keytab.file</name>
-    <value>/etc/security/keytabs/jhs.service.keytab</value>
-    <description>The keytab for the job history server principal.</description>
-  </property>
-
-  <property>
     <name>mapreduce.shuffle.port</name>
     <value>13562</value>
     <description>
@@ -361,6 +355,43 @@
     <description>
       Should the job outputs be compressed?
     </description>
+  </property>
+
+<!-- Properties from HDP 2.2 -->
+  <property>
+    <name>mapreduce.application.framework.path</name>
+    <value>/apps/mapreduce/mapreduce.tar.gz#mr-framework</value>
+    <description></description>
+  </property>
+
+  <property>
+    <name>mapreduce.reduce.shuffle.fetch.retry.enabled</name>
+    <value>1</value>
+    <description></description>
+  </property>
+
+  <property>
+    <name>mapreduce.reduce.shuffle.fetch.retry.interval-ms</name>
+    <value>1000</value>
+    <description></description>
+  </property>
+
+  <property>
+    <name>mapreduce.reduce.shuffle.fetch.retry.timeout-ms</name>
+    <value>30000</value>
+    <description></description>
+  </property>
+
+  <property>
+    <name>mapreduce.job.emit-timeline-data</name>
+    <value>false</value>
+    <description></description>
+  </property>
+
+  <property>
+    <name>mapreduce.jobhistory.bind-host</name>
+    <value>0.0.0.0</value>
+    <description></description>
   </property>
 
 </configuration>

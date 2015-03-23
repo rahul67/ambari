@@ -21,17 +21,19 @@ import glob
 import json
 import os
 from resource_management import *
+from resource_management.libraries.functions.flume_agent_helper import is_flume_process_live
+from resource_management.libraries.functions.flume_agent_helper import find_expected_agent_names
+from ambari_commons import OSConst
+from ambari_commons.os_family_impl import OsFamilyFuncImpl, OsFamilyImpl
 
+@OsFamilyFuncImpl(os_family=OSConst.WINSRV_FAMILY)
 def flume(action = None):
   import params
 
   if action == 'config':
     # remove previously defined meta's
-    for n in find_expected_agent_names():
+    for n in find_expected_agent_names(params.flume_conf_dir):
       os.unlink(os.path.join(params.flume_conf_dir, n, 'ambari-meta.json'))
-
-    Directory(params.flume_conf_dir, recursive=True)
-    Directory(params.flume_log_dir, owner=params.flume_user)
 
     flume_agents = {}
     if params.flume_conf_content is not None:
@@ -42,6 +44,53 @@ def flume(action = None):
       flume_agent_conf_file = os.path.join(flume_agent_conf_dir, 'flume.conf')
       flume_agent_meta_file = os.path.join(flume_agent_conf_dir, 'ambari-meta.json')
       flume_agent_log4j_file = os.path.join(flume_agent_conf_dir, 'log4j.properties')
+      flume_agent_env_file = os.path.join(flume_agent_conf_dir, 'flume-env.ps1')
+
+      Directory(flume_agent_conf_dir)
+
+      PropertiesFile(flume_agent_conf_file,
+                     properties=flume_agents[agent])
+
+      File(flume_agent_log4j_file,
+           content=Template('log4j.properties.j2', agent_name = agent))
+
+      File(flume_agent_meta_file,
+           content = json.dumps(ambari_meta(agent, flume_agents[agent])))
+
+      File(flume_agent_env_file,
+           owner=params.flume_user,
+           content=InlineTemplate(params.flume_env_sh_template)
+      )
+
+      if params.has_metric_collector:
+        File(os.path.join(flume_agent_conf_dir, "flume-metrics2.properties"),
+             owner=params.flume_user,
+             content=Template("flume-metrics2.properties.j2")
+        )
+
+@OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
+def flume(action = None):
+  import params
+
+  if action == 'config':
+    # remove previously defined meta's
+    for n in find_expected_agent_names(params.flume_conf_dir):
+      os.unlink(os.path.join(params.flume_conf_dir, n, 'ambari-meta.json'))
+
+    Directory(params.flume_conf_dir, recursive=True)
+    Directory(params.flume_log_dir, owner=params.flume_user)
+    Directory(params.flume_run_dir, owner=params.flume_user)
+
+    flume_agents = {}
+    if params.flume_conf_content is not None:
+      flume_agents = build_flume_topology(params.flume_conf_content)
+
+    for agent in flume_agents.keys():
+      flume_agent_conf_dir = os.path.join(params.flume_conf_dir, agent)
+      flume_agent_conf_file = os.path.join(flume_agent_conf_dir, 'flume.conf')
+      flume_agent_meta_file = os.path.join(flume_agent_conf_dir, 'ambari-meta.json')
+      flume_agent_log4j_file = os.path.join(flume_agent_conf_dir, 'log4j.properties')
+      flume_agent_env_file = os.path.join(flume_agent_conf_dir, 'flume-env.sh')
 
       Directory(flume_agent_conf_dir)
 
@@ -57,13 +106,25 @@ def flume(action = None):
         content = json.dumps(ambari_meta(agent, flume_agents[agent])),
         mode = 0644)
 
+      File(flume_agent_env_file,
+           owner=params.flume_user,
+           content=InlineTemplate(params.flume_env_sh_template)
+      )
+
+      if params.has_metric_collector:
+        File(os.path.join(flume_agent_conf_dir, "flume-metrics2.properties"),
+             owner=params.flume_user,
+             content=Template("flume-metrics2.properties.j2")
+        )
+
   elif action == 'start':
     # desired state for service should be STARTED
     if len(params.flume_command_targets) == 0:
       _set_desired_state('STARTED')
-      
-    flume_base = format('su -s /bin/bash {flume_user} -c "export JAVA_HOME={java_home}; '
-      '{flume_bin} agent --name {{0}} --conf {{1}} --conf-file {{2}} {{3}}"')
+
+    # It is important to run this command as a background process.
+
+    flume_base = as_user(format("{flume_bin} agent --name {{0}} --conf {{1}} --conf-file {{2}} {{3}} > {flume_log_dir}/{{4}}.out 2>&1"), params.flume_user, env={'JAVA_HOME': params.java_home}) + " &"
 
     for agent in cmd_target_names():
       flume_agent_conf_dir = params.flume_conf_dir + os.sep + agent
@@ -73,21 +134,32 @@ def flume(action = None):
       if not os.path.isfile(flume_agent_conf_file):
         continue
 
-      if not is_live(flume_agent_pid_file):
+      if not is_flume_process_live(flume_agent_pid_file):
         # TODO someday make the ganglia ports configurable
         extra_args = ''
         if params.ganglia_server_host is not None:
           extra_args = '-Dflume.monitoring.type=ganglia -Dflume.monitoring.hosts={0}:{1}'
           extra_args = extra_args.format(params.ganglia_server_host, '8655')
+        if params.has_metric_collector:
+          extra_args = '-Dflume.monitoring.type=org.apache.hadoop.metrics2.sink.flume.FlumeTimelineMetricsSink ' \
+                       '-Dflume.monitoring.node={0}:{1}'
+          extra_args = extra_args.format(params.metric_collector_host, params.metric_collector_port)
 
         flume_cmd = flume_base.format(agent, flume_agent_conf_dir,
-           flume_agent_conf_file, extra_args)
+           flume_agent_conf_file, extra_args, agent)
 
-        Execute(flume_cmd, wait_for_finish=False)
+        Execute(flume_cmd, 
+          wait_for_finish=False,
+          environment={'JAVA_HOME': params.java_home}
+        )
 
         # sometimes startup spawns a couple of threads - so only the first line may count
+
         pid_cmd = format('pgrep -o -u {flume_user} -f ^{java_home}.*{agent}.* > {flume_agent_pid_file}')
-        Execute(pid_cmd, logoutput=True, tries=10, try_sleep=6)
+        Execute(pid_cmd,
+                logoutput=True,
+                tries=20,
+                try_sleep=10)
 
     pass
   elif action == 'stop':
@@ -124,6 +196,7 @@ def ambari_meta(agent_name, agent_conf):
 
   return res
 
+
 # define a map of dictionaries, where the key is agent name
 # and the dictionary is the name/value pair
 def build_flume_topology(content):
@@ -153,75 +226,8 @@ def build_flume_topology(content):
     if not k in agent_names:
       del result[k]
 
-
   return result
 
-def is_live(pid_file):
-  live = False
-
-  try:
-    check_process_status(pid_file)
-    live = True
-  except ComponentIsNotRunning:
-    pass
-
-  return live
-
-def live_status(pid_file):
-  import params
-
-  pid_file_part = pid_file.split(os.sep).pop()
-
-  res = {}
-  res['name'] = pid_file_part
-  
-  if pid_file_part.endswith(".pid"):
-    res['name'] = pid_file_part[:-4]
-
-  res['status'] = 'RUNNING' if is_live(pid_file) else 'NOT_RUNNING'
-  res['sources_count'] = 0
-  res['sinks_count'] = 0
-  res['channels_count'] = 0
-
-  flume_agent_conf_dir = params.flume_conf_dir + os.sep + res['name']
-  flume_agent_meta_file = flume_agent_conf_dir + os.sep + 'ambari-meta.json'
-
-  try:
-    with open(flume_agent_meta_file) as fp:
-      meta = json.load(fp)
-      res['sources_count'] = meta['sources_count']
-      res['sinks_count'] = meta['sinks_count']
-      res['channels_count'] = meta['channels_count']
-  except:
-    pass
-
-  return res
-  
-def flume_status():
-  import params
-
-  meta_files = find_expected_agent_names()
-  pid_files = []
-  for agent_name in meta_files:
-    pid_files.append(os.path.join(params.flume_run_dir, agent_name + '.pid'))
-
-  procs = []
-  for pid_file in pid_files:
-    procs.append(live_status(pid_file))
-
-  return procs
-
-# these are what Ambari believes should be running
-def find_expected_agent_names():
-  import params
-
-  files = glob.glob(params.flume_conf_dir + os.sep + "*/ambari-meta.json")
-  expected = []
-
-  for f in files:
-    expected.append(os.path.dirname(f).split(os.sep).pop())
-
-  return expected
 
 def cmd_target_names():
   import params
@@ -229,15 +235,16 @@ def cmd_target_names():
   if len(params.flume_command_targets) > 0:
     return params.flume_command_targets
   else:
-    return find_expected_agent_names()
+    return find_expected_agent_names(params.flume_conf_dir)
+
 
 def _set_desired_state(state):
   import params
-  try:
-    with open(os.path.join(params.flume_run_dir, 'ambari-state.txt'), 'w') as fp:
-      fp.write(state)
-  except:
-    pass
+  filename = os.path.join(params.flume_run_dir, 'ambari-state.txt')
+  File(filename,
+    content = state,
+  )
+
 
 def get_desired_state():
   import params

@@ -21,7 +21,7 @@
  * check the storage capacity remaining on local datanode storage
  */
 
-  include "hdp_nagios_init.php";
+  include "hadoop_nagios_init.php";
 
   $options = getopt ("h:p:w:c:e:k:r:t:s:");
   if (!array_key_exists('h', $options) || !array_key_exists('p', $options) || !array_key_exists('w', $options) 

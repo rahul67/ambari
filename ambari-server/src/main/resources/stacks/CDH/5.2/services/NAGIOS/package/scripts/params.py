@@ -204,7 +204,7 @@ elif System.get_instance().os_family == "redhat":
   web_conf_dir = "/etc/httpd/conf.d"
 
 nagios_httpd_config_file = format("{web_conf_dir}/{nagios_service_name}.conf")
-hdp_mon_nagios_addons_path = format("{web_conf_dir}/hdp_mon_nagios_addons.conf")
+hadoop_mon_nagios_addons_path = format("{web_conf_dir}/hadoop_mon_nagios_addons.conf")
 
 ambarinagios_php_dir = "/usr/share/hdp/nagios/"
 ambarinagios_php_filename = "nagios_alerts.php"

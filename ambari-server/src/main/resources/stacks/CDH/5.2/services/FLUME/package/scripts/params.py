@@ -17,33 +17,39 @@ limitations under the License.
 
 """
 
+from resource_management.libraries.functions.version import format_hdp_stack_version, compare_versions
+from resource_management.libraries.functions.default import default
 from resource_management import *
+from ambari_commons import OSCheck
+
+if OSCheck.is_windows_family():
+  from params_windows import *
+else:
+  from params_linux import *
 
 config = Script.get_config()
+
+stack_name = default("/hostLevelParams/stack_name", None)
+
+# New Cluster Stack Version that is defined during the RESTART of a Rolling Upgrade
+version = default("/commandParams/version", None)
 
 user_group = config['configurations']['cluster-env']['user_group']
 proxyuser_group =  config['configurations']['hadoop-env']['proxyuser_group']
 
 security_enabled = False
 
-#RPM versioning support
-rpm_version = default("/configurations/hadoop-env/rpm_version", None)
+stack_version_unformatted = str(config['hostLevelParams']['stack_version'])
+cluster_stack_version = format_hdp_stack_version(stack_version_unformatted)
 
 #hadoop params
-if rpm_version is not None:
-  flume_bin = '/usr/hdp/current/flume/bin/flume-ng'
-else:
-  flume_bin = '/usr/bin/flume-ng'
+flume_bin = '/usr/bin/flume-ng'
+flume_hive_home = '/usr/lib/hive'
+flume_hcat_home = '/usr/lib/hive-hcatalog'
 
-flume_conf_dir = '/etc/flume/conf'
 java_home = config['hostLevelParams']['java_home']
 flume_log_dir = '/var/log/flume'
 flume_run_dir = '/var/run/flume'
-flume_user = 'flume'
-flume_group = 'flume'
-
-if 'flume-env' in config['configurations'] and 'flume_user' in config['configurations']['flume-env']:
-  flume_user = config['configurations']['flume-env']['flume_user']
 
 if (('flume-conf' in config['configurations']) and('content' in config['configurations']['flume-conf'])):
   flume_conf_content = config['configurations']['flume-conf']['content']
@@ -58,6 +64,8 @@ else:
 targets = default('/commandParams/flume_handler', None)
 flume_command_targets = [] if targets is None else targets.split(',')
 
+flume_env_sh_template = config['configurations']['flume-env']['content']
+
 ganglia_server_hosts = default('/clusterHostInfo/ganglia_server_host', [])
 ganglia_server_host = None
 if 0 != len(ganglia_server_hosts):
@@ -66,3 +74,12 @@ if 0 != len(ganglia_server_hosts):
 hostname = None
 if config.has_key('hostname'):
   hostname = config['hostname']
+
+ams_collector_hosts = default("/clusterHostInfo/metrics_collector_hosts", [])
+has_metric_collector = not len(ams_collector_hosts) == 0
+if has_metric_collector:
+  metric_collector_host = ams_collector_hosts[0]
+  metric_collector_port = default("/configurations/ams-site/timeline.metrics.service.webapp.address", "0.0.0.0:6188")
+  if metric_collector_port and metric_collector_port.find(':') != -1:
+    metric_collector_port = metric_collector_port.split(':')[1]
+  pass

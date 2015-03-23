@@ -20,20 +20,19 @@ limitations under the License.
 
 from resource_management import *
 import os
-import fnmatch
 
 def install_tez_jars():
   import params
-  
+
   destination_hdfs_dirs = get_tez_hdfs_dir_paths(params.tez_lib_uris)
 
   # If tez libraries are to be stored in hdfs
   if destination_hdfs_dirs:
     for hdfs_dir in destination_hdfs_dirs:
       params.HdfsDirectory(hdfs_dir,
-                          action="create_delayed",
-                          owner=params.tez_user,
-                          mode=0755
+                           action="create_delayed",
+                           owner=params.tez_user,
+                           mode=0755
       )
     pass
     params.HdfsDirectory(None, action="create")
@@ -53,7 +52,7 @@ def install_tez_jars():
     app_dir_path = None
     lib_dir_path = None
 
-    if len(destination_hdfs_dirs) > 1:
+    if len(destination_hdfs_dirs) > 0:
       for path in destination_hdfs_dirs:
         if 'lib' in path:
           lib_dir_path = path
@@ -99,6 +98,9 @@ def get_tez_hdfs_dir_paths(tez_lib_uris = None):
         lib_dir_path = path.replace(hdfs_path_prefix, '')
         lib_dir_path = lib_dir_path if lib_dir_path.endswith(os.sep) else lib_dir_path + os.sep
         lib_dir_paths.append(lib_dir_path)
+      else:
+        lib_dir_path = path.replace(hdfs_path_prefix, '')
+        lib_dir_paths.append(os.path.dirname(lib_dir_path))
     pass
   pass
 

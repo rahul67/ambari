@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-  include "hdp_nagios_init.php";
+  include "hadoop_nagios_init.php";
 
   $options = getopt ("h:p:w:c:k:r:t:u:e");
   if (!array_key_exists('h', $options) || !array_key_exists('p', $options) || !array_key_exists('w', $options)

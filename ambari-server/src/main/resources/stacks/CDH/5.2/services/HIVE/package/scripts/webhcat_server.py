@@ -18,36 +18,126 @@ limitations under the License.
 Ambari Agent
 
 """
-import sys
 from resource_management import *
-
+from resource_management.libraries.functions.security_commons import build_expectations, \
+  cached_kinit_executor, get_params_from_filesystem, validate_security_config_properties, \
+  FILE_TYPE_XML
 from webhcat import webhcat
 from webhcat_service import webhcat_service
 
 class WebHCatServer(Script):
+
+  def get_stack_to_component(self):
+    return {"HDP": "hive-webhcat"}
+
   def install(self, env):
-    self.install_packages(env)
+    import params
+    self.install_packages(env, exclude_packages=params.hive_exclude_packages)
+
+
   def configure(self, env):
     import params
     env.set_params(params)
     webhcat()
 
-  def start(self, env):
+
+  def start(self, env, rolling_restart=False):
     import params
     env.set_params(params)
     self.configure(env) # FOR SECURITY
     webhcat_service(action = 'start')
 
-  def stop(self, env):
+
+  def stop(self, env, rolling_restart=False):
     import params
     env.set_params(params)
 
     webhcat_service(action = 'stop')
 
+
   def status(self, env):
     import status_params
     env.set_params(status_params)
     check_process_status(status_params.webhcat_pid_file)
+
+
+  def pre_rolling_restart(self, env):
+    Logger.info("Executing WebHCat Rolling Upgrade pre-restart")
+    import params
+    env.set_params(params)
+
+    if params.version and compare_versions(format_hdp_stack_version(params.version), '2.2.0.0') >= 0:
+      Execute(format("hdp-select set hive-webhcat {version}"))
+
+  def security_status(self, env):
+    import status_params
+    env.set_params(status_params)
+
+    if status_params.security_enabled:
+      expectations ={}
+      expectations.update(
+        build_expectations(
+          'webhcat-site',
+          {
+            "templeton.kerberos.secret": "secret"
+          },
+          [
+            "templeton.kerberos.keytab",
+            "templeton.kerberos.principal"
+          ],
+          [
+            "templeton.kerberos.keytab"
+          ]
+        )
+      )
+      expectations.update(
+        build_expectations(
+          'hive-site',
+          {
+            "hive.server2.authentication": "KERBEROS",
+            "hive.metastore.sasl.enabled": "true",
+            "hive.security.authorization.enabled": "true"
+          },
+          None,
+          None
+        )
+      )
+
+      security_params = {}
+      security_params.update(get_params_from_filesystem(status_params.hive_conf_dir,
+                                                        {'hive-site.xml': FILE_TYPE_XML}))
+      security_params.update(get_params_from_filesystem(status_params.webhcat_conf_dir,
+                                                        {'webhcat-site.xml': FILE_TYPE_XML}))
+      result_issues = validate_security_config_properties(security_params, expectations)
+      if not result_issues: # If all validations passed successfully
+        try:
+          # Double check the dict before calling execute
+          if 'webhcat-site' not in security_params \
+            or 'templeton.kerberos.keytab' not in security_params['webhcat-site'] \
+            or 'templeton.kerberos.principal' not in security_params['webhcat-site']:
+            self.put_structured_out({"securityState": "UNSECURED"})
+            self.put_structured_out({"securityIssuesFound": "Keytab file or principal are not set property."})
+            return
+
+          cached_kinit_executor(status_params.kinit_path_local,
+                                status_params.webhcat_user,
+                                security_params['webhcat-site']['templeton.kerberos.keytab'],
+                                security_params['webhcat-site']['templeton.kerberos.principal'],
+                                status_params.hostname,
+                                status_params.tmp_dir)
+          self.put_structured_out({"securityState": "SECURED_KERBEROS"})
+        except Exception as e:
+          self.put_structured_out({"securityState": "ERROR"})
+          self.put_structured_out({"securityStateErrorInfo": str(e)})
+      else:
+        issues = []
+        for cf in result_issues:
+          issues.append("Configuration file %s did not pass the validation. Reason: %s" % (cf, result_issues[cf]))
+        self.put_structured_out({"securityIssuesFound": ". ".join(issues)})
+        self.put_structured_out({"securityState": "UNSECURED"})
+    else:
+      self.put_structured_out({"securityState": "UNSECURED"})
+
 
 if __name__ == "__main__":
   WebHCatServer().execute()

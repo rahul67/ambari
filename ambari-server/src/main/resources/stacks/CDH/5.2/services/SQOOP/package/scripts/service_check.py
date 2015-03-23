@@ -23,11 +23,17 @@ from resource_management import *
 
 
 class SqoopServiceCheck(Script):
+
+  def get_stack_to_component(self):
+    return {"HDP": "sqoop-server"}
+
   def service_check(self, env):
     import params
     env.set_params(params)
     if params.security_enabled:
-        Execute(format("{kinit_path_local}  -kt {smoke_user_keytab} {smokeuser}"))
+      Execute(format("{kinit_path_local}  -kt {smoke_user_keytab} {smokeuser_principal}"),
+              user = params.smokeuser,
+      )
     Execute("sqoop version",
             user = params.smokeuser,
             path = params.sqoop_bin_dir,

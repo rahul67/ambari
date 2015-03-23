@@ -24,12 +24,17 @@ from resource_management import *
 from oozie import oozie
 from oozie_service import oozie_service
 
-         
+
 class OozieClient(Script):
+
+  def get_stack_to_component(self):
+    return {"HDP": "oozie-client"}
+
   def install(self, env):
     self.install_packages(env)
     self.configure(env)
-    
+
+
   def configure(self, env):
     import params
     env.set_params(params)
@@ -38,6 +43,30 @@ class OozieClient(Script):
 
   def status(self, env):
     raise ClientComponentHasNoStatus()
-    
+
+
+  def pre_rolling_restart(self, env):
+    import params
+    env.set_params(params)
+
+    # this function should not execute if the version can't be determined or
+    # is not at least HDP 2.2.0.0
+    if not params.version or compare_versions(format_hdp_stack_version(params.version), '2.2.0.0') < 0:
+      return
+
+    Logger.info("Executing Oozie Client Rolling Upgrade pre-restart")
+    Execute(format("hdp-select set oozie-client {version}"))
+
+  # We substitute some configs (oozie.authentication.kerberos.principal) before generation (see oozie.py and params.py).
+  # This function returns changed configs (it's used for config generation before config download)
+  def generate_configs_get_xml_file_content(self, filename, dictionary):
+    if dictionary == 'oozie-site':
+      import params
+      config = self.get_config()
+      return {'configurations': params.oozie_site,
+              'configuration_attributes': config['configuration_attributes'][dictionary]}
+    else:
+      return super(OozieClient, self).generate_configs_get_xml_file_content(filename, dictionary)
+
 if __name__ == "__main__":
   OozieClient().execute()

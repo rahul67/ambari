@@ -39,7 +39,7 @@ def service(componentName, action='start', serviceName='yarn'):
 
   if action == 'start':
     daemon_cmd = format("{ulimit_cmd} {cmd} start {componentName}")
-    check_process = format("ls {pid_file} >/dev/null 2>&1 && ps `cat {pid_file}` >/dev/null 2>&1")
+    check_process = format("ls {pid_file} >/dev/null 2>&1 && ps -p `cat {pid_file}` >/dev/null 2>&1")
 
     # Remove the pid file if its corresponding process is not running.
     File(pid_file,
@@ -68,7 +68,8 @@ def service(componentName, action='start', serviceName='yarn'):
          action="delete")
 
   elif action == 'refreshQueues':
-    refresh_cmd = format("export HADOOP_LIBEXEC_DIR={hadoop_libexec_dir} && {yarn_container_bin}/yarn rmadmin -refreshQueues")
+    rm_kinit_cmd = params.rm_kinit_cmd
+    refresh_cmd = format("{rm_kinit_cmd} export HADOOP_LIBEXEC_DIR={hadoop_libexec_dir} && {yarn_container_bin}/yarn rmadmin -refreshQueues")
 
     Execute(refresh_cmd,
             user=usr,

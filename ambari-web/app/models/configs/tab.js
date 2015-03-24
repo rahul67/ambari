@@ -26,9 +26,17 @@ App.Tab = DS.Model.extend({
   rows: DS.attr('number', {defaultValue: 1}),
   isAdvanced: DS.attr('boolean', {defaultValue: false}),
   serviceName: DS.attr('string'),
-  sections: DS.hasMany('App.Section')
+  sections: DS.hasMany('App.Section'),
+  /**
+   * Class name used for tab switching
+   *
+   * @type {String}
+   * @property headingClass
+   */
+  headingClass: function() {
+    return '.' + this.get('id');
+  }.property('id')
 });
 
 
 App.Tab.FIXTURES = [];
-

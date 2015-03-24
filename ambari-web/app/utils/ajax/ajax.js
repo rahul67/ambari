@@ -609,7 +609,12 @@ var urls = {
     'real': '{stackVersionUrl}/services/{serviceName}/artifacts/theme',
     'mock': '/data/configurations/theme.json'
   },
-  
+
+  'configs.theme.services': {
+    'real': '{stackVersionUrl}/services?StackServices/service_name.in({serviceNames})&artifacts/Artifacts/artifact_name=theme&fields=artifacts/*',
+    'mock': '/data/configurations/theme_services.json'
+  },
+
   /*************************CONFIG GROUPS***************************************/
 
   'configs.config_groups.load.all': {
@@ -662,7 +667,7 @@ var urls = {
   },
 
   'configs.config_versions.load.current_versions': {
-    'real': '/clusters/{clusterName}/configurations/service_config_versions?service_name.in({serviceNames})&group_id=-1&is_current=true&fields=*',
+    'real': '/clusters/{clusterName}/configurations/service_config_versions?service_name.in({serviceNames})&is_current=true&fields=*',
     'mock': '/data/configurations/config_versions.json'
   },
 
@@ -1187,6 +1192,10 @@ var urls = {
     'real': '/clusters',
     'mock': '/data/clusters/info.json'
   },
+  'cluster.load_last_upgrade': {
+    'real': '/clusters/{clusterName}/upgrades?fields=Upgrade/request_status,Upgrade/request_id,Upgrade/to_version,Upgrade/direction',
+    'mock': '/data/stack_versions/upgrades.json'
+  },
   'cluster.update_upgrade_version': {
     'real': '/stacks/{stackName}/versions?fields=services/StackServices,Versions',
     'mock': '/data/wizard/stack/stacks.json',
@@ -1636,7 +1645,7 @@ var urls = {
     }
   },
   'wizard.service_components': {
-    'real': '{stackUrl}/services?fields=StackServices/*,components/*,components/dependencies/Dependencies/scope',
+    'real': '{stackUrl}/services?fields=StackServices/*,components/*,components/dependencies/Dependencies/scope,artifacts/Artifacts/artifact_name',
     'mock': '/data/stacks/HDP-2.1/service_components.json',
     'format': function (data) {
       return {
@@ -2392,6 +2401,16 @@ var urls = {
           "Requests/resource_filters": [{"hosts": data.hosts}]})
       }
     }
+  },
+
+  'widgets.layout.stackDefined.get': {
+    real: '{stackVersionURL}/services/{serviceName}/artifacts/widget_descriptor',
+    mock: '/data/widget_layouts/HBASE/stack_layout.json'
+  },
+
+  'widgets.layout.userDefined.get': {
+    real: '/users/{loginName}/widget_layouts?section_name={sectionName}',
+    mock: '/data/widget_layouts/HBASE/empty_user_layout.json'
   }
 };
 /**

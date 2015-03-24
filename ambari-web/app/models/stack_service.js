@@ -37,6 +37,7 @@ App.StackService = DS.Model.extend({
   isSelected: DS.attr('boolean', {defaultValue: true}),
   isInstalled: DS.attr('boolean', {defaultValue: false}),
   isInstallable: DS.attr('boolean', {defaultValue: true}),
+  isServiceWithWidgets: DS.attr('boolean', {defaultValue: false}),
   stack: DS.belongsTo('App.Stack'),
   serviceComponents: DS.hasMany('App.StackServiceComponent'),
   configs: DS.attr('array'),
@@ -223,7 +224,8 @@ App.StackService.configCategories = function () {
         App.ServiceConfigCategory.create({ name: 'NAMENODE', displayName: 'NameNode'}),
         App.ServiceConfigCategory.create({ name: 'SECONDARY_NAMENODE', displayName: 'Secondary NameNode'}),
         App.ServiceConfigCategory.create({ name: 'DATANODE', displayName: 'DataNode'}),
-        App.ServiceConfigCategory.create({ name: 'General', displayName: 'General'})
+        App.ServiceConfigCategory.create({ name: 'General', displayName: 'General'}),
+        App.ServiceConfigCategory.create({ name: 'NFS_GATEWAY', displayName: 'NFS Gateway'})
       ]);
       break;
     case 'GLUSTERFS':

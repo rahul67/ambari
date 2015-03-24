@@ -21,14 +21,14 @@ Ambari Agent
 """
 
 __all__ = ["get_kinit_path"]
-from find_path import find_path
+from find_executable import find_executable
 
 
-def get_kinit_path():
+def get_kinit_path(search_directories=None):
   """
-  Searches for the kinit executable using a default set of of paths to search:
-    /usr/bin
-    /usr/kerberos/bin
-    /usr/sbin
+  Searches for the kinit executable using the specified search paths or a default set of of paths to search
+
+  @param search_directories: comma separated list or a list of (absolute paths to) directories to search (in order of preference)
+  :return: the path to the found kinit executable
   """
-  return find_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"], "kinit")
+  return find_executable(search_directories, "kinit")

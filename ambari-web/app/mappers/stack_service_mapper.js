@@ -34,6 +34,7 @@ App.stackServiceMapper = App.QuickDataMapper.create({
     is_selected: 'is_selected',
     is_installed: 'is_installed',
     is_installable: 'is_installable',
+    is_service_with_widgets: 'is_service_with_widgets',
     required_services: 'required_services',
     service_check_supported: 'service_check_supported',
     service_components_key: 'service_components',
@@ -77,8 +78,14 @@ App.stackServiceMapper = App.QuickDataMapper.create({
     var result = [];
     var stackServiceComponents = [];
     var nonInstallableServices = ['KERBEROS'];
-    this.rearrangeServicesForDisplayOrder(json.items, App.StackService.displayOrder);
-    json.items.forEach(function (item) {
+    var displayOrderLength = App.StackService.displayOrder.length;
+    var items = json.items.map(function (item, index) {
+      var displayOrderIndex = App.StackService.displayOrder.indexOf(item.StackServices.service_name);
+      return $.extend(item, {
+        index: displayOrderIndex == -1 ? displayOrderLength + index : displayOrderIndex
+      });
+    }).sortProperty('index');
+    items.forEach(function (item) {
       var stackService = item.StackServices;
       var serviceComponents = [];
       item.components.forEach(function (serviceComponent) {
@@ -96,6 +103,7 @@ App.stackServiceMapper = App.QuickDataMapper.create({
       }, this);
       stackService.stack_id = stackService.stack_name + '-' + stackService.stack_version;
       stackService.service_components = serviceComponents;
+      stackService.is_service_with_widgets = item.artifacts.someProperty('Artifacts.artifact_name', 'widget_descriptor');
       // @todo: replace with server response value after API implementation
       if (nonInstallableServices.contains(stackService.service_name)) {
         stackService.is_installable = false;
@@ -121,14 +129,6 @@ App.stackServiceMapper = App.QuickDataMapper.create({
         });
       }, this);
     }, this);
-  },
-
-  rearrangeServicesForDisplayOrder: function (array, displayOrderArray) {
-    return array.sort(function (a, b) {
-      var aValue = displayOrderArray.indexOf(a.StackServices.service_name) != -1 ? displayOrderArray.indexOf(a.StackServices.service_name) : array.length;
-      var bValue = displayOrderArray.indexOf(b.StackServices.service_name) != -1 ? displayOrderArray.indexOf(b.StackServices.service_name) : array.length;
-      return aValue - bValue;
-    });
   }
 });
 

@@ -338,6 +338,12 @@ Em.I18n.translations = {
   'popup.invalid.KDC.admin.principal': 'Admin principal',
   'popup.invalid.KDC.admin.password': 'Admin password',
 
+  'popup.dependent.configs.header': 'Dependent Properties',
+  'popup.dependent.configs.title': 'Properties that was changed has dependent properties. It\'s recommended to update these properties!',
+  'popup.dependent.configs.table.saveProperty': 'Save property',
+  'popup.dependent.configs.table.currentValue': 'Current value',
+  'popup.dependent.configs.table.recommendedValue': 'Recommended value',
+
   'login.header':'Sign in',
   'login.username':'Username',
   'login.loginButton':'Sign in',
@@ -2272,6 +2278,7 @@ Em.I18n.translations = {
   'dashboard.services.hdfs.totalFilesAndDirs':'Total Files + Directories',
   'dashboard.services.hdfs.datanodes':'DataNodes',
   'dashboard.services.hdfs.datanodecounts':'DataNodes Status',
+  'dashboard.services.hdfs.nfsgateways':'NFSGateways',
   'dashboard.services.hdfs.version':'Version',
   'dashboard.services.hdfs.nameNodeWebUI':'NameNode Web UI',
   'dashboard.services.hdfs.nodes.live':'live',

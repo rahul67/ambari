@@ -21,7 +21,7 @@
     <service>
       <name>FLUME</name>
       <displayName>Flume</displayName>
-      <comment>Data management and processing platform</comment>
+      <comment>A distributed service for collecting, aggregating, and moving large amounts of streaming data into HDFS</comment>
       <version>1.4.0.2.0</version>
       <components>
         <component>
@@ -29,6 +29,7 @@
           <displayName>Flume</displayName>
           <category>SLAVE</category>
           <cardinality>1+</cardinality>
+          <versionAdvertised>true</versionAdvertised>
           <commandScript>
             <script>scripts/flume_handler.py</script>
             <scriptType>PYTHON</scriptType>
@@ -61,7 +62,6 @@
       <configuration-dependencies>
         <config-type>flume-env</config-type>
         <config-type>flume-conf</config-type>
-        <config-type>flume-log4j</config-type>
       </configuration-dependencies>
 
     </service>

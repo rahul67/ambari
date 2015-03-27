@@ -87,6 +87,10 @@ public class ServiceInfo implements Validable{
   @XmlElement(name = "restartRequiredAfterChange")
   private Boolean restartRequiredAfterChange;
 
+  @JsonIgnore
+  @XmlElement(name = "restartRequiredAfterRackChange")
+  private Boolean restartRequiredAfterRackChange;
+
   @XmlElement(name = "extends")
   private String parent;
 
@@ -102,10 +106,8 @@ public class ServiceInfo implements Validable{
   }
 
   @XmlTransient
-  private ThemeInfo themeInfo = null;
-  
-  @XmlTransient
   private File metricsFile = null;
+
   @XmlTransient
   private Map<String, Map<String, List<MetricDefinition>>> metrics = null;
   
@@ -164,6 +166,18 @@ public class ServiceInfo implements Validable{
   @JsonIgnore
   @XmlElement(name="configuration-dir")
   private String configDir = AmbariMetaInfo.SERVICE_CONFIG_FOLDER_NAME;
+
+  @JsonIgnore
+  @XmlElement(name = "themes-dir")
+  private String themesDir = AmbariMetaInfo.SERVICE_THEMES_FOLDER_NAME;
+
+  @JsonIgnore
+  @XmlElementWrapper(name = "themes")
+  @XmlElements(@XmlElement(name = "theme"))
+  private List<ThemeInfo> themes;
+
+  @XmlTransient
+  private volatile Map<String, ThemeInfo> themesMap;
 
 
   /**
@@ -607,20 +621,6 @@ public class ServiceInfo implements Validable{
     return excludedConfigTypes;
   }
 
-  /**
-   * @return theme description map
-   */
-  public ThemeInfo getThemeInfo() {
-    return themeInfo;
-  }
-
-  /**
-   * @param themeInfo map with theme description
-   */
-  public void setThemeInfo(ThemeInfo themeInfo) {
-    this.themeInfo = themeInfo;
-  }
-
   public void setExcludedConfigTypes(Set<String> excludedConfigTypes) {
     this.excludedConfigTypes = excludedConfigTypes;
   }
@@ -645,5 +645,58 @@ public class ServiceInfo implements Validable{
     return result;
   }
 
+  /**
+   * Determine whether or not a restart is required for this service after a host rack info change.
+   *
+   * @return true if a restart is required
+   */
+  public Boolean isRestartRequiredAfterRackChange() {
+    return restartRequiredAfterRackChange;
+  }
 
+  /**
+   * Set indicator for required restart after a host rack info change.
+   *
+   * @param restartRequiredAfterRackChange  true if a restart is required
+   */
+  public void setRestartRequiredAfterRackChange(Boolean restartRequiredAfterRackChange) {
+    this.restartRequiredAfterRackChange = restartRequiredAfterRackChange;
+  }
+
+  public String getThemesDir() {
+    return themesDir;
+  }
+
+  public void setThemesDir(String themesDir) {
+    this.themesDir = themesDir;
+  }
+
+  public List<ThemeInfo> getThemes() {
+    return themes;
+  }
+
+  public void setThemes(List<ThemeInfo> themes) {
+    this.themes = themes;
+  }
+
+  public Map<String, ThemeInfo> getThemesMap() {
+    if (themesMap == null) {
+      synchronized (this) {
+      }
+      if (themesMap == null) {
+        Map<String, ThemeInfo> tmp = new TreeMap<String, ThemeInfo>();
+        if (themes != null) {
+          for (ThemeInfo theme : themes) {
+            tmp.put(theme.getFileName(), theme);
+          }
+        }
+        themesMap = tmp;
+      }
+    }
+    return themesMap;
+  }
+
+  public void setThemesMap(Map<String, ThemeInfo> themesMap) {
+    this.themesMap = themesMap;
+  }
 }

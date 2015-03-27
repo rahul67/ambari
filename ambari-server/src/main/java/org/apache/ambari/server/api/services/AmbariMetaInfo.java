@@ -90,6 +90,7 @@ public class AmbariMetaInfo {
 
 
   public static final String SERVICE_CONFIG_FOLDER_NAME = "configuration";
+  public static final String SERVICE_THEMES_FOLDER_NAME = "themes";
   public static final String SERVICE_CONFIG_FILE_NAME_POSTFIX = ".xml";
   public static final String RCO_FILE_NAME = "role_command_order.json";
   public static final String SERVICE_METRIC_FILE_NAME = "metrics.json";
@@ -99,11 +100,6 @@ public class AmbariMetaInfo {
    * The filename name for a Kerberos descriptor file at either the stack or service level
    */
   public static final String KERBEROS_DESCRIPTOR_FILE_NAME = "kerberos.json";
-
-  /**
-   * Filename for theme file at service layer
-   */
-  public static final String SERVICE_THEME_FILE_NAME = "theme.json";
 
   /**
    * This string is used in placeholder in places that are common for
@@ -525,7 +521,38 @@ public class AmbariMetaInfo {
     Collection<ServiceInfo> serviceInfos = getServices(stackName, version).values();
 
     for (ServiceInfo service : serviceInfos) {
-      if (service.isRestartRequiredAfterChange() != null && service.isRestartRequiredAfterChange()) {
+
+      Boolean restartRequiredAfterChange = service.isRestartRequiredAfterChange();
+
+      if (restartRequiredAfterChange != null && restartRequiredAfterChange) {
+        needRestartServices.add(service.getName());
+      }
+    }
+    return needRestartServices;
+  }
+
+  /**
+   * Get the set of names of services which require restart when host rack information is changed.
+   *
+   * @param stackName  the stack name
+   * @param version    the stack version
+   *
+   * @return the set of services which require restart when host rack information is changed
+   *
+   * @throws AmbariException if the service set can not be acquired
+   */
+  public Set<String> getRackSensitiveServicesNames(String stackName, String version)
+      throws AmbariException {
+
+    HashSet<String> needRestartServices = new HashSet<String>();
+
+    Collection<ServiceInfo> serviceInfos = getServices(stackName, version).values();
+
+    for (ServiceInfo service : serviceInfos) {
+
+      Boolean restartRequiredAfterRackChange = service.isRestartRequiredAfterRackChange();
+
+      if (restartRequiredAfterRackChange != null && restartRequiredAfterRackChange) {
         needRestartServices.add(service.getName());
       }
     }

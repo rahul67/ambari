@@ -59,7 +59,7 @@ class TestHookBeforeStart(RMFTestCase):
                               owner = 'hdfs',
                               )
     self.assertResourceCalled('File', '/etc/hadoop/conf/health_check',
-                              content = Template('health_check-v2.j2'),
+                              content = Template('health_check.j2'),
                               owner = 'hdfs',
                               )
     self.assertResourceCalled('File',
@@ -84,6 +84,15 @@ class TestHookBeforeStart(RMFTestCase):
     self.assertResourceCalled('File', '/etc/hadoop/conf/masters',
       owner = 'hdfs',
       group = 'hadoop',
+    )
+    self.assertResourceCalled('File', '/etc/hadoop/conf/topology_mappings.data',
+      owner = 'hdfs',
+      content = Template('topology_mappings.data.j2'),
+      group = 'hadoop',
+    )
+    self.assertResourceCalled('File', '/etc/hadoop/conf/topology_script.py',
+      content = StaticFile('topology_script.py'),
+      mode = 0755,
     )
     self.assertNoMoreResources()
 
@@ -120,7 +129,7 @@ class TestHookBeforeStart(RMFTestCase):
                               owner = 'root',
                               )
     self.assertResourceCalled('File', '/etc/hadoop/conf/health_check',
-                              content = Template('health_check-v2.j2'),
+                              content = Template('health_check.j2'),
                               owner = 'root',
                               )
     self.assertResourceCalled('File',
@@ -198,7 +207,7 @@ class TestHookBeforeStart(RMFTestCase):
                               owner = 'hdfs',
                               )
     self.assertResourceCalled('File', '/etc/hadoop/conf/health_check',
-                              content = Template('health_check-v2.j2'),
+                              content = Template('health_check.j2'),
                               owner = 'hdfs',
                               )
     self.assertResourceCalled('File',
@@ -223,6 +232,15 @@ class TestHookBeforeStart(RMFTestCase):
     self.assertResourceCalled('File', '/etc/hadoop/conf/masters',
                               owner = 'hdfs',
                               group = 'hadoop',
+                              )
+    self.assertResourceCalled('File', '/etc/hadoop/conf/topology_mappings.data',
+                              owner = 'hdfs',
+                              content = Template('topology_mappings.data.j2'),
+                              group = 'hadoop',
+                              )
+    self.assertResourceCalled('File', '/etc/hadoop/conf/topology_script.py',
+                              content = StaticFile('topology_script.py'),
+                              mode = 0755,
                               )
     self.assertNoMoreResources()
 

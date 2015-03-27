@@ -20,7 +20,7 @@
   {{view App.SpinnerInputView contentBinding="spinnerContent" disabledBinding="view.disabled"}}
 {{/each}}
 {{#if view.valueIsChanged}}
-  <div class="restore-btn">
+  <div class="action-button">
     <a class="btn btn-small" href="#" {{action "restoreValue" target="view"}}>
       <i class="icon-undo"></i>
     </a>

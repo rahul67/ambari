@@ -59,6 +59,7 @@ import org.apache.ambari.server.state.MaintenanceState;
 import org.apache.ambari.server.state.SecurityType;
 import org.apache.ambari.server.state.ServiceComponentHost;
 import org.apache.ambari.server.state.configgroup.ConfigGroup;
+import org.apache.ambari.server.state.stack.OsFamily;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +94,8 @@ public class HostResourceProvider extends BaseBlueprintProcessor {
       PropertyHelper.getPropertyId("Hosts", "os_arch");
   protected static final String HOST_OS_TYPE_PROPERTY_ID =
       PropertyHelper.getPropertyId("Hosts", "os_type");
+  protected static final String HOST_OS_FAMILY_PROPERTY_ID =
+      PropertyHelper.getPropertyId("Hosts", "os_family");
   protected static final String HOST_RACK_INFO_PROPERTY_ID =
       PropertyHelper.getPropertyId("Hosts", "rack_info");
   protected static final String HOST_LAST_HEARTBEAT_TIME_PROPERTY_ID =
@@ -130,6 +133,9 @@ public class HostResourceProvider extends BaseBlueprintProcessor {
 
   @Inject
   private MaintenanceStateHelper maintenanceStateHelper;
+
+  @Inject
+  private OsFamily osFamily;
 
   // ----- Constructors ----------------------------------------------------
 
@@ -224,6 +230,15 @@ public class HostResourceProvider extends BaseBlueprintProcessor {
           response.getOsArch(), requestedIds);
       setResourceProperty(resource, HOST_OS_TYPE_PROPERTY_ID,
           response.getOsType(), requestedIds);
+
+      String hostOsFamily = osFamily.find(response.getOsType());
+      if (hostOsFamily == null) {
+        LOG.error("Can not find host OS family. For OS type = '{}' and host name = '{}'",
+            response.getOsType(), response.getHostname());
+      }
+      setResourceProperty(resource, HOST_OS_FAMILY_PROPERTY_ID,
+          hostOsFamily, requestedIds);
+
       setResourceProperty(resource, HOST_RACK_INFO_PROPERTY_ID,
           response.getRackInfo(), requestedIds);
       setResourceProperty(resource, HOST_LAST_HEARTBEAT_TIME_PROPERTY_ID,
@@ -751,48 +766,54 @@ public class HostResourceProvider extends BaseBlueprintProcessor {
             + ", request=" + request);
       }
 
-      Host h = clusters.getHost(request.getHostname());
+      Host host = clusters.getHost(request.getHostname());
+
+      String clusterName = request.getClusterName();
 
       try {
         // The below method call throws an exception when trying to create a duplicate mapping in the clusterhostmapping
         // table. This is done to detect duplicates during host create. In order to be robust, handle these gracefully.
-        clusters.mapHostToCluster(request.getHostname(), request.getClusterName());
+        clusters.mapHostToCluster(request.getHostname(), clusterName);
       } catch (DuplicateResourceException e) {
         // do nothing
       }
 
       if (null != request.getHostAttributes()) {
-        h.setHostAttributes(request.getHostAttributes());
+        host.setHostAttributes(request.getHostAttributes());
       }
 
-      if (null != request.getRackInfo()) {
-        h.setRackInfo(request.getRackInfo());
+      String  rackInfo        = host.getRackInfo();
+      String  requestRackInfo = request.getRackInfo();
+      boolean rackChange      = requestRackInfo != null && !requestRackInfo.equals(rackInfo);
+
+      if (rackChange) {
+        host.setRackInfo(requestRackInfo);
       }
 
       if (null != request.getPublicHostName()) {
-        h.setPublicHostName(request.getPublicHostName());
+        host.setPublicHostName(request.getPublicHostName());
       }
       
-      if (null != request.getClusterName() && null != request.getMaintenanceState()) {
-        Cluster c = clusters.getCluster(request.getClusterName());
+      if (null != clusterName && null != request.getMaintenanceState()) {
+        Cluster c = clusters.getCluster(clusterName);
         MaintenanceState newState = MaintenanceState.valueOf(request.getMaintenanceState());
-        MaintenanceState oldState = h.getMaintenanceState(c.getClusterId());
+        MaintenanceState oldState = host.getMaintenanceState(c.getClusterId());
         if (!newState.equals(oldState)) {
           if (newState.equals(MaintenanceState.IMPLIED_FROM_HOST)
               || newState.equals(MaintenanceState.IMPLIED_FROM_SERVICE)) {
             throw new IllegalArgumentException("Invalid arguments, can only set " +
               "maintenance state to one of " + EnumSet.of(MaintenanceState.OFF, MaintenanceState.ON));
           } else {
-            h.setMaintenanceState(c.getClusterId(), newState);
+            host.setMaintenanceState(c.getClusterId(), newState);
           }
         }
       }
 
       // Create configurations
-      if (null != request.getClusterName() && null != request.getDesiredConfigs()) {
-        Cluster c = clusters.getCluster(request.getClusterName());
+      if (null != clusterName && null != request.getDesiredConfigs()) {
+        Cluster c = clusters.getCluster(clusterName);
 
-        if (clusters.getHostsForCluster(request.getClusterName()).containsKey(h.getHostName())) {
+        if (clusters.getHostsForCluster(clusterName).containsKey(host.getHostName())) {
 
           for (ConfigurationRequest cr : request.getDesiredConfigs()) {
 
@@ -800,7 +821,7 @@ public class HostResourceProvider extends BaseBlueprintProcessor {
               LOG.info(MessageFormat.format("Applying configuration with tag ''{0}'' to host ''{1}'' in cluster ''{2}''",
                   cr.getVersionTag(),
                   request.getHostname(),
-                  request.getClusterName()));
+                  clusterName));
 
               cr.setClusterName(c.getClusterName());
               controller.createConfiguration(cr);
@@ -809,12 +830,12 @@ public class HostResourceProvider extends BaseBlueprintProcessor {
             Config baseConfig = c.getConfig(cr.getType(), cr.getVersionTag());
             if (null != baseConfig) {
               String authName = controller.getAuthName();
-              DesiredConfig oldConfig = h.getDesiredConfigs(c.getClusterId()).get(cr.getType());
+              DesiredConfig oldConfig = host.getDesiredConfigs(c.getClusterId()).get(cr.getType());
 
-              if (h.addDesiredConfig(c.getClusterId(), cr.isSelected(), authName,  baseConfig)) {
+              if (host.addDesiredConfig(c.getClusterId(), cr.isSelected(), authName,  baseConfig)) {
                 Logger logger = LoggerFactory.getLogger("configchange");
                 logger.info("cluster '" + c.getClusterName() + "', "
-                    + "host '" + h.getHostName() + "' "
+                    + "host '" + host.getHostName() + "' "
                     + "changed by: '" + authName + "'; "
                     + "type='" + baseConfig.getType() + "' "
                     + "version='" + baseConfig.getVersion() + "'"
@@ -826,8 +847,11 @@ public class HostResourceProvider extends BaseBlueprintProcessor {
         }
       }
 
-      if (null != request.getClusterName() && !request.getClusterName().isEmpty()) {
-        clusters.getCluster(request.getClusterName()).recalculateAllClusterVersionStates();
+      if (clusterName != null && !clusterName.isEmpty()) {
+        clusters.getCluster(clusterName).recalculateAllClusterVersionStates();
+        if (rackChange) {
+          controller.registerRackChange(clusterName);
+        }
       }
 
       //todo: if attempt was made to update a property other than those

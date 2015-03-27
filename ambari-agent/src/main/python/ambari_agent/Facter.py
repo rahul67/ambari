@@ -25,8 +25,6 @@ import platform
 import re
 import shlex
 import socket
-import fcntl
-import struct
 import multiprocessing
 import subprocess
 from ambari_commons.shell import shellRunner
@@ -65,10 +63,6 @@ class Facter(object):
   # Returns the OS name
   def getKernel(self):
     return platform.system()
-
-  # Returns the FQDN of the host
-  def getFqdn(self):
-    return socket.getfqdn().lower()
 
   # Returns the host's primary DNS domain name
   def getDomain(self):
@@ -195,6 +189,10 @@ class FacterWindows(Facter):
   GET_UPTIME_CMD = 'echo $([int]((get-date)-[system.management.managementdatetimeconverter]::todatetime((get-wmiobject -class win32_operatingsystem).Lastbootuptime)).TotalSeconds)'
 
 
+  # Returns the FQDN of the host
+  def getFqdn(self):
+    return socket.getfqdn().lower()
+
   # Return  netmask
   def getNetmask(self):
     #TODO return correct netmask
@@ -291,6 +289,9 @@ class FacterLinux(Facter):
   GET_UPTIME_CMD = "cat /proc/uptime"
   GET_MEMINFO_CMD = "cat /proc/meminfo"
 
+  # hostname command
+  GET_HOSTNAME_CMD = "/bin/hostname -f"
+
   def __init__(self):
 
     self.DATA_IFCONFIG_OUTPUT = FacterLinux.setDataIfConfigOutput()
@@ -327,6 +328,20 @@ class FacterLinux(Facter):
       log.warn("Can't execute {0}".format(FacterLinux.GET_MEMINFO_CMD))
     return ""
 
+  # Returns the FQDN of the host
+  def getFqdn(self):
+    # Try to use OS command to get hostname first due to Python Issue5004
+    try:
+      retcode, out, err = run_os_command(self.GET_HOSTNAME_CMD)
+      if (0 == retcode and 0 != len(out.strip())):
+        return out.strip()
+      else:
+        log.warn("Could not get fqdn using {0}".format(self.GET_HOSTNAME_CMD))
+    except OSError:
+      log.warn("Could not run {0} for fqdn".format(self.GET_HOSTNAME_CMD))
+    return socket.getfqdn().lower()
+
+
   def isSeLinux(self):
 
     try:
@@ -359,6 +374,8 @@ class FacterLinux(Facter):
 
   # Return  netmask
   def getNetmask(self):
+    import fcntl
+    import struct
     primary_ip = self.getIpAddress().strip()
     interface_pattern="(\w+)(?:.*Link encap:)"
     if OSCheck.is_redhat7():
@@ -371,6 +388,8 @@ class FacterLinux(Facter):
       
   # Return IP by interface name
   def get_ip_address_by_ifname(self, ifname):
+    import fcntl
+    import struct
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
         s.fileno(),

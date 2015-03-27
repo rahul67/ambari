@@ -28,7 +28,7 @@ class MahoutServiceCheck(Script):
     env.set_params(params)
 
     create_input_dir_cmd = format("fs -mkdir /user/{smokeuser}/mahoutsmokeinput")
-    copy_file_to_hdfs_cmd = format("fs -put {tmp_dir}/sample-mahout-test.txt /user/{smokeuser}/mahoutsmokeinput/")
+    copy_test_file_to_hdfs_cmd = format("fs -put {tmp_dir}/sample-mahout-test.txt /user/{smokeuser}/mahoutsmokeinput/")
     mahout_command = format("mahout seqdirectory --input /user/{smokeuser}/mahoutsmokeinput/sample-mahout-test.txt "
                             "--output /user/{smokeuser}/mahoutsmokeoutput/ --charset utf-8")
     test_command = format("fs -test -e /user/{smokeuser}/mahoutsmokeoutput/_SUCCESS")
@@ -61,7 +61,7 @@ class MahoutServiceCheck(Script):
         mode = 0755
     )
 
-    ExecuteHadoop( copy_file_to_hdfs_cmd,
+    ExecuteHadoop( copy_test_file_to_hdfs_cmd,
                    tries = 3,
                    try_sleep = 5,
                    user = params.smokeuser,

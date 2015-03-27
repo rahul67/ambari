@@ -36,6 +36,12 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
   slider: null,
 
   /**
+   * Determines if widget controls should be disabled
+   * @type {boolean}
+   */
+  disabled: false,
+
+  /**
    * Mirror of the config-value shown in the input on the left of the slider
    * @type {number}
    */
@@ -66,6 +72,16 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
     return this.get('config.stackConfigProperty.valueAttributes.type') === 'int' ? validator.isValidInt : validator.isValidFloat;
   }.property('config.stackConfigProperty.valueAttributes.type'),
 
+  /**
+   * Enable/disable slider state
+   * @method toggleWidgetState
+   */
+  toggleWidgetState: function () {
+    var slider = this.get('slider');
+    this.get('config.isEditable') ? slider.enable() : slider.disable();
+    this.set('disabled', !this.get('config.isEditable'));
+  }.observes('config.isEditable'),
+
   willInsertElement: function () {
     this._super();
     this.addObserver('mirrorValue', this, this.mirrorValueObs);
@@ -76,6 +92,7 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
     this.set('mirrorValue', this.get('config.value'));
     this.prepareValueAttributes();
     this.initSlider();
+    this.toggleWidgetState();
   },
 
   /**
@@ -92,9 +109,9 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
       parseFunction = this.get('parseFunction');
     if (validationFunction(mirrorValue)) {
       var parsed = parseFunction(mirrorValue);
-      if (parsed >= min && parsed <=max) {
+      if (parsed >= min && parsed <= max) {
         this.set('isMirrorValueValid', true);
-        this.set('config.value', parsed);
+        this.set('config.value', '' + parsed);
         if (slider) {
           slider.setValue(parsed);
         }
@@ -156,7 +173,7 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
 
     slider.on('change', function (obj) {
       var val = parseFunction(obj.newValue);
-      self.set('config.value', val);
+      self.set('config.value', '' + val);
       self.set('mirrorValue', val);
     });
 

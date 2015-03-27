@@ -25,6 +25,11 @@ describe('App.SliderConfigWidgetView', function () {
   beforeEach(function () {
     viewInt = App.SliderConfigWidgetView.create({
       initSlider: Em.K,
+      slider: {
+        enable: Em.K,
+        disable: Em.K,
+        setValue: Em.K
+      },
       config: Em.Object.create({
         name: 'a.b.c',
         description: 'A B C',
@@ -44,6 +49,11 @@ describe('App.SliderConfigWidgetView', function () {
     viewInt.didInsertElement();
     viewFloat = App.SliderConfigWidgetView.create({
       initSlider: Em.K,
+      slider: {
+        enable: Em.K,
+        disable: Em.K,
+        setValue: Em.K
+      },
       config: Em.Object.create({
         name: 'a.b.c2',
         description: 'A B C 2',
@@ -75,21 +85,21 @@ describe('App.SliderConfigWidgetView', function () {
     it('check int', function () {
       viewInt.set('mirrorValue', 1000);
       expect(viewInt.get('isMirrorValueValid')).to.be.true;
-      expect(viewInt.get('config.value')).to.equal(1000);
+      expect(viewInt.get('config.value')).to.equal('1000');
 
       viewInt.set('mirrorValue', 100500);
       expect(viewInt.get('isMirrorValueValid')).to.be.false;
-      expect(viewInt.get('config.value')).to.equal(1000);
+      expect(viewInt.get('config.value')).to.equal('1000');
     });
 
     it('check float', function () {
       viewFloat.set('mirrorValue', 55.5);
       expect(viewFloat.get('isMirrorValueValid')).to.be.true;
-      expect(viewFloat.get('config.value')).to.equal(55.5);
+      expect(viewFloat.get('config.value')).to.equal('55.5');
 
       viewFloat.set('mirrorValue', 100500.5);
       expect(viewFloat.get('isMirrorValueValid')).to.be.false;
-      expect(viewFloat.get('config.value')).to.equal(55.5);
+      expect(viewFloat.get('config.value')).to.equal('55.5');
     });
 
   });

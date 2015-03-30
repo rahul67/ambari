@@ -22,6 +22,7 @@
 require('mixins/common/blueprint');
 require('mixins/common/localStorage');
 require('mixins/common/userPref');
+require('mixins/common/reload_popup');
 require('mixins/common/serverValidator');
 require('mixins/common/table_server_view_mixin');
 require('mixins/common/table_server_mixin');
@@ -37,3 +38,4 @@ require('mixins/wizard/selectHost');
 require('mixins/wizard/addSecurityConfigs');
 require('mixins/wizard/wizard_menu_view');
 require('mixins/common/configs/enhanced_configs');
+require('mixins/common/widget_mixin');

@@ -20,7 +20,7 @@ var App = require('app');
 var lazyloading = require('utils/lazy_loading');
 var numberUtils = require('utils/number_utils');
 
-App.WizardStep3Controller = Em.Controller.extend({
+App.WizardStep3Controller = Em.Controller.extend(App.ReloadPopupMixin, {
 
   name: 'wizardStep3Controller',
 
@@ -312,6 +312,7 @@ App.WizardStep3Controller = Em.Controller.extend({
     return App.showConfirmationPopup(function () {
       App.router.send('removeHosts', hosts);
       self.hosts.removeObjects(hosts);
+      self.stopRegistration();
       if (!self.hosts.length) {
         self.set('isSubmitDisabled', true);
       }
@@ -477,6 +478,7 @@ App.WizardStep3Controller = Em.Controller.extend({
    * @return {$.ajax|null}
    */
   doBootstrap: function () {
+    var self = this;
     if (this.get('stopBootstrap')) {
       return null;
     }
@@ -496,12 +498,14 @@ App.WizardStep3Controller = Em.Controller.extend({
         timeout: App.timeout
       }).
       then(
-      null,
-      function () {
-        App.showReloadPopup();
-        console.log('Bootstrap failed');
-      }
-    );
+        function () {
+          self.closeReloadPopup();
+        },
+        function () {
+          self.showReloadPopup();
+          console.log('Bootstrap failed');
+        }
+      );
   },
 
   /**
@@ -578,6 +582,7 @@ App.WizardStep3Controller = Em.Controller.extend({
     if (this.get('stopBootstrap')) {
       return null;
     }
+    var self = this;
     return App.ajax.send({
       name: 'wizard.step3.is_hosts_registered',
       sender: this,
@@ -588,12 +593,14 @@ App.WizardStep3Controller = Em.Controller.extend({
         timeout: App.timeout
       }).
       then(
-      null,
-      function () {
-        App.showReloadPopup();
-        console.log('Error: Getting registered host information from the server');
-      }
-    );
+        function () {
+          self.closeReloadPopup();
+        },
+        function () {
+          self.showReloadPopup();
+          console.log('Error: Getting registered host information from the server');
+        }
+      );
   },
 
   /**

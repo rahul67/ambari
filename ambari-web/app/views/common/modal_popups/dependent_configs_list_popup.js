@@ -32,7 +32,7 @@ App.showDependentConfigsPopup = function (configs, callback, secondaryCallback) 
     primary: Em.I18n.t('common.save'),
     secondary: Em.I18n.t('common.cancel'),
     header: Em.I18n.t('popup.dependent.configs.header'),
-    classNames: ['full-width-modal'],
+    classNames: ['sixty-percent-width-modal','modal-full-width'],
     configs: configs,
     bodyClass: Em.View.extend({
       templateName: require('templates/common/modal_popups/dependent_configs_list')
@@ -42,21 +42,13 @@ App.showDependentConfigsPopup = function (configs, callback, secondaryCallback) 
     }.property('controller.stepConfigs.@each'),
     onPrimary: function () {
       this.hide();
-      configs.filterProperty('saveRecommended', true).forEach(function(c) {
-        c.set('value', c.get('recommendedValue'));
-        var stepConfig = this.get('stepConfigs').find(function(stepConf) {
-          return stepConf.get('name') === c.get('name') && stepConf.get('filename') === c.get('fileName');
-        });
-        if (stepConfig) {
-          stepConfig.set('value', c.get('recommendedValue'));
-        }
-      }, this);
       if (callback) {
         callback();
       }
     },
     onSecondary: function() {
       this.hide();
+      configs.setEach('saveRecommended', false);
       if(secondaryCallback) {
         secondaryCallback();
       }

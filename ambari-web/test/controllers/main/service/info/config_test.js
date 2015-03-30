@@ -182,12 +182,13 @@ describe("App.MainServiceInfoConfigsController", function () {
 
   describe("#addOverrideProperty", function () {
     var serviceConfigProperty = Em.Object.create({
-      overrides: []
+      overrides: [],
+      isOriginalSCP: true
     });
 
     var group = {};
     var newSCP = App.ServiceConfigProperty.create(serviceConfigProperty);
-    newSCP.set('value', '');
+    newSCP.set('value', '1');
     newSCP.set('isOriginalSCP', false);
     newSCP.set('parentSCP', serviceConfigProperty);
     newSCP.set('isEditable', true);
@@ -195,8 +196,12 @@ describe("App.MainServiceInfoConfigsController", function () {
 
 
     it("add new overridden property", function () {
-      mainServiceInfoConfigsController.addOverrideProperty(serviceConfigProperty, group);
-      expect(serviceConfigProperty.get("overrides")[0]).to.eql(newSCP);
+      mainServiceInfoConfigsController.addOverrideProperty(serviceConfigProperty, group, '1');
+      expect(serviceConfigProperty.get("overrides")[0].get('name')).to.equal(newSCP.get('name'));
+      expect(serviceConfigProperty.get("overrides")[0].get('isOriginalSCP')).to.be.false;
+      expect(serviceConfigProperty.get("overrides")[0].get('isEditable')).to.be.true;
+      expect(serviceConfigProperty.get("overrides")[0].get('group')).to.eql({});
+      expect(serviceConfigProperty.get("overrides")[0].get('parentSCP')).to.eql(serviceConfigProperty);
     });
   });
 
@@ -1313,49 +1318,6 @@ describe("App.MainServiceInfoConfigsController", function () {
         });
       });
     });
-  });
-
-  describe('#calculateDependentFileNames()', function() {
-
-    beforeEach(function() {
-      mainServiceInfoConfigsController.set('dependentFileNames', []);
-      App.resetDsStoreTypeMap(App.StackConfigProperty);
-      App.StackConfigProperty.createRecord({id: 'name1_site1', propertyDependedBy: [{
-        type: 'site2',
-        name: 'name2'
-      }]});
-      App.StackConfigProperty.createRecord({id: 'name2_site2', propertyDependedBy: [{
-          type: 'site3',
-          name: 'name3'
-        },
-        {
-          type: 'site4',
-          name: 'name4'
-        }]
-      });
-      App.StackConfigProperty.createRecord({id: 'name3_site3', propertyDependedBy: []});
-      App.StackConfigProperty.createRecord({id: 'name4_site4', propertyDependedBy: []});
-    });
-
-    it('adds all file names that need to be loaded to dependentFileNames', function() {
-      mainServiceInfoConfigsController.calculateDependentFileNames(App.StackConfigProperty.find('name1_site1'));
-      expect(mainServiceInfoConfigsController.get('dependentFileNames').toArray()).to.eql(["site2", "site3", "site4"]);
-    });
-  });
-
-  describe('#getServiceNamesForConfigs()', function() {
-    it('returns serviceNames which configs need to be loaded', function() {
-      mainServiceInfoConfigsController.set('content', {});
-      mainServiceInfoConfigsController.set('content.serviceName', 'currentService');
-      mainServiceInfoConfigsController.set('dependentFileNames', ['site1', 'site2']);
-      App.resetDsStoreTypeMap(App.StackService);
-      App.StackService.createRecord({id: 'service1', serviceName: 'service1', configTypes: {'site1':'site1'}});
-      App.StackService.createRecord({id: 'service2', serviceName: 'service2', configTypes: {'site1':'site1', 'site2': 'site2'}});
-      App.StackService.createRecord({id: 'service3', serviceName: 'service3', configTypes: {'site3':'site3'}});
-      expect(mainServiceInfoConfigsController.getServiceNamesForConfigs()).to.eql(['service1', 'service2', 'currentService']);
-    });
-
-
   });
 
 });

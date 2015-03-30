@@ -17,20 +17,25 @@
       "centos linux"
     ],
     "versions": [
-      5,
       6,
+      7
+    ]
+  },
+  "debian": {
+    "extends" : "ubuntu",
+    "distro": [
+      "debian"
+    ],
+    "versions": [
       7
     ]
   },
   "ubuntu": {
     "distro": [
-      "ubuntu",
-      "debian"
+      "ubuntu"
     ],
     "versions": [
-      7,
-      12,
-      14
+      12
     ]
   },
   "suse": {

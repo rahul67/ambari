@@ -24,7 +24,7 @@
 
       <osSpecifics>
         <osSpecific>
-          <osFamily>redhat5,redhat6,suse11</osFamily>
+          <osFamily>redhat6,suse11</osFamily>
           <packages>
             <package>
               <name>hadoop_2_3_*</name>
@@ -51,7 +51,7 @@
         </osSpecific>
 
         <osSpecific>
-          <osFamily>ubuntu7,ubuntu12</osFamily>
+          <osFamily>debian7,ubuntu12</osFamily>
           <packages>
             <package>
               <name>hadoop-2-3-.*-client</name>

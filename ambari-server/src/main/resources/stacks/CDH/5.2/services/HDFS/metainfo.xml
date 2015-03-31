@@ -232,7 +232,7 @@
         </osSpecific>
         
         <osSpecific>
-          <osFamily>ubuntu12,ubuntu7</osFamily>
+          <osFamily>ubuntu12,debian7</osFamily>
           <packages>
             <package>
               <name>libsnappy1</name>

@@ -215,7 +215,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>redhat5,redhat6,ubuntu12,ubuntu7</osFamily>
+          <osFamily>redhat5,redhat6,ubuntu12,debian7</osFamily>
           <packages>
             <package>
               <name>mysql-server</name>
@@ -223,7 +223,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>ubuntu12,ubuntu7</osFamily>
+          <osFamily>ubuntu12,debian7</osFamily>
           <packages>
             <package>
               <name>mysql-connector-java</name>

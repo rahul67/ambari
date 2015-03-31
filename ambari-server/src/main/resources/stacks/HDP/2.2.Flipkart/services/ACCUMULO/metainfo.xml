@@ -1,6 +1,4 @@
 <?xml version="1.0"?>
-<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
-
 <!--
    Licensed to the Apache Software Foundation (ASF) under one or more
    contributor license agreements.  See the NOTICE file distributed with
@@ -17,21 +15,32 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
+<metainfo>
+  <schemaVersion>2.0</schemaVersion>
+  <services>
+    <service>
+      <name>ACCUMULO</name>
+      <extends>common-services/ACCUMULO/1.6.1.2.2.0</extends>
 
-<!-- Put site-specific property overrides in this file. -->
+      <osSpecifics>
+        <osSpecific>
+          <osFamily>redhat6,suse11</osFamily>
+          <packages>
+            <package>
+              <name>accumulo_2_2_*</name>
+            </package>
+          </packages>
+        </osSpecific>
+        <osSpecific>
+          <osFamily>debian7,ubuntu12,ubuntu14</osFamily>
+          <packages>
+            <package>
+              <name>accumulo-2-2-.*</name>
+            </package>
+          </packages>
+        </osSpecific>
+      </osSpecifics>
 
-<configuration supports_final="true">
-
-  <property>
-    <name>dfs.namenode.startup.delay.block.deletion.sec</name>
-    <value>3600</value>
-    <description></description>
-  </property>
-
-  <property>
-    <name>dfs.journalnode.edits.dir</name>
-    <value>/hadoop/hdfs/journalnode</value>
-    <description>The path where the JournalNode daemon will store its local state. </description>
-  </property>
-
-</configuration>
+    </service>
+  </services>
+</metainfo>

@@ -96,6 +96,15 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
   },
 
   /**
+   * view class for text box that is used with slider widget
+   * @type {Em.TextField}
+   */
+  MirrorValueView: Em.TextField.extend({
+    focusOut: function() {
+      this.get('parentView').sendRequestRorDependentConfigs(this.get('parentView.config'));
+    }
+  }),
+  /**
    * Check if <code>mirrorValue</code> was updated by user
    * Validate it. If value is correct, set it to slider and config.value
    * @method mirrorValueObs
@@ -126,6 +135,15 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
       this.set('isMirrorValueValid', false);
       this.set('config.errorMessage', 'Invalid value');
     }
+  },
+
+  /**
+   * @override
+   * @method setValue
+   * set widget value same as config value
+   */
+  setValue: function() {
+    this.set('mirrorValue', this.get('config.value'));
   },
 
   /**
@@ -165,7 +183,7 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
       ticksLabels.push(index % 2 === 0 ? tick + ' ' + unit : '');
     });
 
-    var slider = new Slider('#' + this.get('elementId') + ' input.slider-input', {
+    var slider = new Slider(this.$('input.slider-input')[0], {
       value: parseFunction(this.get('config.value')),
       ticks: ticks,
       tooltip: 'hide',
@@ -178,6 +196,13 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
       var val = parseFunction(obj.newValue);
       self.set('config.value', '' + val);
       self.set('mirrorValue', val);
+    });
+    /**
+     * action to run sendRequestRorDependentConfigs when
+     * we have changed config value within slider
+     */
+    slider.on('slideStop', function() {
+      self.sendRequestRorDependentConfigs(self.get('config'));
     });
 
     this.set('slider', slider);

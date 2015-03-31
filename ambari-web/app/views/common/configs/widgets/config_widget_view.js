@@ -17,17 +17,25 @@
  */
 
 var App = require('app');
-
+require('views/common/controls_view');
 /**
  * Common view for config widgets
  * @type {Em.View}
  */
-App.ConfigWidgetView = Em.View.extend({
+App.ConfigWidgetView = Em.View.extend(App.SupportsDependentConfigs, {
 
   /**
    * @type {App.ConfigProperty}
    */
   config: null,
+
+  /**
+   * Alias to <code>config.isOriginalSCP</code>
+   * Should be used in the templates
+   * Don't use original <code>config.isOriginalSCP</code> in the widget-templates!!!
+   * @type {boolean}
+   */
+  isOriginalSCPBinding: 'config.isOriginalSCP',
 
   /**
    * Config name to display.
@@ -85,6 +93,21 @@ App.ConfigWidgetView = Em.View.extend({
     var config = this.get('config');
     if (!config) return false;
     return !config.get('cantBeUndone') && config.get('isNotDefaultValue');
-  }.property('config.cantBeUndone', 'config.isNotDefaultValue')
+  }.property('config.cantBeUndone', 'config.isNotDefaultValue'),
 
+  /**
+   * sync widget value with config value when dependent properties
+   * have been loaded or changed
+   */
+  syncValueWithConfig: function() {
+    this.setValue(this.get('config.value'));
+  }.observes('controller.recommendationTimeStamp'),
+
+  /**
+   * set widget value same as config value
+   * useful for widgets that work with intermediate config value, not original
+   * for now used in slider widget
+   * @abstract
+   */
+  setValue: Em.K
 });

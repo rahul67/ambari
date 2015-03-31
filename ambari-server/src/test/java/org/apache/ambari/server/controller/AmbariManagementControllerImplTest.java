@@ -56,6 +56,7 @@ import org.apache.ambari.server.state.ServiceComponentHost;
 import org.apache.ambari.server.state.ServiceInfo;
 import org.apache.ambari.server.state.ServiceOsSpecific;
 import org.apache.ambari.server.state.StackId;
+import org.apache.ambari.server.state.State;
 import org.easymock.Capture;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,7 +72,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.*;
+import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.DB_DRIVER_FILENAME;
+import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.JAVA_VERSION;
+import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.STACK_NAME;
+import static org.apache.ambari.server.agent.ExecutionCommand.KeyNames.STACK_VERSION;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.createMock;
@@ -902,7 +906,7 @@ public class AmbariManagementControllerImplTest {
 
     // replay mocks
     replay(maintHelper, injector, clusters, cluster, host, stack, ambariMetaInfo,
-      service, component);
+            service, component);
 
     //test
     AmbariManagementController controller = new AmbariManagementControllerImpl(null, clusters, injector);
@@ -918,6 +922,81 @@ public class AmbariManagementControllerImplTest {
     // assert and verify
     assertSame(controller, controllerCapture.getValue());
     verify(injector, clusters, cluster, host, stack, ambariMetaInfo, service, component);
+  }
+
+  @Test
+  public void testGetHostComponents___ServiceComponentHostFilteredByState() throws Exception {
+    // member state mocks
+    Injector injector = createStrictMock(Injector.class);
+    Capture<AmbariManagementController> controllerCapture = new Capture<AmbariManagementController>();
+    StackId stack = createNiceMock(StackId.class);
+
+    Cluster cluster = createNiceMock(Cluster.class);
+    final Host host = createNiceMock(Host.class);
+    Service service = createNiceMock(Service.class);
+    ServiceComponent component = createNiceMock(ServiceComponent.class);
+    MaintenanceStateHelper maintHelper = createNiceMock(MaintenanceStateHelper.class);
+    final ServiceComponentHost componentHost1 = createNiceMock(ServiceComponentHost.class);
+    ServiceComponentHostResponse response1 = createNiceMock(ServiceComponentHostResponse.class);
+
+    // requests
+    ServiceComponentHostRequest request1 = new ServiceComponentHostRequest(
+            "cluster1", null, "component1", "host1", null);
+    request1.setState("INSTALLED");
+
+
+    Set<ServiceComponentHostRequest> setRequests = new HashSet<ServiceComponentHostRequest>();
+    setRequests.add(request1);
+
+    // expectations
+    // constructor init
+    injector.injectMembers(capture(controllerCapture));
+    expect(injector.getInstance(Gson.class)).andReturn(null);
+    expect(injector.getInstance(MaintenanceStateHelper.class)).andReturn(maintHelper);
+    expect(injector.getInstance(KerberosHelper.class)).andReturn(createNiceMock(KerberosHelper.class));
+    expect(maintHelper.getEffectiveState(
+            anyObject(ServiceComponentHost.class),
+            anyObject(Host.class))).andReturn(MaintenanceState.OFF).anyTimes();
+
+    // getHostComponent
+    expect(clusters.getCluster("cluster1")).andReturn(cluster);
+    expect(clusters.getClustersForHost("host1")).andReturn(Collections.singleton(cluster));
+    expect(clusters.getHostsForCluster((String) anyObject())).andReturn(
+            new HashMap<String, Host>() {{
+              put("host1", host);
+            }}).anyTimes();
+
+    expect(cluster.getDesiredStackVersion()).andReturn(stack);
+    expect(cluster.getClusterName()).andReturn("cl1");
+    expect(stack.getStackName()).andReturn("stackName");
+    expect(stack.getStackVersion()).andReturn("stackVersion");
+
+    expect(ambariMetaInfo.getComponentToService("stackName", "stackVersion", "component1")).andReturn("service1");
+    expect(cluster.getService("service1")).andReturn(service);
+    expect(service.getServiceComponent("component1")).andReturn(component);
+    expect(component.getName()).andReturn("component1").anyTimes();
+    expect(component.getServiceComponentHosts()).andReturn(new HashMap<String, ServiceComponentHost>() {{
+      put("host1", componentHost1);
+    }});
+
+    expect(componentHost1.getState()).andReturn(State.INSTALLED);
+    expect(componentHost1.convertToResponse()).andReturn(response1);
+    expect(componentHost1.getHostName()).andReturn("host1");
+
+    // replay mocks
+    replay(maintHelper, injector, clusters, cluster, host, stack, ambariMetaInfo,
+            service, component, componentHost1, response1);
+
+    //test
+    AmbariManagementController controller = new AmbariManagementControllerImpl(null, clusters, injector);
+    setAmbariMetaInfo(ambariMetaInfo, controller);
+
+    Set<ServiceComponentHostResponse> responses = controller.getHostComponents(setRequests);
+
+    // assert and verify
+    assertSame(controller, controllerCapture.getValue());
+    assertTrue(responses.size() == 1);
+    verify(injector, clusters, cluster, host, stack, ambariMetaInfo, service, component, componentHost1, response1);
   }
 
   @Test
@@ -1695,6 +1774,7 @@ public class AmbariManagementControllerImplTest {
     expect(configuration.getJCEName()).andReturn(JCE_NAME);
     expect(configuration.getOjdbcJarName()).andReturn(OJDBC_JAR_NAME);
     expect(configuration.getServerDBName()).andReturn(SERVER_DB_NAME);
+    expect(configuration.getJavaVersion()).andReturn(8);
 
     replay(manager, clusters, cluster, injector, stackId, configuration);
 
@@ -1725,10 +1805,11 @@ public class AmbariManagementControllerImplTest {
 
     Map<String, String> defaultHostParams = helper.createDefaultHostParams(cluster);
 
-    assertEquals(defaultHostParams.size(), 10);
+    assertEquals(defaultHostParams.size(), 11);
     assertEquals(defaultHostParams.get(DB_DRIVER_FILENAME), MYSQL_JAR);
     assertEquals(defaultHostParams.get(STACK_NAME), SOME_STACK_NAME);
     assertEquals(defaultHostParams.get(STACK_VERSION), SOME_STACK_VERSION);
+    assertEquals(defaultHostParams.get(JAVA_VERSION), "8");
   }
 
   @Test

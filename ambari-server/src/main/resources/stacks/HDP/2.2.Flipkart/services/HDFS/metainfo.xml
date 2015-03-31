@@ -52,7 +52,7 @@
         </osSpecific>
 
         <osSpecific>
-          <osFamily>ubuntu7,ubuntu12,ubuntu14</osFamily>
+          <osFamily>debian7,ubuntu12,ubuntu14</osFamily>
           <packages>
             <package>
               <name>hadoop-2-2-.*-client</name>

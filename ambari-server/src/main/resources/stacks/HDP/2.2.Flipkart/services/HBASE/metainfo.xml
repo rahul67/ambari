@@ -36,7 +36,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>ubuntu7,ubuntu12,ubuntu14</osFamily>
+          <osFamily>debian7,ubuntu12,ubuntu14</osFamily>
           <packages>
             <package>
               <name>hbase-2-2-.*</name>

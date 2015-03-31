@@ -100,9 +100,8 @@
             </package>
           </packages>
         </osSpecific>
-        <!-- Debian 7 (Wheezy) is represented as Ubuntu7 here -->
         <osSpecific>
-          <osFamily>ubuntu7</osFamily>
+          <osFamily>debian7</osFamily>
           <packages>
             <package>
               <name>libganglia1=3.3.8-1+nmu1</name>

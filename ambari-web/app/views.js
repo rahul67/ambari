@@ -76,6 +76,7 @@ require('views/common/controls_view');
 require('views/common/widget/graph_widget_view');
 require('views/common/widget/template_widget_view');
 require('views/common/widget/gauge_widget_view');
+require('views/common/widget/number_widget_view');
 require('views/login');
 require('views/main');
 require('views/main/menu');
@@ -311,6 +312,11 @@ require('views/main/charts/heatmap');
 require('views/main/charts/heatmap/heatmap_rack');
 require('views/main/charts/heatmap/heatmap_host');
 require('views/main/charts/heatmap/heatmap_host_detail');
+
+require('views/main/service/widgets/create/wizard_view');
+require('views/main/service/widgets/create/step1_view');
+require('views/main/service/widgets/create/step2_view');
+require('views/main/service/widgets/create/step3_view');
 
 require('views/main/views_view');
 

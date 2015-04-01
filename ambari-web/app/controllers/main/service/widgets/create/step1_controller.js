@@ -16,31 +16,31 @@
  * limitations under the License.
  */
 
-#widget_layout {
-  .widget {
-    .title {
-      padding: 5px 0 0 5px;
-      height: 25px;
-      font-weight: bold;
-      text-align: left;
-    }
-    .content {
-      text-align: center;
-      color: #5ab400;
-      padding-top: 35px;
-      font-weight: bold;
-      font-size: 35px;
-    }
-    .template-widget {
-      height: 150px;
-      width: 90%;
-    }
-    .gauge-widget {
-      height: 150px;
-      width: 90%;
-      .content {
-        padding-top: 5px;
-      }
+var App = require('app');
+
+App.WidgetWizardStep1Controller = Em.Controller.extend({
+  name: "widgetWizardStep1Controller",
+
+  widgetType: '',
+
+  isSubmitDisabled: function() {
+    return !this.get('widgetType');
+  }.property('widgetType'),
+
+  options: App.WidgetType.find(),
+
+  loadStep: function() {
+    this.clearStep();
+  },
+
+  clearStep: function() {
+    this.set('widgetType', '');
+  },
+
+  next: function () {
+    if (!this.get('isSubmitDisabled')) {
+      App.router.send('next');
     }
   }
-}
+});
+

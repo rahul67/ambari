@@ -308,7 +308,15 @@ App.MainServiceInfoSummaryView = Em.View.extend(App.UserPref, {
     var result = [], graphObjects = [], chunkSize = this.get('chunkSize');
     var self = this;
 
-    if (!graphNames) {
+    if (App.get('supports.customizedWidgets')) {
+      var serviceName = this.get('controller.content.serviceName');
+      var stackService = App.StackService.find().findProperty('serviceName', serviceName);
+      if (!graphNames && !stackService.get('isServiceWithWidgets')) {
+        self.set('serviceMetricGraphs', []);
+        self.set('isServiceMetricLoaded', true);
+        return;
+      }
+    } else if (!graphNames) {
       self.set('serviceMetricGraphs', []);
       self.set('isServiceMetricLoaded', true);
       return;
@@ -325,7 +333,10 @@ App.MainServiceInfoSummaryView = Em.View.extend(App.UserPref, {
       if (App.get('supports.customizedWidgets')) {
         graphObjects.push(Ember.View.extend({
           classNames: ['last-child'],
-          template: Ember.Handlebars.compile('<div id="add-widget-action-box"><i class="icon-plus"></i></div>')
+          template: Ember.Handlebars.compile('<button id="add-widget-action-box" class="btn btn-default" {{action "goToAddWidgetWizard" controller.content target="view"}}><i class="icon-plus"></i></button>'),
+          goToAddWidgetWizard: function(evt) {
+            App.router.send('addServiceWidget',evt.context);
+          }
         }));
       }
 
@@ -365,6 +376,59 @@ App.MainServiceInfoSummaryView = Em.View.extend(App.UserPref, {
       this.set('currentTimeRangeIndex', 0);
     }
   },
+  /**
+   * list of static actions of widget
+   * @type {Array}
+   */
+  staticWidgetActions: [
+    Em.Object.create({
+      label: Em.I18n.t('dashboard.widgets.layout.save'),
+      class: 'icon-download-alt',
+      action: 'saveLayout',
+      isAction: true
+    }),
+    Em.Object.create({
+      label: Em.I18n.t('dashboard.widgets.layout.import'),
+      class: 'icon-file',
+      isAction: true,
+      layouts: App.WidgetLayout.find()
+    }),
+    Em.Object.create({
+      label: Em.I18n.t('dashboard.widgets.create'),
+      class: 'icon-plus',
+      action: 'createWidget',
+      isAction: true
+    })
+  ],
+
+  /**
+   * @type {Array}
+   */
+  widgetActions: function() {
+    var options = [];
+
+    options.pushObjects(this.get('staticWidgetActions'));
+    this.get('controller.widgets').forEach(function (widget) {
+      options.push(Em.Object.create({
+        label: widget.get('displayName'),
+        isVisible: widget.get('isVisible'),
+        selected: true,
+        isAction: false
+      }));
+    }, this);
+
+    return options;
+  }.property('controller.widgets.length'),
+
+  /**
+   * call action function defined in controller
+   * @param event
+   */
+  doWidgetAction: function(event) {
+    if($.isFunction(this.get('controller')[event.context])) {
+      this.get('controller')[event.context].apply(this.get('controller'));
+    }
+  },
 
   /**
    * time range options for service metrics, a dropdown will list all options
@@ -396,7 +460,8 @@ App.MainServiceInfoSummaryView = Em.View.extend(App.UserPref, {
       var svcName = self.get('service.serviceName');
       if (svcName) {
         var result = [], graphObjects = [], chunkSize = this.get('chunkSize');
-        App.service_graph_config[svcName.toLowerCase()].forEach(function(graphName) {
+        var allServices = require('data/service_graph_config').getServiceGraphConfig();
+        allServices[svcName.toLowerCase()].forEach(function(graphName) {
           graphObjects.push(App["ChartServiceMetrics" + graphName].extend({
             currentTimeIndex : event.context.index
           }));
@@ -478,11 +543,18 @@ App.MainServiceInfoSummaryView = Em.View.extend(App.UserPref, {
       var stackService = App.StackService.find().findProperty('serviceName', serviceName);
       if (stackService.get('isServiceWithWidgets')) {
         this.get('controller').loadWidgets();
+        this.get('controller').loadWidgetLayouts();
       }
     }
 
+    //prevent dropdown closing on checkbox click
+    $('html').on('click.dropdown', '.dropdown-menu li', function (e) {
+      $(this).hasClass('keep-open') && e.stopPropagation();
+    });
+
     if (svcName && isMetricsSupported) {
-      this.constructGraphObjects(App.service_graph_config[svcName.toLowerCase()]);
+      var allServices =  require('data/service_graph_config').getServiceGraphConfig();
+      this.constructGraphObjects(allServices[svcName.toLowerCase()]);
     }
     // adjust the summary table height
     var summaryTable = document.getElementById('summary-info');

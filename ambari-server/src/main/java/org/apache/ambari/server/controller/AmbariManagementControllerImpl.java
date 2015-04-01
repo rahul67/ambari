@@ -59,10 +59,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Singleton;
-import com.google.inject.persist.Transactional;
 import org.apache.ambari.server.AmbariException;
 import org.apache.ambari.server.ClusterNotFoundException;
 import org.apache.ambari.server.DuplicateResourceException;
@@ -1008,8 +1004,6 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
 
     boolean checkDesiredState = false;
     State desiredStateToCheck = null;
-    boolean checkState = false;
-    State stateToCheck = null;
     boolean filterBasedConfigStaleness = false;
     boolean staleConfig = true;
     if (request.getStaleConfig() != null) {
@@ -1024,15 +1018,6 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
             + " state, desiredState=" + desiredStateToCheck);
       }
       checkDesiredState = true;
-    }
-
-    if (!StringUtils.isEmpty(request.getState())) {
-      stateToCheck = State.valueOf(request.getState());
-      // maybe check should be more wider
-      if (stateToCheck == null) {
-        throw new IllegalArgumentException("Invalid arguments, invalid state, State=" + request.getState());
-      }
-      checkState = true;
     }
 
     Map<String, Host> hosts = clusters.getHostsForCluster(cluster.getClusterName());
@@ -1071,11 +1056,6 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
             if (checkDesiredState && (desiredStateToCheck != sch.getDesiredState())) {
               continue;
             }
-
-            if (checkState && stateToCheck != sch.getState()) {
-              continue;
-            }
-
             if (request.getAdminState() != null) {
               String stringToMatch =
                   sch.getComponentAdminState() == null ? "" : sch.getComponentAdminState().name();
@@ -1115,10 +1095,6 @@ public class AmbariManagementControllerImpl implements AmbariManagementControlle
         } else {
           for (ServiceComponentHost sch : serviceComponentHostMap.values()) {
             if (checkDesiredState && (desiredStateToCheck != sch.getDesiredState())) {
-              continue;
-            }
-
-            if (checkState && stateToCheck != sch.getState()) {
               continue;
             }
 

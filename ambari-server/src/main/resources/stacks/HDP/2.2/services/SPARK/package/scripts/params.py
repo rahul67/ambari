@@ -127,7 +127,7 @@ spark_yarn_am_extraJavaOptions = str(config['configurations']['spark-defaults'][
 spark_javaopts_properties = str(spark_javaopts_properties)
 
 security_enabled = config['configurations']['cluster-env']['security_enabled']
-kinit_path_local = functions.get_kinit_path()
+kinit_path_local = functions.get_kinit_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"])
 spark_kerberos_keytab =  config['configurations']['spark-defaults']['spark.history.kerberos.keytab']
 spark_kerberos_principal =  config['configurations']['spark-defaults']['spark.history.kerberos.principal']
 if security_enabled:

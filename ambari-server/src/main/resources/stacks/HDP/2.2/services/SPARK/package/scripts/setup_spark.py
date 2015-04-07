@@ -189,6 +189,8 @@ def create_file(file_path):
 def setup_tarball():
     import params
     
+    setup_spark_user_group()
+    
     tempdir = tempfile.mkdtemp()
     tarball_name = tempdir + os.sep + "spark.tgz"
     u = urllib2.urlopen(params.spark_tarball_url)
@@ -216,6 +218,8 @@ def setup_tarball():
         shutil.rmtree(os.path.join(params.spark_install_dir, "conf"))
     os.chdir(params.spark_install_dir)
     os.symlink(params.spark_conf, "conf")
+    
+    Execute (format("chown -R root:root {params.spark_install_dir}"))
     
     shutil.rmtree(tempdir)
 

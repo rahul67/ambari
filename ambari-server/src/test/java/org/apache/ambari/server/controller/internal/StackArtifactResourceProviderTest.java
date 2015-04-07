@@ -17,29 +17,6 @@
  */
 package org.apache.ambari.server.controller.internal;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.persist.PersistService;
-import org.apache.ambari.server.api.services.AmbariMetaInfo;
-import org.apache.ambari.server.controller.AmbariManagementController;
-import org.apache.ambari.server.controller.spi.Predicate;
-import org.apache.ambari.server.controller.spi.Request;
-import org.apache.ambari.server.controller.spi.Resource;
-import org.apache.ambari.server.controller.utilities.PredicateBuilder;
-import org.apache.ambari.server.controller.utilities.PropertyHelper;
-import org.apache.ambari.server.orm.GuiceJpaInitializer;
-import org.apache.ambari.server.orm.InMemoryDefaultTestModule;
-import org.apache.ambari.server.state.stack.MetricDefinition;
-import org.apache.ambari.server.state.stack.WidgetLayout;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import static org.apache.ambari.server.controller.internal.StackArtifactResourceProvider.ARTIFACT_DATA_PROPERTY_ID;
 import static org.apache.ambari.server.controller.internal.StackArtifactResourceProvider.ARTIFACT_NAME_PROPERTY_ID;
 import static org.apache.ambari.server.controller.internal.StackArtifactResourceProvider.STACK_NAME_PROPERTY_ID;
@@ -49,6 +26,33 @@ import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.ambari.server.api.services.AmbariMetaInfo;
+import org.apache.ambari.server.controller.AmbariManagementController;
+import org.apache.ambari.server.controller.spi.Predicate;
+import org.apache.ambari.server.controller.spi.Request;
+import org.apache.ambari.server.controller.spi.Resource;
+import org.apache.ambari.server.controller.utilities.PredicateBuilder;
+import org.apache.ambari.server.controller.utilities.PropertyHelper;
+import org.apache.ambari.server.orm.GuiceJpaInitializer;
+import org.apache.ambari.server.orm.InMemoryDefaultTestModule;
+import org.apache.ambari.server.state.stack.Metric;
+import org.apache.ambari.server.state.stack.MetricDefinition;
+import org.apache.ambari.server.state.stack.WidgetLayout;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.persist.PersistService;
 
 public class StackArtifactResourceProviderTest {
   private AmbariMetaInfo metaInfo;
@@ -62,7 +66,6 @@ public class StackArtifactResourceProviderTest {
     injector = Guice.createInjector(module);
     injector.getInstance(GuiceJpaInitializer.class);
     metaInfo = injector.getInstance(AmbariMetaInfo.class);
-    metaInfo.init();
   }
 
   @After
@@ -117,7 +120,12 @@ public class StackArtifactResourceProviderTest {
     Assert.assertEquals(1, ((ArrayList) descriptor.get("Component")).size());
     MetricDefinition md = (MetricDefinition) ((ArrayList) descriptor.get
       ("Component")).iterator().next();
+
+    Metric m1 = md.getMetrics().get("metrics/dfs/datanode/heartBeats_avg_time");
+    Metric m2 = md.getMetrics().get("metrics/rpc/closeRegion_num_ops");
     Assert.assertEquals(326, md.getMetrics().size());
+    Assert.assertTrue(m1.isAmsHostMetric());
+    Assert.assertFalse(m2.isAmsHostMetric());
 
     verify(managementController);
   }

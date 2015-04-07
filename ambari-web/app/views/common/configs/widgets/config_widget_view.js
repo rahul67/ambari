@@ -22,12 +22,18 @@ require('views/common/controls_view');
  * Common view for config widgets
  * @type {Em.View}
  */
-App.ConfigWidgetView = Em.View.extend(App.SupportsDependentConfigs, {
+App.ConfigWidgetView = Em.View.extend(App.SupportsDependentConfigs, App.WidgetPopoverSupport, App.ConvertUnitWidgetViewMixin, {
 
   /**
    * @type {App.ConfigProperty}
    */
   config: null,
+
+  /**
+   * Determines if user hover on widget-view
+   * @type {boolean}
+   */
+  isHover: false,
 
   /**
    * Alias to <code>config.isOriginalSCP</code>
@@ -50,7 +56,7 @@ App.ConfigWidgetView = Em.View.extend(App.SupportsDependentConfigs, {
    * @type {String}
    */
   configLabel: function() {
-    return this.get('config.displayName') || this.get('config.name');
+    return this.get('config.stackConfigProperty.displayName') || this.get('config.displayName') || this.get('config.name');
   }.property('config.name', 'config.displayName'),
 
 
@@ -76,6 +82,11 @@ App.ConfigWidgetView = Em.View.extend(App.SupportsDependentConfigs, {
    */
   restoreValue: function () {
     this.set('config.value', this.get('config.defaultValue'));
+    this.sendRequestRorDependentConfigs(this.get('config'));
+
+    if (this.get('config.supportsFinal')) {
+      this.get('config').set('isFinal', this.get('config.defaultIsFinal'));
+    }
   },
 
   /**
@@ -98,13 +109,39 @@ App.ConfigWidgetView = Em.View.extend(App.SupportsDependentConfigs, {
     return !config.get('cantBeUndone') && config.get('isNotDefaultValue');
   }.property('config.cantBeUndone', 'config.isNotDefaultValue'),
 
+  showFinalConfig: function () {
+    var config = this.get('config');
+    return config.get('isFinal') || (!config.get('isNotEditable') && this.get('isHover'));
+  }.property('config.isFinal', 'config.isNotEditable', 'isHover'),
+
+  toggleFinalFlag: function (event) {
+    var configProperty = event.context;
+    if (configProperty.get('isNotEditable')) {
+      return;
+    }
+    configProperty.toggleProperty('isFinal');
+  },
+
   /**
    * sync widget value with config value when dependent properties
    * have been loaded or changed
+   * @method syncValueWithConfig
    */
   syncValueWithConfig: function() {
     this.setValue(this.get('config.value'));
   }.observes('controller.recommendationTimeStamp'),
+
+  didInsertElement: function () {
+    var self = this;
+    var element = this.$();
+    if (element) {
+      element.hover(function() {
+        self.set('isHover', true);
+      }, function() {
+        self.set('isHover', false);
+      });
+    }
+  },
 
   /**
    * set widget value same as config value

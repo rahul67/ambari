@@ -236,6 +236,7 @@
         "StackConfigurations/property_depends_on",
         "StackConfigurations/property_depended_by",
         "StackConfigurations/property_description",
+        "StackConfigurations/property_display_name",
         "StackConfigurations/type",
         "StackConfigurations/final",
         "StackConfigurations/adding_forbidden",
@@ -419,6 +420,33 @@
         "ServiceComponentInfo/cluster_name",
         "HostRoles/host_name",
         "_"
+    ],
+    "Widget":[
+      "Widgets/id",
+      "Widgets/cluster_name",
+      "Widgets/widget_name",
+      "Widgets/display_name",
+      "Widgets/widget_type",
+      "Widgets/time_created",
+      "Widgets/author",
+      "Widgets/description",
+      "Widgets/scope",
+      "Widgets/metrics",
+      "Widgets/values",
+      "Widgets/properties",
+      "_"
+    ],
+    "WidgetLayout":[
+      "WidgetLayouts/id",
+      "WidgetLayouts/section_name",
+      "WidgetLayouts/cluster_name",
+      "WidgetLayouts/layout_name",
+      "WidgetLayouts/display_name",
+      "WidgetLayouts/scope",
+      "WidgetLayouts/user_name",
+      "WidgetLayouts/WidgetsInfo",
+      "User/user_name",
+      "_"
     ],
     "StackLevelConfiguration":[
         "StackLevelConfigurations/stack_name",

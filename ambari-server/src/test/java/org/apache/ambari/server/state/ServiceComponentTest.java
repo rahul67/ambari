@@ -18,6 +18,7 @@
 
 package org.apache.ambari.server.state;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.util.HashMap;
@@ -33,14 +34,15 @@ import org.apache.ambari.server.orm.InMemoryDefaultTestModule;
 import org.apache.ambari.server.orm.OrmTestHelper;
 import org.apache.ambari.server.orm.dao.HostComponentDesiredStateDAO;
 import org.apache.ambari.server.orm.dao.HostComponentStateDAO;
+import org.apache.ambari.server.orm.dao.HostDAO;
 import org.apache.ambari.server.orm.dao.ServiceComponentDesiredStateDAO;
 import org.apache.ambari.server.orm.entities.HostComponentDesiredStateEntity;
 import org.apache.ambari.server.orm.entities.HostComponentDesiredStateEntityPK;
 import org.apache.ambari.server.orm.entities.HostComponentStateEntity;
 import org.apache.ambari.server.orm.entities.HostComponentStateEntityPK;
+import org.apache.ambari.server.orm.entities.HostEntity;
 import org.apache.ambari.server.orm.entities.ServiceComponentDesiredStateEntity;
 import org.apache.ambari.server.orm.entities.ServiceComponentDesiredStateEntityPK;
-import org.apache.ambari.server.state.RepositoryVersionState;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,6 +64,7 @@ public class ServiceComponentTest {
   private ServiceComponentHostFactory serviceComponentHostFactory;
   private AmbariMetaInfo metaInfo;
   private OrmTestHelper helper;
+  private HostDAO hostDAO;
 
   @Before
   public void setup() throws Exception {
@@ -74,8 +77,8 @@ public class ServiceComponentTest {
     serviceComponentHostFactory = injector.getInstance(
         ServiceComponentHostFactory.class);
     helper = injector.getInstance(OrmTestHelper.class);
+    hostDAO = injector.getInstance(HostDAO.class);
     metaInfo = injector.getInstance(AmbariMetaInfo.class);
-    metaInfo.init();
 
     clusterName = "foo";
     serviceName = "HDFS";
@@ -211,6 +214,9 @@ public class ServiceComponentTest {
     addHostToCluster("h2", service.getCluster().getClusterName());
     addHostToCluster("h3", service.getCluster().getClusterName());
 
+    HostEntity hostEntity1 = hostDAO.findByName("h1");
+    assertNotNull(hostEntity1);
+
     ServiceComponentHost sch1 =
         serviceComponentHostFactory.createNew(sc, "h1");
     ServiceComponentHost sch2 =
@@ -267,11 +273,11 @@ public class ServiceComponentTest {
 
     dPK.setClusterId(cluster.getClusterId());
     dPK.setComponentName(componentName);
-    dPK.setHostName("h1");
+    dPK.setHostId(hostEntity1.getHostId());
     dPK.setServiceName(serviceName);
     lPK.setClusterId(cluster.getClusterId());
     lPK.setComponentName(componentName);
-    lPK.setHostName("h1");
+    lPK.setHostId(hostEntity1.getHostId());
     lPK.setServiceName(serviceName);
 
     HostComponentDesiredStateEntity desiredStateEntity =

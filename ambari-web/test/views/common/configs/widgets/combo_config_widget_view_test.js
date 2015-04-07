@@ -21,7 +21,9 @@ var App = require('app');
 describe('App.ComboConfigWidgetView', function() {
 
   beforeEach(function() {
-    this.view = App.ComboConfigWidgetView.create({});
+    this.view = App.ComboConfigWidgetView.create({
+      initPopover: Em.K
+    });
   });
 
   afterEach(function() {
@@ -33,8 +35,16 @@ describe('App.ComboConfigWidgetView', function() {
     var tests = [
       {
         valueAttributes: {
-          entry_labels: ["Item A", "Item B"],
-          entries: ["a", "b"]
+          entries: [
+            {
+              label: "Item A",
+              value: "a"
+            },
+            {
+              label: "Item B",
+              value: "b"
+            },
+          ]
         },
         e: [
           {

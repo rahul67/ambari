@@ -133,6 +133,8 @@ public interface Service {
     FLUME,
     YARN,
     MAPREDUCE2,
- AMS, TEZ
+    AMS,
+    TEZ,
+    SPARK
   }
 }

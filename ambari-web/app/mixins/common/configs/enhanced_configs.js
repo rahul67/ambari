@@ -51,6 +51,7 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
    * ex:
    * {
    *   saveRecommended: {boolean}, //by default is true (checkbox binding)
+   *   saveRecommendedDefault: {boolean}, used for cancel operation to restore previous state
    *   fileName: {string}, //file name without '.xml'
    *   propertyName: {string},
    *   configGroup: {string},
@@ -96,195 +97,6 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
    */
   groupsToSave: {},
 
-  /***********************************METHODS THAT WORKS WITH MODEL ********************************************/
-
-  /**
-   * generates desired_config objects for default config group
-   * @returns {Object}
-   * @method getDependentConfigObject
-   */
-  getDependentConfigObject: function(serviceName) {
-
-    var fileNamesToSave = this._getFileNamesToSave(serviceName);
-
-    var configsToSave = this._getConfigsToSave(fileNamesToSave);
-
-    return this.generateDesiredConfigsJSON(configsToSave, fileNamesToSave, this.get('serviceConfigNote'));
-  },
-
-  /**
-   * generates data and save configs for not default groups only
-   * that uses configs from model App.ConfigProperty
-   * @param serviceName
-   * @param configGroup
-   * @method saveEnhancedConfigsAndGroup
-   */
-  saveModelConfigsWithGroup: function(serviceName, configGroup) {
-    /**
-     * for now we are saving configs from model only for dependent services
-     * so excluding situation in current service is trying to be saved
-     * this is temporary solution
-     */
-    if (this.get('content.serviceName') !== serviceName) {
-
-      var configsToSave = App.ConfigProperty.find().filter(function(cp) {
-        return cp.get('configVersion.groupName') == configGroup.get('name') || cp.get('isNotSaved');
-      });
-      if (configsToSave.length > 0) {
-        var hostNames = configGroup.get('hosts').map(function(hostName) {
-          return  {
-            "host_name": hostName
-          }
-        });
-
-        var fileNamesToSave = configsToSave.mapProperty('fileName').uniq();
-
-        this.putConfigGroupChanges({
-          ConfigGroup: {
-            "id": configGroup.get('id'),
-            "cluster_name": App.get('clusterName'),
-            "group_name": configGroup.get('name'),
-            "tag": configGroup.get('service.id'),
-            "description": configGroup.get('description'),
-            "hosts": hostNames,
-            "service_config_version_note": this.get('serviceConfigNote'),
-            "desired_configs": this.generateDesiredConfigsJSON(configsToSave, fileNamesToSave, null, true)
-          }
-        })
-      }
-    }
-  },
-
-  /**
-   * save configs from model to default config group
-   * @param serviceName
-   */
-  saveModelConfigs: function(serviceName) {
-    var desired_configs = this.getDependentConfigObject(serviceName);
-    if (desired_configs.length > 0) {
-      var data = [JSON.stringify({
-        Clusters: {
-          desired_config: desired_configs
-        }
-      })];
-      this.doPUTClusterConfigurationSites(data);
-    }
-  },
-
-  /********************************METHODS THAT GENERATES JSON TO SAVE *****************************************/
-
-  /**
-   * generating common JSON object for desired configs
-   * @param configsToSave
-   * @param fileNamesToSave
-   * @param serviceConfigNote
-   * @param {boolean} [isNotDefaultGroup=false]
-   * @returns {Array}
-   */
-  generateDesiredConfigsJSON: function(configsToSave, fileNamesToSave, serviceConfigNote, isNotDefaultGroup) {
-    var desired_config = [];
-    if (Em.isArray(configsToSave) && Em.isArray(fileNamesToSave) && fileNamesToSave.length && configsToSave.length) {
-      serviceConfigNote = serviceConfigNote || "";
-      var tagVersion = "version" + (new Date).getTime();
-
-      fileNamesToSave.forEach(function(fName) {
-        if (this.allowSaveSite(fName)) {
-          var properties = configsToSave.filterProperty('fileName', fName);
-          var type = App.config.getConfigTagFromFileName(fName);
-          desired_config.push(this.createDesiredConfig(type, tagVersion, properties, serviceConfigNote, isNotDefaultGroup));
-        }
-      }, this);
-    }
-    return desired_config;
-  },
-
-  /**
-   * for some file names we have a restriction
-   * and can't save them, in this this method will return false
-   * @param fName
-   * @returns {boolean}
-   */
-  allowSaveSite: function(fName) {
-    switch (fName) {
-      case 'mapred-queue-acls.xml':
-        return false;
-      case 'core-site.xml':
-        return ['HDFS', 'GLUSTERFS'].contains(this.get('content.serviceName'));
-      default :
-        return true;
-    }
-  },
-
-  /**
-   * generating common JSON object for desired config
-   * @param {string} type - file name without '.xml'
-   * @param {string} tagVersion - version + timestamp
-   * @param {App.ConfigProperty[]} properties - array of properties from model
-   * @param {string} serviceConfigNote
-   * @param {boolean} [isNotDefaultGroup=false]
-   * @returns {{type: string, tag: string, properties: {}, properties_attributes: {}|undefined, service_config_version_note: string|undefined}}
-   */
-  createDesiredConfig: function(type, tagVersion, properties, serviceConfigNote, isNotDefaultGroup) {
-    Em.assert('type and tagVersion should be defined', type && tagVersion);
-    var desired_config = {
-      "type": type,
-      "tag": tagVersion,
-      "properties": {}
-    };
-    if (!isNotDefaultGroup) {
-      desired_config.service_config_version_note = serviceConfigNote || "";
-    }
-    var attributes = { final: {} };
-    if (Em.isArray(properties)) {
-      properties.forEach(function(property) {
-
-        if (property.get('isRequiredByAgent')) {
-          desired_config.properties[property.get('name')] = this.formatValueBeforeSave(property);
-          /**
-           * add is final value
-           */
-          if (property.get('isFinal')) {
-            attributes.final[property.get('name')] = "true";
-          }
-        }
-      }, this);
-    }
-
-    if (Object.keys(attributes.final).length) {
-      desired_config.properties_attributes = attributes;
-    }
-    return desired_config;
-  },
-
-  /**
-   * format value before save performs some changing of values
-   * according to the rules that includes heapsizeException trimming and some custom rules
-   * @param {App.ConfigProperty} property
-   * @returns {string}
-   */
-  formatValueBeforeSave: function(property) {
-    var name = property.get('name');
-    var value = property.get('value');
-    //TODO check for core-site
-    if (this.get('heapsizeRegExp').test(name) && !this.get('heapsizeException').contains(name) && !(value).endsWith("m")) {
-      return value += "m";
-    }
-    if (typeof property.get('value') === "boolean") {
-      return property.get('value').toString();
-    }
-    switch (name) {
-      case 'storm.zookeeper.servers':
-        if (Object.prototype.toString.call(value) === '[object Array]' ) {
-          return JSON.stringify(value).replace(/"/g, "'");
-        } else {
-          return value;
-        }
-        break;
-      default:
-        return App.config.trimProperty(property, true);
-    }
-  },
-
   /******************************METHODS THAT WORKS WITH DEPENDENT CONFIGS *************************************/
 
   /**
@@ -303,26 +115,6 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
 
 
   /**
-   * saves properties for dependent service to config group based on <code>groupsToSave<code>
-   */
-  saveDependentGroups: function() {
-    if (App.get('supports.enhancedConfigs') && this.get('dependentServiceNames.length') && Object.keys(this.get('groupsToSave')).length > 0) {
-
-      this.get('dependentServiceNames').forEach(function(serviceName) {
-        if (this.get('groupsToSave')[serviceName]) {
-          if (this.get('groupsToSave')[serviceName].contains('Default')) {
-            this.saveModelConfigs(serviceName);
-          } else {
-            this.saveModelConfigsWithGroup(serviceName, this.get('dependentConfigGroups').findProperty('name', this.get('groupsToSave')[serviceName]));
-          }
-        }
-      }, this);
-
-    }
-  },
-
-
-  /**
    * runs <code>setDependentServicesAndFileNames<code>
    * for stack properties for current service
    * @method loadDependentConfigs
@@ -333,17 +125,6 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
         this._setDependentServicesAndFileNames(stackProperty);
       }
     }, this);
-  },
-
-  /**
-   * get service for current config type
-   * @param {String} configType - config fileName without xml
-   * @return App.StackService
-   */
-  getServiceByConfigType: function(configType) {
-    return App.StackService.find().find(function(s) {
-      return Object.keys(s.get('configTypes')).contains(configType);
-    });
   },
 
   /**
@@ -375,10 +156,13 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
   /**
    * sends request to get values for dependent configs
    * @param changedConfigs
+   * @param initial
+   * @param onComplete
    * @returns {$.ajax|null}
    */
-  getRecommendationsForDependencies: function(changedConfigs) {
-    if (Em.isArray(changedConfigs) && changedConfigs.length > 0) {
+  getRecommendationsForDependencies: function(changedConfigs, initial, onComplete) {
+    if (Em.isArray(changedConfigs) && changedConfigs.length > 0 || initial) {
+      var self = this;
       var recommendations = this.get('hostGroups');
       var configs = this._getConfigsByGroup(this.get('stepConfigs'));
       recommendations.blueprint.configurations = blueprintUtils.buildConfigsJSON(this.get('services'), configs);
@@ -389,22 +173,26 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
         services: this.get('serviceNames'),
         recommendations: recommendations
       };
-      /** TODO uncomment when be will be ready
-       if (App.get('supports.enhancedConfigs')) {
+      if (App.get('supports.enhancedConfigs') && changedConfigs) {
         dataToSend.recommend = 'configuration-dependencies';
         dataToSend.changed_configurations = changedConfigs;
       }
-       **/
       return App.ajax.send({
         name: 'config.recommendations',
         sender: this,
         data: {
           stackVersionUrl: App.get('stackVersionURL'),
-          dataToSend: dataToSend
+          dataToSend: dataToSend,
+          initial: initial
         },
         success: 'dependenciesSuccess',
         error: 'dependenciesError',
-        callback: this.onRecommendationsReceived.bind(this)
+        callback: function() {
+          self.onRecommendationsReceived();
+          if (onComplete) {
+            onComplete()
+          }
+        }
       });
     } else {
       return null;
@@ -424,18 +212,20 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
    * if case properties that was changes belongs to not default group
    * user should pick to what config group from dependent service dependent properties will be saved
    * @param data
+   * @param opt
+   * @param params
    * @method dependenciesSuccess
    */
-  dependenciesSuccess: function (data) {
+  dependenciesSuccess: function (data, opt, params) {
     var self = this;
     if (!this.get('selectedConfigGroup.isDefault')) {
       self.showSelectGroupsPopup(function () {
-        self._saveRecommendedValues(data);
-        self._saveDependentConfigs();
+        self._saveRecommendedValues(data, params.initial);
+        self._updateDependentConfigs(self.get('selectedConfigGroup.isDefault'));
       });
     } else {
-      self._saveRecommendedValues(data);
-      self._saveDependentConfigs();
+      self._saveRecommendedValues(data, params.initial);
+      self._updateDependentConfigs(self.get('selectedConfigGroup.isDefault'));
     }
   },
 
@@ -447,12 +237,11 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
     var self = this;
     if (self.get('_dependentConfigValues.length') > 0) {
       App.showDependentConfigsPopup(this.get('_dependentConfigValues'), function() {
-        self._saveDependentConfigs();
-        self._discardChanges();
+        self._updateDependentConfigs(self.get('selectedConfigGroup.isDefault'));
         if (callback) {
           callback();
         }
-      }, this._discardChanges.bind(this));
+      });
     } else {
       if (callback) {
         callback();
@@ -499,152 +288,57 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
   },
 
   /**
-   * get file names that need to be saved
-   * used for default config group
-   * @param {String} serviceName
-   * @returns {Ember.Enumerable}
-   * @private
-   */
-  _getFileNamesToSave: function(serviceName) {
-    return App.ConfigProperty.find().filter(function(cp) {
-      return cp.get('isNotDefaultValue') && cp.get('stackConfigProperty.serviceName') === serviceName;
-    }, this).mapProperty('fileName').uniq();
-  },
-
-  /**
-   * get configs that need to be saved, for default group
-   * @param fileNamesToSave
-   * @returns {App.ConfigProperty[]}
-   * @private
-   */
-  _getConfigsToSave: function(fileNamesToSave) {
-    if (Em.isArray(fileNamesToSave) && fileNamesToSave.length) {
-      return App.ConfigProperty.find().filter(function(cp) {
-        return fileNamesToSave.contains(cp.get('fileName')) && cp.get('configVersion.isCurrent');
-      });
-    } else {
-      return Em.A([]);
-    }
-  },
-
-  /**
    * save values that are stored in <code>_dependentConfigValues<code>
-   * for current service to step configs
-   * for dependent services to model
+   * to step configs
+   * @param isDefaultConfigGroup
    * @private
    */
-  _saveDependentConfigs: function() {
+  _updateDependentConfigs: function(isDefaultConfigGroup) {
     var self = this;
-    this.get('_dependentConfigValues').forEach(function(dependentConfig) {
-      if (Em.get(dependentConfig, 'saveRecommended')) { // if saveRecommended is false leave properties as is
-        if (Em.get(dependentConfig, 'serviceName') === self.get('content.serviceName')) { //for current service save dependent properties to step configs
-          self.get('stepConfigs').objectAt(0).get('configs').forEach(function(stepConfig) {
-            if (stepConfig.get('filename') === App.config.getOriginalFileName(Em.get(dependentConfig, 'fileName'))
-              && stepConfig.get('name') === Em.get(dependentConfig, 'propertyName')) {
-              if (self.get('selectedConfigGroup.isDefault')) {
-                stepConfig.set('value', Em.get(dependentConfig, 'recommendedValue'))
-              } else {
-                if (!stepConfig.get('overrides')) {
-                  stepConfig.set('overrides', Em.A([]));
-                }
-                var overridenConfig = stepConfig.get('overrides').findProperty('group.name', Em.get(dependentConfig, 'configGroup'));
-                if (overridenConfig) {
-                  overridenConfig.set('value', Em.get(dependentConfig, 'recommendedValue'));
-                } else {
-                  self.addOverrideProperty(stepConfig.set('isNotSaved', true), self.get('selectedConfigGroup'), Em.get(dependentConfig, 'recommendedValue'));
-                }
+    var dependentConfigs = this.get('_dependentConfigValues');
+    this.get('stepConfigs').forEach(function(serviceConfigs) {
+      var selectedGroup = self.getGroupForService(serviceConfigs.get('serviceName'));
+      serviceConfigs.get('configs').forEach(function(cp) {
+        var dependentConfig = dependentConfigs.filterProperty('propertyName', cp.get('name')).findProperty('fileName', App.config.getConfigTagFromFileName(cp.get('filename')));
+        if (dependentConfig) {
+          var valueToSave = dependentConfig.saveRecommended ? dependentConfig.recommendedValue : dependentConfig.value;
+          if (isDefaultConfigGroup || selectedGroup.get('isDefault')) {
+            cp.set('value', valueToSave);
+          } else {
+            var overridenConfig = cp.get('overrides') && cp.get('overrides').findProperty('group.name', selectedGroup.get('name'));
+            if (overridenConfig) {
+              overridenConfig.set('value', valueToSave);
+            }
+            if (dependentConfig.saveRecommended) {
+              if (!overridenConfig) {
+                self.addOverrideProperty(cp, selectedGroup, valueToSave, true);
+              }
+            } else {
+              if (overridenConfig && overridenConfig.get('isNotSaved')) {
+                cp.get('overrides').removeObject(overridenConfig);
               }
             }
-          })
-        } else { //for not current service save dependent properties to model
-
-          App.ConfigProperty.find().forEach(function(cp) {
-            if (cp.get('name') === Em.get(dependentConfig, 'propertyName')
-              && cp.get('fileName') === App.config.getOriginalFileName(Em.get(dependentConfig, 'fileName'))) {
-
-              if (self.get('selectedConfigGroup.isDefault') || Em.get(dependentConfig, 'configGroup').contains('Default')) {
-                if (cp.get('isOriginalSCP')) {
-                  cp.set('value', Em.get(dependentConfig, 'recommendedValue'))
-                }
-              } else {
-                if (cp.get('configVersion.groupName') === self.get('groupsToSave')[dependentConfig.serviceName]) {
-                  cp.set('value', Em.get(dependentConfig, 'recommendedValue'));
-                } else {
-                  App.store.load(App.ConfigProperty, {
-                    id: Em.get(dependentConfig, 'propertyName') + '_' + Em.get(dependentConfig, 'fileName') + '_',
-                    name: Em.get(dependentConfig, 'propertyName'),
-                    value: Em.get(dependentConfig, 'recommendedValue'),
-                    file_name: App.config.getOriginalFileName(Em.get(dependentConfig, 'fileName')),
-                    is_not_saved: true
-                  })
-                }
-              }
-
-            }
-          });
+          }
         }
-      }
+      })
     });
   },
 
   /**
-   * opposite to <code>_saveDependentConfigs<code>
-   * restore values that was before applying changes for dependent configs
-   * do this action only for properties that has <code>saveRecommended<code> - false
-   * @private
+   * get config group object for current service
+   * @param serviceName
+   * @returns {*}
    */
-  _discardChanges: function () {
-    var self = this;
-    this.get('_dependentConfigValues').forEach(function(dependentConfig) {
-      if (!Em.get(dependentConfig, 'saveRecommended')) { // if saveRecommended is false leave properties as is
-        if (Em.get(dependentConfig, 'serviceName') === self.get('content.serviceName')) { //for current service save dependent properties to step configs
-          self.get('stepConfigs').objectAt(0).get('configs').forEach(function(stepConfig) {
-            if (stepConfig.get('filename') === App.config.getOriginalFileName(Em.get(dependentConfig, 'fileName'))
-              && stepConfig.get('name') === Em.get(dependentConfig, 'propertyName')) {
-              if (self.get('selectedConfigGroup.isDefault')) {
-                stepConfig.set('value', Em.get(dependentConfig, 'value'))
-              } else {
-                if (!stepConfig.get('overrides')) {
-                  stepConfig.set('overrides', Em.A([]));
-                }
-                var overridenConfig = stepConfig.get('overrides').findProperty('group.name', Em.get(dependentConfig, 'configGroup'));
-                if (overridenConfig) {
-                  if (overridenConfig.get('isNotSaved')) {
-                    stepConfig.get('overrides').removeObject(overridenConfig);
-                  } else {
-                    overridenConfig.set('value', Em.get(dependentConfig, 'value'));
-                  }
-                }
-              }
-            }
-          })
-        } else { //for not current service save dependent properties to model
-
-          App.ConfigProperty.find().forEach(function(cp) {
-            if (cp.get('name') === Em.get(dependentConfig, 'propertyName')
-              && cp.get('fileName') === App.config.getOriginalFileName(Em.get(dependentConfig, 'fileName'))) {
-
-              if (self.get('selectedConfigGroup.isDefault') || Em.get(dependentConfig, 'configGroup').contains('Default')) {
-                if (cp.get('isOriginalSCP')) {
-                  cp.set('value', Em.get(dependentConfig, 'value'))
-                }
-              } else {
-                if (cp.get('configVersion.groupName') === self.get('groupsToSave')[dependentConfig.serviceName]) {
-                  if (cp.get('isNotSaved')) {
-                    cp.deleteRecord();
-                    App.store.commit();
-                  } else {
-                    cp.set('value', Em.get(dependentConfig, 'value'));
-                  }
-                }
-              }
-
-            }
-          });
-        }
+  getGroupForService: function(serviceName) {
+    if (this.get('content.serviceName') === serviceName) {
+      return this.get('selectedConfigGroup')
+    } else {
+      if (this.get('selectedConfigGroup.isDefault')) {
+        return this.get('dependentConfigGroups').filterProperty('service.serviceName', serviceName).findProperty('isDefault');
+      } else {
+        return this.get('dependentConfigGroups').findProperty('name', this.get('groupsToSave')[serviceName]);
       }
-    });
-    this.set('recommendationTimeStamp', (new Date).getTime());
+    }
   },
 
   /**
@@ -653,117 +347,107 @@ App.EnhancedConfigsMixin = Em.Mixin.create({
    * for not default group - overriden property in case there is such property in group
    * otherwise - property from default group
    * @param stepConfigs
-   * @returns {App.ServiceConfigProperty[]}
+   * @returns {Object[]}
    * @private
    */
   _getConfigsByGroup: function(stepConfigs) {
-    var configsToSend = [];
-    if (this.get('selectedConfigGroup.isDefault')) {
+    if (this.get('selectedConfigGroup.isDefault') || this.get('controller.name') === 'wizardStep7Controller') {
       return stepConfigs;
     } else {
-      stepConfigs.forEach(function(stepConfig) {
-        if (stepConfig.get('overrides')) {
-          var conf = stepConfig.get('overrides').findProperty('group.name', this.get('selectedConfigGroup.name'));
-          if (conf) {
-            configsToSend.pushObject(conf);
+      var configsToSend = [];
+
+      stepConfigs.forEach(function(serviceConfig) {
+        var stepConfigToSend = [];
+        var group = this.getGroupForService(serviceConfig.get('serviceName'));
+        serviceConfig.get('configs').forEach(function(cp) {
+          if (group && !group.get('isDefault') && cp.get('overrides')) {
+            var conf = cp.get('overrides').findProperty('group.name', group.get('name'));
+            stepConfigToSend.pushObject(conf ? conf : cp);
           } else {
-            configsToSend.pushObject(stepConfig);
+            stepConfigToSend.pushObject(cp);
           }
-        } else {
-          configsToSend.pushObject(stepConfig);
-        }
-      }, this)
+        }, this);
+        App.config.createServiceConfig(serviceConfig.get('serviceName'));
+        var stepConfig =  App.config.createServiceConfig(serviceConfig.get('serviceName'));
+        stepConfig.set('configs', stepConfigToSend);
+        configsToSend.pushObject(stepConfig);
+      }, this);
+
+      return configsToSend;
     }
-    return configsToSend;
   },
 
   /**
    * saves values from response for dependent configs to <code>_dependentConfigValues<code>
    * @param data
+   * @param updateOnlyBoundaries
    * @method saveRecommendedValues
    * @private
    */
-  _saveRecommendedValues: function(data) {
-    Em.assert('invalid data', data && data.resources[0] && Em.get(data.resources[0], 'recommendations.blueprint.configurations'));
+  _saveRecommendedValues: function(data, updateOnlyBoundaries) {
+    Em.assert('invalid data - `data.resources[0].recommendations.blueprint.configurations` not defined ', data && data.resources[0] && Em.get(data.resources[0], 'recommendations.blueprint.configurations'));
     var configs = data.resources[0].recommendations.blueprint.configurations;
+    /** get all configs by config group **/
+    var stepConfigsByGroup = this._getConfigsByGroup(this.get('stepConfigs'));
     for (var key in configs) {
+
+      /**  defines main info for file name (service name, config group, config that belongs to filename) **/
+      var service = App.config.getServiceByConfigType(key);
+      var serviceName = service.get('serviceName');
+      var stepConfig = stepConfigsByGroup.findProperty('serviceName', serviceName);
+      var configProperties = stepConfig ? stepConfig.get('configs').filterProperty('filename', App.config.getOriginalFileName(key)) : [];
+
+      var group = this.getGroupForService(serviceName);
+
       for (var propertyName in configs[key].properties) {
-        var service = this.getServiceByConfigType(key);
-        var value = this._getCurrentValue(service.get('serviceName'), key, propertyName, this.get('selectedConfigGroup'));
+        /**  if property exists and has value **/
+        var cp = configProperties.findProperty('name', propertyName);
+        var value = cp && cp.get('value');
+
         if (!Em.isNone(value)) {
-          var dependentProperty = this.get('_dependentConfigValues').findProperty('propertyName', propertyName);
-          if (dependentProperty) {
-            if (value != configs[key].properties[propertyName]) {
-              Em.set(dependentProperty, 'value', value);
-              Em.set(dependentProperty, 'recommendedValue', configs[key].properties[propertyName]);
+          if (!updateOnlyBoundaries) { //on first initial request we don't need to change values
+            var dependentProperty = this.get('_dependentConfigValues').findProperty('propertyName', propertyName);
+            if (dependentProperty) {
+              if (value != configs[key].properties[propertyName]) {
+                Em.set(dependentProperty, 'value', value);
+                Em.set(dependentProperty, 'recommendedValue', configs[key].properties[propertyName]);
+              }
             } else {
-              this.get('_dependentConfigValues').removeObject(dependentProperty);
+              if (value != configs[key].properties[propertyName]) {
+                this.get('_dependentConfigValues').pushObject({
+                  saveRecommended: true,
+                  saveRecommendedDefault: true,
+                  fileName: key,
+                  propertyName: propertyName,
+                  configGroup: group ? group.get('name') : service.get('displayName') + " Default",
+                  value: value,
+                  serviceName: serviceName,
+                  recommendedValue: configs[key].properties[propertyName]
+                });
+              }
             }
-          } else {
-            var configGroup = this.get('selectedConfigGroup.isDefault') ?
-              service.get('serviceName') + ' Default' : this.get('groupsToSave')[service.get('serviceName')] || this.get('selectedConfigGroup.name');
-            if (value != configs[key].properties[propertyName]) {
-              this.get('_dependentConfigValues').pushObject({
-                saveRecommended: true,
-                fileName: key,
-                propertyName: propertyName,
-                configGroup: configGroup,
-                value: value,
-                serviceName: service.get('serviceName'),
-                recommendedValue: configs[key].properties[propertyName]
-              });
+          }
+        }
+
+        /**
+         * saving new attribute values
+         */
+        if (configs[key].property_attributes && configs[key].property_attributes[propertyName]) {
+
+          var stackProperty = App.StackConfigProperty.find(propertyName + '_' + key);
+          if (stackProperty && stackProperty.get('valueAttributes')) {
+            if (configs[key].property_attributes[propertyName].min) {
+              stackProperty.set('valueAttributes.minimum', configs[key].property_attributes[propertyName].min);
+            }
+            if (configs[key].property_attributes[propertyName].max) {
+              stackProperty.set('valueAttributes.maximum', configs[key].property_attributes[propertyName].max);
+            }
+            if (configs[key].property_attributes[propertyName].step) {
+              stackProperty.set('valueAttributes.step', configs[key].property_attributes[propertyName].step);
             }
           }
         }
       }
     }
-  },
-
-  /**
-   * get current value for property by serviceName, tag and ConfigGroup
-   * @param serviceName
-   * @param tag
-   * @param propertyName
-   * @param configGroup
-   * @returns {null|Object}
-   * @private
-   */
-  _getCurrentValue: function(serviceName, tag, propertyName, configGroup) {
-    if (serviceName == this.get('content.serviceName')) {
-      var stepConfig = this.get('stepConfigs').objectAt(0).get('configs').find(function(stepConfig) {
-        return (stepConfig.get('filename') === App.config.getOriginalFileName(tag) && stepConfig.get('name') === propertyName);
-      });
-      if (stepConfig) {
-        if (configGroup.get('isDefault') || Em.isNone(stepConfig.get('overrides'))) {
-          return stepConfig.get('value');
-        } else {
-          var overridenConfig = stepConfig.get('overrides').findProperty('group.name', configGroup.get('name'));
-          if (overridenConfig) {
-            return overridenConfig.get('value');
-          } else {
-            return stepConfig.get('value');
-          }
-        }
-      }
-    } else {
-      var currentDefaultProperties = App.ConfigProperty.find().filter(function(cp) {
-        return cp.get('configVersion.isCurrent') && cp.get('configVersion.isDefault');
-      });
-      if (!this.get('selectedConfigGroup.isDefault') && (!this.get('groupsToSave')[serviceName] || !this.get('groupsToSave')[serviceName].contains('Default'))) {
-        var currentProperties = App.ConfigProperty.find().filter(function(cp) {
-          return cp.get('configVersion.isCurrent') && cp.get('configVersion.groupName') === this.get('groupsToSave')[serviceName];
-        }, this);
-        var modelConfig = currentProperties.findProperty('name', propertyName);
-        if (modelConfig) {
-          return modelConfig.get('value');
-        }
-      }
-
-      var modelDefaultConfig = currentDefaultProperties.findProperty('name', propertyName);
-      if (modelDefaultConfig) {
-        return modelDefaultConfig.get('value');
-      }
-    }
-    return null;
   }
 });

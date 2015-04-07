@@ -20,6 +20,7 @@
     <class>org.apache.ambari.server.orm.entities.AlertHistoryEntity</class>
     <class>org.apache.ambari.server.orm.entities.AlertNoticeEntity</class>
     <class>org.apache.ambari.server.orm.entities.AlertTargetEntity</class>
+    <class>org.apache.ambari.server.orm.entities.ArtifactEntity</class>
     <class>org.apache.ambari.server.orm.entities.BlueprintConfigEntity</class>
     <class>org.apache.ambari.server.orm.entities.BlueprintEntity</class>
     <class>org.apache.ambari.server.orm.entities.ClusterConfigEntity</class>
@@ -65,12 +66,13 @@
     <class>org.apache.ambari.server.orm.entities.ServiceConfigApplicationEntity</class>
     <class>org.apache.ambari.server.orm.entities.ServiceConfigEntity</class>
     <class>org.apache.ambari.server.orm.entities.ServiceDesiredStateEntity</class>
+    <class>org.apache.ambari.server.orm.entities.StackEntity</class>
     <class>org.apache.ambari.server.orm.entities.StageEntity</class>
     <class>org.apache.ambari.server.orm.entities.UpgradeEntity</class>
     <class>org.apache.ambari.server.orm.entities.UpgradeGroupEntity</class>
     <class>org.apache.ambari.server.orm.entities.UpgradeItemEntity</class>
     <class>org.apache.ambari.server.orm.entities.UserEntity</class>
-    <class>org.apache.ambari.server.orm.entities.UserWidgetEntity</class>
+    <class>org.apache.ambari.server.orm.entities.WidgetEntity</class>
     <class>org.apache.ambari.server.orm.entities.ViewEntity</class>
     <class>org.apache.ambari.server.orm.entities.ViewEntityEntity</class>
     <class>org.apache.ambari.server.orm.entities.ViewInstanceDataEntity</class>
@@ -80,7 +82,6 @@
     <class>org.apache.ambari.server.orm.entities.ViewResourceEntity</class>
     <class>org.apache.ambari.server.orm.entities.WidgetLayoutEntity</class>
     <class>org.apache.ambari.server.orm.entities.WidgetLayoutUserWidgetEntity</class>
-    <class>org.apache.ambari.server.orm.entities.ArtifactEntity</class>
 
     <properties>      
       <property name="eclipselink.cache.size.default" value="10000" />

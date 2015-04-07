@@ -25,7 +25,7 @@
 
       <osSpecifics>
         <osSpecific>
-          <osFamily>redhat6,suse11</osFamily>
+          <osFamily>redhat7,redhat6,suse11</osFamily>
           <packages>
             <package>
               <name>hadoop_2_3_*-yarn</name>
@@ -39,7 +39,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>debian7,ubuntu12</osFamily>
+          <osFamily>debian7,ubuntu12,ubuntu14</osFamily>
           <packages>
             <package>
               <name>hadoop-2-3-.*-yarn</name>
@@ -57,7 +57,7 @@
       <version>2.7.0.2.3</version>
       <osSpecifics>
         <osSpecific>
-          <osFamily>redhat6,suse11</osFamily>
+          <osFamily>redhat7,redhat6,suse11</osFamily>
           <packages>
             <package>
               <name>hadoop_2_3_*-mapreduce</name>
@@ -65,7 +65,7 @@
           </packages>
         </osSpecific>
         <osSpecific>
-          <osFamily>debian7,ubuntu12</osFamily>
+          <osFamily>debian7,ubuntu12,ubuntu14</osFamily>
           <packages>
             <package>
               <name>hadoop-2-3-.*-mapreduce</name>
@@ -73,6 +73,7 @@
           </packages>
         </osSpecific>
       </osSpecifics>
+      <configuration-dir>configuration-mapred</configuration-dir>
     </service>
 
   </services>

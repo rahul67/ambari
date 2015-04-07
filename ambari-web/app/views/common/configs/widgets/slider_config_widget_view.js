@@ -55,6 +55,12 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
   isMirrorValueValid: true,
 
   /**
+   * Unit label to display.
+   * @type {String}
+   */
+  unitLabel: '',
+
+  /**
    * Function used to parse config value (based on <code>config.stackConfigProperty.valueAttributes.type</code>)
    * For integer - parseInt, for float - parseFloat
    * @type {Function}
@@ -84,15 +90,26 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
 
   willInsertElement: function () {
     this._super();
+    this.prepareValueConverter();
     this.addObserver('mirrorValue', this, this.mirrorValueObs);
   },
 
   didInsertElement: function () {
     this._super();
-    this.set('mirrorValue', this.get('config.value'));
+    this.set('mirrorValue', this.widgetValueByConfigAttributes(this.get('config.value')));
     this.prepareValueAttributes();
     this.initSlider();
     this.toggleWidgetState();
+    this.initPopover();
+    this.addObserver('config.stackConfigProperty.valueAttributes.minimum', this, this.changeBoundaries);
+    this.addObserver('config.stackConfigProperty.valueAttributes.maximum', this, this.changeBoundaries);
+    this.addObserver('config.stackConfigProperty.valueAttributes.step', this, this.changeBoundaries);
+  },
+
+  willDestroyElement: function() {
+    this.removeObserver('config.stackConfigProperty.valueAttributes.step', this, this.changeBoundaries);
+    this.removeObserver('config.stackConfigProperty.valueAttributes.maximum', this, this.changeBoundaries);
+    this.removeObserver('config.stackConfigProperty.valueAttributes.minimum', this, this.changeBoundaries);
   },
 
   /**
@@ -104,6 +121,7 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
       this.get('parentView').sendRequestRorDependentConfigs(this.get('parentView.config'));
     }
   }),
+
   /**
    * Check if <code>mirrorValue</code> was updated by user
    * Validate it. If value is correct, set it to slider and config.value
@@ -112,8 +130,8 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
   mirrorValueObs: function () {
     var mirrorValue = this.get('mirrorValue'),
       slider = this.get('slider'),
-      min = this.get('config.stackConfigProperty.valueAttributes.minimum'),
-      max = this.get('config.stackConfigProperty.valueAttributes.maximum'),
+      min = this.widgetValueByConfigAttributes(this.get('config.stackConfigProperty.valueAttributes.minimum')),
+      max = this.widgetValueByConfigAttributes(this.get('config.stackConfigProperty.valueAttributes.maximum')),
       validationFunction = this.get('validateFunction'),
       parseFunction = this.get('parseFunction');
     if (validationFunction(mirrorValue)) {
@@ -121,7 +139,7 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
       if (parsed >= min && parsed <= max) {
         this.set('isMirrorValueValid', true);
         this.set('config.errorMessage', '');
-        this.set('config.value', '' + parsed);
+        this.set('config.value', '' + this.configValueByWidget(parsed));
         if (slider) {
           slider.setValue(parsed);
         }
@@ -143,7 +161,8 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
    * set widget value same as config value
    */
   setValue: function() {
-    this.set('mirrorValue', this.get('config.value'));
+    var parseFunction = this.get('parseFunction');
+    this.set('mirrorValue', this.widgetValueByConfigAttributes(parseFunction(this.get('config.value'))));
   },
 
   /**
@@ -160,6 +179,18 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
   },
 
   /**
+   * Setup convert table according to widget unit-name and property type.
+   * Set label for unit to display.
+   */
+  prepareValueConverter: function() {
+    var widgetUnit = this._converterGetWidgetUnits();
+    if (['int', 'float'].contains(this._converterGetPropertyAttributes()) && widgetUnit == 'percent') {
+      this.set('currentDimensionType', 'percent.percent_' + this._converterGetPropertyAttributes());
+    }
+    this.set('unitLabel', Em.getWithDefault(this.get('unitLabelMap'), widgetUnit, widgetUnit));
+  },
+
+  /**
    * Draw slider for current config
    * @method initSlider
    */
@@ -167,24 +198,47 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
     var self = this,
       config = this.get('config'),
       valueAttributes = config.get('stackConfigProperty.valueAttributes'),
-      unit = Em.getWithDefault(valueAttributes, 'unit', ''),
       parseFunction = this.get('parseFunction'),
-      ticks = [valueAttributes.minimum],
-      ticksLabels = [];
+      ticks = [this.widgetValueByConfigAttributes(valueAttributes.minimum)],
+      ticksLabels = [],
+      defaultValue = this.widgetValueByConfigAttributes(this.valueForTick(+config.get('defaultValue'))),
+      defaultValueMirroredId,
+      defaultValueId;
 
     // ticks and labels
     for (var i = 1; i <= 3; i++) {
-      var val = (valueAttributes.minimum + valueAttributes.maximum) / 4 * i;
+      var val = this.widgetValueByConfigAttributes((valueAttributes.minimum + valueAttributes.maximum)) / 4 * i;
       // if value's type is float, ticks may be float too
-      ticks.push(valueAttributes.type === 'int' ? Math.round(val) : parseFloat(val.toFixed(1)));
+      ticks.push(this.valueForTick(val));
     }
-    ticks.push(valueAttributes.maximum);
+    ticks.push(this.widgetValueByConfigAttributes(valueAttributes.maximum));
     ticks.forEach(function (tick, index) {
-      ticksLabels.push(index % 2 === 0 ? tick + ' ' + unit : '');
+      ticksLabels.push(index % 2 === 0 ? tick + ' ' + self.get('unitLabel') : '');
     });
+    // process additional tick for default value if it not defined in previous computation
+    if (!ticks.contains(defaultValue)) {
+      // push default value
+      ticks.push(defaultValue);
+      // and resort array
+      ticks = ticks.sort(function(a,b) { return a-b; });
+      defaultValueId = ticks.indexOf(defaultValue);
+      // to save nice tick labels layout we should add new tick value which is mirrored by index to default value
+      defaultValueMirroredId = ticks.length - defaultValueId;
+      // push empty label for default value tick
+      ticksLabels.insertAt(defaultValueId, '');
+      // push empty to mirrored position
+      ticksLabels.insertAt(defaultValueMirroredId, '');
+      // for saving correct sliding need to add value to mirrored position which is average between previous
+      // and next value
+      ticks.insertAt(defaultValueMirroredId, (ticks[defaultValueMirroredId] + ticks[defaultValueMirroredId - 1])/2);
+      // get new index for default value
+      defaultValueId = ticks.indexOf(defaultValue);
+    } else {
+      defaultValueId = ticks.indexOf(defaultValue);
+    }
 
     var slider = new Slider(this.$('input.slider-input')[0], {
-      value: parseFunction(this.get('config.value')),
+      value: this.widgetValueByConfigAttributes(parseFunction(this.get('config.value'))),
       ticks: ticks,
       tooltip: 'hide',
       ticks_labels: ticksLabels,
@@ -194,20 +248,48 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
 
     slider.on('change', function (obj) {
       var val = parseFunction(obj.newValue);
-      self.set('config.value', '' + val);
+      self.set('config.value', '' + self.configValueByWidget(val));
       self.set('mirrorValue', val);
-    });
-    /**
-     * action to run sendRequestRorDependentConfigs when
-     * we have changed config value within slider
-     */
-    slider.on('slideStop', function() {
-      self.sendRequestRorDependentConfigs(self.get('config'));
-    });
-
+    }).on('slideStop', function() {
+        /**
+         * action to run sendRequestRorDependentConfigs when
+         * we have changed config value within slider
+         */
+        self.sendRequestRorDependentConfigs(self.get('config'));
+      });
     this.set('slider', slider);
+    var sliderTicks = this.$('.ui-slider-wrapper:eq(0) .slider-tick');
+
+    sliderTicks.eq(defaultValueId).addClass('slider-tick-default').on('click', function() {
+      self.restoreValue();
+    });
+    // if mirrored value was added need to hide the tick for it
+    if (defaultValueMirroredId) {
+      sliderTicks.eq(defaultValueMirroredId).hide();
+    }
     // hide some ticks. can't do this via css
-    this.$('.slider-tick:first, .slider-tick:last').hide();
+    if (defaultValueId == 0) {
+      sliderTicks.last().hide();
+    } else
+      if (defaultValueId == ticks.length - 1) {
+        sliderTicks.first().hide();
+      }
+      else {
+        sliderTicks.first().hide();
+        sliderTicks.last().hide();
+      }
+  },
+
+  /**
+   * Convert value according to property attribute unit.
+   *
+   * @method valueForTick
+   * @param {Number} val
+   * @private
+   * @returns {Number}
+   */
+  valueForTick: function(val) {
+    return this.get('config.stackConfigProperty.valueAttributes').type === 'int' ? Math.round(val) : parseFloat(val.toFixed(2));
   },
 
   /**
@@ -218,9 +300,43 @@ App.SliderConfigWidgetView = App.ConfigWidgetView.extend({
   restoreValue: function () {
     this._super();
     var parseFunction = this.get('parseFunction'),
-      val = parseFunction(this.get('config.value'));
+      val = this.widgetValueByConfigAttributes(parseFunction(this.get('config.value')));
     this.get('slider').setValue(val);
     this.set('mirrorValue', val);
+  },
+
+  /**
+   * Run changeBoundariesOnce only once
+   * @method changeBoundaries
+   */
+  changeBoundaries: function() {
+    Em.run.once(this, 'changeBoundariesOnce');
+  },
+
+  /**
+   * recreate widget in case max or min values were changed
+   * @method changeBoundariesOnce
+   */
+  changeBoundariesOnce: function () {
+    if ($.mocho) {
+      //temp fix as it can broke test that doesn't have any connection with this method
+      return;
+    }
+    var self = this;
+    var valueAttributes = this.get('config.stackConfigProperty.valueAttributes');
+
+    self.prepareValueAttributes();
+    if (self.get('slider')) {
+      self.get('slider').destroy();
+      self.initSlider();
+      if (self.get('config.value') > Em.get(valueAttributes, 'maximum')) {
+        self.set('mirrorValue', this.widgetValueByConfigAttributes(Em.get(valueAttributes, 'maximum')));
+      }
+      if (self.get('config.value') < Em.get(valueAttributes, 'minimum')) {
+        self.set('mirrorValue', this.widgetValueByConfigAttributes(Em.get(valueAttributes, 'minimum')));
+      }
+      self.toggleWidgetState();
+    }
   }
 
 });

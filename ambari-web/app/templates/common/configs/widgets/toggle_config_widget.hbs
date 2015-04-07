@@ -16,9 +16,19 @@
 * limitations under the License.
 }}
 
-<p>{{view.configLabel}}</p>
+<p class="widget-config-label">{{view.configLabel}}</p>
 <div class="pull-left">
   {{view Ember.Checkbox checkedBinding="view.switcherValue"}}
 </div>
 {{view App.RestoreConfigView}}
+{{#if view.isOriginalSCP}}
+  {{view App.ConfigWidgetOverrideView
+  serviceConfigPropertyBinding="view.config"
+  isDefaultGroupSelectedBinding="controller.selectedConfigGroup.isDefault"
+  }}
+{{/if}}
+
+{{#if view.isComparison}}
+  {{view App.ConfigWidgetComparisonView serviceConfigPropertyBinding="view.config"}}
+{{/if}}
 <div class="clearfix"></div>

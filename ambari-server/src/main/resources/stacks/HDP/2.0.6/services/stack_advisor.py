@@ -125,7 +125,7 @@ class HDP206StackAdvisor(DefaultStackAdvisor):
     putYarnEnvProperty = self.putProperty(configurations, "yarn-env", services)
     putYarnProperty('yarn.nodemanager.resource.memory-mb', int(round(clusterData['containers'] * clusterData['ramPerContainer'])))
     putYarnProperty('yarn.scheduler.minimum-allocation-mb', int(clusterData['ramPerContainer']))
-    putYarnProperty('yarn.scheduler.maximum-allocation-mb', int(round(clusterData['containers'] * clusterData['ramPerContainer'])))
+    putYarnProperty('yarn.scheduler.maximum-allocation-mb', int(configurations["yarn-site"]["properties"]["yarn.nodemanager.resource.memory-mb"]))
     putYarnEnvProperty('min_user_id', self.get_system_min_uid())
 
   def recommendMapReduce2Configurations(self, configurations, clusterData, services, hosts):
@@ -210,9 +210,9 @@ class HDP206StackAdvisor(DefaultStackAdvisor):
 
 
   def getHostWithComponent(self, serviceName, componentName, services, hosts):
-    if services is not None and hosts is not None:
+    if services is not None and hosts is not None and serviceName in [service["StackServices"]["service_name"] for service in services["services"]]:
       service = [serviceEntry for serviceEntry in services["services"] if serviceEntry["StackServices"]["service_name"] == serviceName][0]
-      components = [componentEntry for componentEntry in service["components"] if componentEntry["StackServiceComponents"]["component_name"] == "NODEMANAGER"]
+      components = [componentEntry for componentEntry in service["components"] if componentEntry["StackServiceComponents"]["component_name"] == componentName]
       if (len(components) > 0 and len(components[0]["StackServiceComponents"]["hostnames"]) > 0):
         # NodeManager available - determine hosts and memory
         componentHostname = components[0]["StackServiceComponents"]["hostnames"][0]

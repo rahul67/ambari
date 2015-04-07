@@ -19,18 +19,18 @@
 var App = require('app');
 var stringUtils = require('utils/string_utils');
 
-var configGroupsByTag = [];
-
 App.config = Em.Object.create({
 
   CONFIG_GROUP_NAME_MAX_LENGTH: 18,
 
   /**
    * filename exceptions used to support substandard sitenames which don't have "xml" extension
+   * @type {string[]}
    */
   filenameExceptions: [],
 
   preDefinedServiceConfigs: [],
+
   /**
    *
    * Returns file name version that stored on server.
@@ -190,97 +190,81 @@ App.config = Em.Object.create({
   },
 
   /**
-   * Cache of loaded configurations. This is useful in not loading
-   * same configuration multiple times. It is populated in multiple
-   * places.
-   *
-   * Example:
-   * {
-   *  'hdfs-site_version3': {...},
-   * }
-   */
-  loadedConfigurationsCache: {},
-
-  /**
    * identify category by filename of config
    * @param config
    * @return {object|null}
    */
   identifyCategory: function (config) {
     var category = null,
-      serviceConfigMetaData = this.get('preDefinedServiceConfigs').findProperty('serviceName', config.serviceName),
+      serviceConfigMetaData = this.get('preDefinedServiceConfigs').findProperty('serviceName', Em.get(config, 'serviceName')),
       configCategories = (serviceConfigMetaData && serviceConfigMetaData.get('configCategories')) || [];
 
-    if (config.filename.contains("env")) {
-      if (config.category) {
-        category = configCategories.findProperty("name", config.category);
+    if (Em.get(config, 'filename') && Em.get(config, 'filename').contains("env")) {
+      if (Em.get(config, 'category')) {
+        category = configCategories.findProperty("name", Em.get(config, 'category'));
       } else {
         configCategories.forEach(function (_category) {
-          if (_category.name.contains(this.getConfigTagFromFileName(config.filename))) {
+          if (_category.name.contains(this.getConfigTagFromFileName(Em.get(config, 'filename')))) {
             category = _category;
           }
         }, this);
       }
     } else {
       configCategories.forEach(function (_category) {
-        if (_category.siteFileNames && Array.isArray(_category.siteFileNames) && _category.siteFileNames.contains(config.filename)) {
+        if (_category.siteFileNames && Array.isArray(_category.siteFileNames) && _category.siteFileNames.contains(Em.get(config, 'filename'))) {
           category = _category;
         }
       });
-      category = Em.isNone(category) ? configCategories.findProperty('siteFileName', this.getOriginalFileName(config.filename)) : category;
+      category = Em.isNone(category) ? configCategories.findProperty('siteFileName', this.getOriginalFileName(Em.get(config, 'filename'))) : category;
     }
     return category;
   },
+
   /**
    * additional handling for special properties such as
    * checkbox and digital which values with 'm' at the end
    * @param config
    */
   handleSpecialProperties: function (config) {
-    if (config.displayType === 'int' && /\d+m$/.test(config.value)) {
-      config.value = config.value.slice(0, config.value.length - 1);
-      config.defaultValue = config.value;
-    }
-  },
-  /**
-   * calculate config properties:
-   * category, filename, isUserProperty, description
-   * @param config
-   * @param isAdvanced
-   * @param advancedConfigs
-   */
-  calculateConfigProperties: function (config, isAdvanced, advancedConfigs) {
-    if (!isAdvanced || this.get('customFileNames').contains(config.filename)) {
-      var categoryMetaData = this.identifyCategory(config);
-      if (categoryMetaData != null) {
-        config.category = categoryMetaData.get('name');
-        if (!isAdvanced) config.isUserProperty = true;
-      }
-      if (isAdvanced) {
-        var advancedProperty = advancedConfigs.filterProperty('filename', config.filename).findProperty('name', config.name);
-        if (advancedProperty) {
-          config.description = advancedProperty.description;
-        }
-      }
-    } else {
-      var advancedProperty = null;
-      var configType = this.getConfigTagFromFileName(config.filename);
-      if (isAdvanced) {
-        advancedProperty = advancedConfigs.filterProperty('filename', config.filename).findProperty('name', config.name);
-      }
-      config.category = config.category ? config.category : 'Advanced ' + configType;
-      if (advancedProperty) {
-        config.description = advancedProperty.description;
-      }
+    if (Em.get(config, 'displayType') === 'int' && /\d+m$/.test(Em.get(config, 'value') )) {
+      Em.set(config, 'value', Em.get(config, 'value').slice(0, Em.get(config, 'value.length') - 1));
+      Em.set(config, 'defaultValue', Em.get(config, 'value'));
     }
   },
 
-  capacitySchedulerFilter: function () {
-    var yarnRegex = /^yarn\.scheduler\.capacity\.root\.([a-z]([\_\-a-z0-9]{0,50}))\.(acl_administer_jobs|acl_submit_jobs|state|user-limit-factor|maximum-capacity|capacity)$/i;
-    return function (_config) {
-      return (yarnRegex.test(_config.name));
+  /**
+   * calculate config properties:
+   * category, filename, description
+   * @param config
+   * @param isAdvanced
+   * @param advancedProperty
+   */
+  calculateConfigProperties: function (config, isAdvanced, advancedProperty) {
+    if (!isAdvanced || this.get('customFileNames').contains(Em.get(config, 'filename'))) {
+      var categoryMetaData = this.identifyCategory(config);
+      if (categoryMetaData != null) {
+        Em.set(config, 'category', categoryMetaData.get('name'));
+      }
+    } else {
+      var configType = this.getConfigTagFromFileName(Em.get(config, 'filename'));
+      Em.set(config, 'category', Em.get(config, 'category') ? Em.get(config, 'category') : 'Advanced ' + configType);
     }
-  }.property(),
+    if (advancedProperty) {
+      Em.set(config, 'description', Em.get(advancedProperty, 'description'));
+    }
+  },
+
+  /**
+   * get service for current config type
+   * @param {String} configType - config fileName without xml
+   * @return App.StackService
+   */
+  getServiceByConfigType: function(configType) {
+    return App.StackService.find().find(function(s) {
+      return Object.keys(s.get('configTypes')).contains(configType);
+    });
+  },
+
   /**
    * return:
    *   configs,
@@ -298,10 +282,13 @@ App.config = Em.Object.create({
     var preDefinedConfigs = this.get('preDefinedSiteProperties').concat(contentProperties);
     var mappingConfigs = [];
     var filenameExceptions = this.get('filenameExceptions');
-    var selectedServiceNames = App.Service.find().mapProperty('serviceName');
     tags.forEach(function (_tag) {
-      var isAdvanced = null;
-      var filename = (filenameExceptions.contains(_tag.siteName)) ? _tag.siteName : _tag.siteName + ".xml";
+      var service = this.getServiceByConfigType(_tag.siteName);
+      if (service) {
+        serviceName = service.get('serviceName');
+      }
+
+      var filename = App.config.getOriginalFileName(_tag.siteName);
       var siteConfig = configCategories.filter(function (serviceConfigProperties) {
         return _tag.tagName === serviceConfigProperties.tag && _tag.siteName === serviceConfigProperties.type;
       });
@@ -312,13 +299,10 @@ App.config = Em.Object.create({
       var properties = siteConfig.properties || {};
       for (var index in properties) {
         var configsPropertyDef = preDefinedConfigs.filterProperty('name', index).findProperty('filename', filename);
+        var advancedConfig = advancedConfigs.filterProperty('name', index).findProperty('filename', filename);
+        var isAdvanced = Boolean(advancedConfig);
         if (!configsPropertyDef) {
-          advancedConfigs.filterProperty('name', index).forEach(function (_advancedConfig) {
-            var isServiceInstalled = selectedServiceNames.contains(_advancedConfig.serviceName);
-            if (isServiceInstalled || _advancedConfig.serviceName == 'MISC') {
-              configsPropertyDef = _advancedConfig;
-            }
-          }, this);
+          configsPropertyDef = advancedConfig;
         }
 
         var serviceConfigObj = App.ServiceConfig.create({
@@ -326,15 +310,17 @@ App.config = Em.Object.create({
           value: properties[index],
           defaultValue: properties[index],
           filename: filename,
-          isUserProperty: false,
+          isUserProperty: !advancedConfig,
           isOverridable: true,
           isReconfigurable: true,
-          isRequired: advancedConfigs.someProperty('name', index),
+          isRequired: isAdvanced,
           isFinal: finalAttributes[index] === "true",
           defaultIsFinal: finalAttributes[index] === "true",
           showLabel: true,
           serviceName: serviceName,
-          belongsToService: []
+          belongsToService: [],
+          supportsFinal: advancedConfig ? Em.get(advancedConfig, 'supportsFinal') : false
+
         });
 
         if (configsPropertyDef) {
@@ -351,22 +337,22 @@ App.config = Em.Object.create({
         this.tweakConfigVisibility(serviceConfigObj, properties);
         if (!this.getBySiteName(serviceConfigObj.get('filename')).someProperty('name', index)) {
           if (configsPropertyDef) {
-            if (configsPropertyDef.isRequiredByAgent === false) {
+            if (Em.get(configsPropertyDef, 'isRequiredByAgent') === false) {
               continue;
             }
             this.handleSpecialProperties(serviceConfigObj);
           } else {
-            serviceConfigObj.displayType = stringUtils.isSingleLine(serviceConfigObj.value) ? 'advanced' : 'multiLine';
+            serviceConfigObj.set('displayType', stringUtils.isSingleLine(serviceConfigObj.get('value')) ? 'advanced' : 'multiLine');
           }
-
-          isAdvanced = advancedConfigs.filterProperty('name', index).someProperty('filename', filename);
-          serviceConfigObj.id = 'site property';
-          serviceConfigObj.displayName = configsPropertyDef && configsPropertyDef.displayName ? configsPropertyDef.displayName : index;
-          serviceConfigObj.options = configsPropertyDef ? configsPropertyDef.options : null;
-          serviceConfigObj.radioName = configsPropertyDef ? configsPropertyDef.radioName : null;
-          serviceConfigObj.serviceName = configsPropertyDef && configsPropertyDef.serviceName ? configsPropertyDef.serviceName : serviceName;
-          serviceConfigObj.belongsToService = configsPropertyDef && configsPropertyDef.belongsToService ? configsPropertyDef.belongsToService : [];
-          this.calculateConfigProperties(serviceConfigObj, isAdvanced, advancedConfigs);
+          serviceConfigObj.setProperties({
+            'id': 'site property',
+            'displayName': configsPropertyDef && Em.get(configsPropertyDef, 'displayName') ? Em.get(configsPropertyDef, 'displayName') : index,
+            'options': configsPropertyDef ? Em.get(configsPropertyDef, 'options') : null,
+            'radioName': configsPropertyDef ? Em.get(configsPropertyDef, 'radioName') : null,
+            'serviceName': configsPropertyDef && Em.get(configsPropertyDef, 'serviceName') ? Em.get(configsPropertyDef, 'serviceName') : serviceName,
+            'belongsToService': configsPropertyDef && Em.get(configsPropertyDef, 'belongsToService') ? Em.get(configsPropertyDef, 'belongsToService') : []
+          });
+          this.calculateConfigProperties(serviceConfigObj, isAdvanced, advancedConfig);
           this.setValueByDisplayType(serviceConfigObj);
           configs.push(serviceConfigObj);
         } else {
@@ -382,8 +368,8 @@ App.config = Em.Object.create({
 
   tweakConfigVisibility: function (config, allSiteConfigs) {
     var kdcType = allSiteConfigs['kdc_type'];
-    if (kdcType === 'active-directory' && (config.name === 'container_dn' || config.name === 'ldap_url')) {
-      config.isVisible = true;
+    if (kdcType === 'active-directory' && ['container_dn', 'ldap_url'].contains(Em.get(config, 'name'))) {
+      Em.set(config, 'isVisible', true);
     }
   },
 
@@ -413,21 +399,23 @@ App.config = Em.Object.create({
    * @param configsPropertyDef : Object
    */
   setServiceConfigUiAttributes: function (serviceConfigObj, configsPropertyDef) {
-    serviceConfigObj.displayType = configsPropertyDef.displayType;
-    serviceConfigObj.isRequired = (configsPropertyDef.isRequired !== undefined) ? configsPropertyDef.isRequired : true;
-    serviceConfigObj.isRequiredByAgent = (configsPropertyDef.isRequiredByAgent !== undefined) ? configsPropertyDef.isRequiredByAgent : true;
-    serviceConfigObj.isReconfigurable = (configsPropertyDef.isReconfigurable !== undefined) ? configsPropertyDef.isReconfigurable : true;
-    serviceConfigObj.isVisible = (configsPropertyDef.isVisible !== undefined) ? configsPropertyDef.isVisible : true;
-    serviceConfigObj.unit = (configsPropertyDef.unit !== undefined) ? configsPropertyDef.unit : undefined;
-    serviceConfigObj.description = (configsPropertyDef.description !== undefined) ? configsPropertyDef.description : undefined;
-    serviceConfigObj.isOverridable = configsPropertyDef.isOverridable === undefined ? true : configsPropertyDef.isOverridable;
-    serviceConfigObj.serviceName = configsPropertyDef ? configsPropertyDef.serviceName : null;
-    serviceConfigObj.index = configsPropertyDef.index;
-    serviceConfigObj.isSecureConfig = configsPropertyDef.isSecureConfig === undefined ? false : configsPropertyDef.isSecureConfig;
-    serviceConfigObj.belongsToService = configsPropertyDef.belongsToService;
-    serviceConfigObj.category = configsPropertyDef.category;
-    serviceConfigObj.showLabel = configsPropertyDef.showLabel !== false;
-    serviceConfigObj.dependentConfigPattern = configsPropertyDef.dependentConfigPattern
+    serviceConfigObj.setProperties({
+      'displayType': Em.get(configsPropertyDef, 'displayType'),
+      'isRequired': (Em.get(configsPropertyDef, 'isRequired') !== undefined) ? Em.get(configsPropertyDef, 'isRequired') : true,
+      'isRequiredByAgent': (Em.get(configsPropertyDef, 'isRequiredByAgent') !== undefined) ? Em.get(configsPropertyDef, 'isRequiredByAgent') : true,
+      'isReconfigurable': (Em.get(configsPropertyDef, 'isReconfigurable') !== undefined) ? Em.get(configsPropertyDef, 'isReconfigurable') : true,
+      'isVisible': (Em.get(configsPropertyDef, 'isVisible') !== undefined) ? Em.get(configsPropertyDef, 'isVisible') : true,
+      'unit': Em.get(configsPropertyDef, 'unit'),
+      'description': Em.get(configsPropertyDef, 'description'),
+      'isOverridable': Em.get(configsPropertyDef, 'isOverridable') === undefined ? true : Em.get(configsPropertyDef, 'isOverridable'),
+      'serviceName': configsPropertyDef ? Em.get(configsPropertyDef, 'serviceName') : serviceConfigObj.get('serviceName'),
+      'index': Em.get(configsPropertyDef, 'index'),
+      'isSecureConfig': Em.get(configsPropertyDef, 'isSecureConfig') === undefined ? false : Em.get(configsPropertyDef, 'isSecureConfig'),
+      'belongsToService': Em.get(configsPropertyDef, 'belongsToService'),
+      'category': Em.get(configsPropertyDef, 'category'),
+      'showLabel': Em.get(configsPropertyDef, 'showLabel') !== false,
+      'dependentConfigPattern': Em.get(configsPropertyDef, 'dependentConfigPattern')
+    });
   },
 
   /**
@@ -570,7 +558,6 @@ App.config = Em.Object.create({
     configData.supportsFinal = !!(advanced && advanced.supportsFinal);
   },
 
-
   /**
    * look over advanced configs and add missing configs to serviceConfigs
    * filter fetched configs by service if passed
@@ -648,6 +635,7 @@ App.config = Em.Object.create({
    * @param allSelectedServiceNames
    * @param installedServiceNames
    * @param localDB
+   * @param recommended
    * @return {Array}
    */
   renderConfigs: function (configs, storedConfigs, allSelectedServiceNames, installedServiceNames, localDB, recommended) {
@@ -718,6 +706,7 @@ App.config = Em.Object.create({
     }, this);
     return renderedServiceConfigs;
   },
+
   /**
    Takes care of the "dynamic defaults" for the GLUSTERFS configs.  Sets
    some of the config defaults to previously user-entered data.
@@ -738,24 +727,6 @@ App.config = Em.Object.create({
     }
   },
 
-  /**
-   * Mark descriptor properties in configuration object.
-   *
-   * @param {Object[]} configs - config properties to change
-   * @param {App.ServiceConfigProperty[]} descriptor - parsed kerberos descriptor
-   */
-  addKerberosDescriptorConfigs: function (configs, descriptor) {
-    descriptor.forEach(function (item) {
-      var property = configs.findProperty('name', item.get('name'));
-      if (property) {
-        Em.set(property, 'isSecureConfig', true);
-        Em.set(property, 'displayName', Em.get(item, 'name'));
-        Em.set(property, 'isUserProperty', false);
-        Em.set(property, 'isOverridable', false);
-        Em.set(property, 'category', 'Advanced ' + Em.get(item, 'filename'));
-      }
-    });
-  },
   /**
    * create new child configs from overrides, attach them to parent config
    * override - value of config, related to particular host(s)
@@ -781,25 +752,28 @@ App.config = Em.Object.create({
       configProperty.set('overrides', overrides);
     }
   },
+
   /**
    * create new ServiceConfig object by service name
-   * @param serviceName
+   * @param {string} serviceName
+   * @return {App.ServiceConfig}
+   * @method createServiceConfig
    */
   createServiceConfig: function (serviceName) {
     var preDefinedServiceConfig = App.config.get('preDefinedServiceConfigs').findProperty('serviceName', serviceName);
-    var serviceConfig = App.ServiceConfig.create({
+    return App.ServiceConfig.create({
       serviceName: preDefinedServiceConfig.get('serviceName'),
       displayName: preDefinedServiceConfig.get('displayName'),
       configCategories: preDefinedServiceConfig.get('configCategories'),
       configs: [],
       configGroups: []
     });
-    return serviceConfig;
   },
+
   /**
    * GETs all cluster level sites in one call.
    *
-   * @return {object}
+   * @return {$.ajax}
    */
   loadConfigsByTags: function (tags) {
     var urlParams = [];
@@ -820,7 +794,7 @@ App.config = Em.Object.create({
    * Fetch cluster configs from server
    *
    * @param callback
-   * @return {object|null}
+   * @return {$.ajax}
    */
   loadClusterConfig: function (callback) {
     return App.ajax.send({
@@ -888,7 +862,7 @@ App.config = Em.Object.create({
    * @param {String[]} serviceNames
    * @param {Object} opt
    * @param {Function} callback
-   * @returns {jqXHR}
+   * @returns {$.ajax}
    */
   loadAdvancedConfigPartial: function (serviceNames, opt, callback) {
     var data = {
@@ -1082,9 +1056,9 @@ App.config = Em.Object.create({
       callback.call(sender, serviceConfigs);
     }
   },
+
   loadServiceConfigGroupOverridesSuccess: function (data, opt, params) {
     data.items.forEach(function (config) {
-      App.config.loadedConfigurationsCache[config.type + "_" + config.tag] = config.properties;
       var group = params.typeTagToGroupMap[config.type + "///" + config.tag];
       var properties = config.properties;
       for (var prop in properties) {
@@ -1104,6 +1078,7 @@ App.config = Em.Object.create({
     }, this);
     params.callback.call(params.sender, params.serviceConfigs);
   },
+
   /**
    * Create config with non default config group. Some custom config properties
    * can be created and assigned to non-default config group.
@@ -1135,6 +1110,7 @@ App.config = Em.Object.create({
     group.set('switchGroupTextFull', Em.I18n.t('services.service.config_groups.switchGroupTextFull').format(group.get('name')));
     return App.ServiceConfigProperty.create(propertyObject);
   },
+
   /**
    * format value of override of config
    * @param serviceConfig
@@ -1151,6 +1127,27 @@ App.config = Em.Object.create({
 
   /**
    * Set all site property that are derived from other site-properties
+   * Replace <foreignKey[0]>, <foreignKey[1]>, ... (in the name and value) to values from configs with names in foreignKey-array
+   * Replace <templateName[0]>, <templateName[1]>, ... (in the value) to values from configs with names in templateName-array
+   * Example:
+   * <code>
+   *  config: {
+   *    name: "name.<foreignKey[0]>.name",
+   *    foreignKey: ["name1"],
+   *    templateName: ["name2"],
+   *    value: "<foreignKey[0]><templateName[0]>"
+   *  }
+   * </code>
+   * "<foreignKey[0]>" in the name will be replaced with value from config with name "name1" (this config will be found
+   * in the mappedConfigs or allConfigs). New name will be set to the '_name'-property. If config with name "name1" won't
+   * be found, updated config will be marked as skipped (<code>noMatchSoSkipThisConfig</code>-property is set to true)
+   * "<templateName[0]>" in the value will be replace with value from config with name "name2" (it also will be found
+   * in the mappedConfigs or allConfigs).
+   *
+   * @param {object[]} mappedConfigs
+   * @param {object[]} allConfigs
+   * @param {object} config
+   * @method setConfigValue
    */
   setConfigValue: function (mappedConfigs, allConfigs, config) {
     var globalValue;
@@ -1160,54 +1157,66 @@ App.config = Em.Object.create({
     var fkValue = config.value.match(/<(foreignKey.*?)>/g);
     var fkName = config.name.match(/<(foreignKey.*?)>/g);
     var templateValue = config.value.match(/<(templateName.*?)>/g);
+
     if (fkValue) {
       fkValue.forEach(function (_fkValue) {
+
         var index = parseInt(_fkValue.match(/\[([\d]*)(?=\])/)[1]);
-        if (mappedConfigs.someProperty('name', config.foreignKey[index])) {
-          globalValue = mappedConfigs.findProperty('name', config.foreignKey[index]).value;
-          config.value = config.value.replace(_fkValue, globalValue);
-        } else if (allConfigs.someProperty('name', config.foreignKey[index])) {
-          if (allConfigs.findProperty('name', config.foreignKey[index]).value === '') {
-            globalValue = allConfigs.findProperty('name', config.foreignKey[index]).defaultValue;
-          } else {
-            globalValue = allConfigs.findProperty('name', config.foreignKey[index]).value;
+        var cfk = config.foreignKey[index];
+        var cFromMapped = mappedConfigs.findProperty('name', cfk);
+        if (Em.isNone(cFromMapped)) {
+          var cFromAll = allConfigs.findProperty('name', cfk);
+          if (!Em.isNone(cFromAll)) {
+            globalValue = Em.get(cFromAll, 'value') === '' ? Em.get(cFromAll, 'defaultValue') : Em.get(cFromAll, 'value');
+            config.value = config.value.replace(_fkValue, globalValue);
           }
+        }
+        else {
+          globalValue = Em.get(cFromMapped, 'value');
           config.value = config.value.replace(_fkValue, globalValue);
         }
-      }, this);
+      });
     }
 
     // config._name - formatted name from original config name
     if (fkName) {
       fkName.forEach(function (_fkName) {
+
         var index = parseInt(_fkName.match(/\[([\d]*)(?=\])/)[1]);
-        if (mappedConfigs.someProperty('name', config.foreignKey[index])) {
-          globalValue = mappedConfigs.findProperty('name', config.foreignKey[index]).value;
-          config._name = config.name.replace(_fkName, globalValue);
-        } else if (allConfigs.someProperty('name', config.foreignKey[index])) {
-          if (allConfigs.findProperty('name', config.foreignKey[index]).value === '') {
-            globalValue = allConfigs.findProperty('name', config.foreignKey[index]).defaultValue;
-          } else {
-            globalValue = allConfigs.findProperty('name', config.foreignKey[index]).value;
+        var cfk = config.foreignKey[index];
+        var cFromMapped = mappedConfigs.findProperty('name', cfk);
+
+        if (Em.isNone(cFromMapped)) {
+          var cFromAll = allConfigs.findProperty('name', cfk);
+          if (Em.isNone(cFromAll)) {
+            config.noMatchSoSkipThisConfig = true;
           }
-          config._name = config.name.replace(_fkName, globalValue);
-        } else {
-          config.noMatchSoSkipThisConfig = true;
+          else {
+            globalValue = Em.get(cFromAll, 'value') === '' ? Em.get(cFromAll, 'defaultValue') : Em.get(cFromAll, 'value');
+            config._name = config.name.replace(_fkName, globalValue);
+          }
         }
-      }, this);
+        else {
+          globalValue = Em.get(cFromMapped, 'value');
+          config._name = config.name.replace(_fkName, globalValue);
+        }
+      });
     }
 
     //For properties in the configMapping file having foreignKey and templateName properties.
     if (templateValue) {
       templateValue.forEach(function (_value) {
         var index = parseInt(_value.match(/\[([\d]*)(?=\])/)[1]);
-        if (allConfigs.someProperty('name', config.templateName[index])) {
-          var globalValue = allConfigs.findProperty('name', config.templateName[index]).value;
-          config.value = config.value.replace(_value, globalValue);
-        } else {
+        var cfk = config.templateName[index];
+        var cFromAll = allConfigs.findProperty('name', cfk);
+        if (Em.isNone(cFromAll)) {
           config.value = null;
         }
-      }, this);
+        else {
+          var globalValue = Em.get(cFromAll, 'value');
+          config.value = config.value.replace(_value, globalValue);
+        }
+      });
     }
   },
 
@@ -1264,8 +1273,8 @@ App.config = Em.Object.create({
     if (stored.category == 'Users and Groups') {
       configData.index = this.getOriginalConfigAttribute(stored, 'index', advancedConfigs);
     }
-
-    App.get('config').calculateConfigProperties(configData, isAdvanced, advancedConfigs);
+    var advancedConfig = advancedConfigs.filterProperty('name', stored.name).findProperty('filename', stored.filename);
+    App.get('config').calculateConfigProperties(configData, isAdvanced, advancedConfig);
     return configData;
   },
 
@@ -1412,33 +1421,15 @@ App.config = Em.Object.create({
    * exclude configs that depends on services which are uninstalled
    * if config doesn't have serviceName or dependent service is installed then
    * config not excluded
+   * @param {object[]} configs
+   * @param {string[]} installedServices
+   * @return {object[]}
+   * @method excludeUnsupportedConfigs
    */
   excludeUnsupportedConfigs: function (configs, installedServices) {
     return configs.filter(function (config) {
       return !(config.serviceName && !installedServices.contains(config.serviceName));
     });
-  },
-
-
-
-  /**
-   * Gets all the configuration-groups for the given service.
-   *
-   * @param serviceId
-   *          (string) ID of the service. Ex: HDFS
-   */
-  getConfigGroupsForService: function (serviceId) {
-
-  },
-
-  /**
-   * Gets all the configuration-groups for a host.
-   *
-   * @param hostName
-   *          (string) host name used to register
-   */
-  getConfigGroupsForHost: function (hostName) {
-
   },
 
   /**
@@ -1460,9 +1451,10 @@ App.config = Em.Object.create({
    *    .......
    *   ]
    * </code>
-   * @param {Array} names
+   * @param {string[]} names
    * @param {Object} properties - additional properties which will merge with base object definition
-   * @returns {*}
+   * @returns {object[]}
+   * @method generateConfigPropertiesByName
    */
   generateConfigPropertiesByName: function (names, properties) {
     return names.map(function (item) {
@@ -1515,174 +1507,12 @@ App.config = Em.Object.create({
   },
 
   /**
-   * runs <code>stackConfigPropertiesMapper<code>
-   * @param data
+   * Runs <code>stackConfigPropertiesMapper<code>
+   * @param {object} data
+   * @method saveConfigsToModel
    */
   saveConfigsToModel: function (data) {
     App.stackConfigPropertiesMapper.map(data);
-  },
-
-  /**
-   * load config groups
-   * @param {String[]} serviceNames
-   * @returns {$.Deferred()}
-   * @method loadConfigGroups
-   */
-  loadConfigGroups: function (serviceNames) {
-    var dfd = $.Deferred();
-    if (!serviceNames || serviceNames.length === 0) {
-      dfd.resolve();
-    } else {
-      App.ajax.send({
-        name: 'configs.config_groups.load.services',
-        sender: this,
-        data: {
-          serviceList: serviceNames.join(','),
-          dfd: dfd
-        },
-        success: 'saveConfigGroupsToModel'
-      });
-    }
-    return dfd.promise();
-  },
-
-  /**
-   * runs <code>configGroupsMapper<code>
-   * @param data
-   * @param opt
-   * @param params
-   */
-  saveConfigGroupsToModel: function (data, opt, params) {
-    App.configGroupsMapper.map(data, params.serviceList.split(','));
-    params.dfd.resolve();
-  },
-
-  /**
-   * load config groups
-   * @param {string} [serviceName=null]
-   * @param {number} [configGroupId=null]
-   * @param {number} [configVersion=null]
-   * @param {boolean} [isForCompare=false]
-   * @returns {$.ajax}
-   * @method loadConfigGroups
-   */
-  loadConfigVersions: function (serviceName, configGroupId, configVersion, isForCompare) {
-    var info = this.generateAjaxDataForVersions(serviceName, configGroupId, configVersion, isForCompare);
-    return App.ajax.send($.extend({sender: this, success: 'saveConfigVersionsToModel'}, info));
-  },
-
-  /**
-   *
-   * @param serviceNames
-   * @returns {$.ajax}
-   */
-  loadConfigCurrentVersions: function (serviceNames) {
-    Em.assert('serviceNames should be not empty array', Em.isArray(serviceNames) && serviceNames.length > 0);
-    return App.ajax.send({
-      name: 'configs.config_versions.load.current_versions',
-      sender: this,
-      data: {
-        serviceNames: serviceNames.join(",")
-      },
-      success: 'saveConfigVersionsToModel'
-    });
-  },
-  /**
-   * generate ajax info
-   * @param {string} [serviceName=null]
-   * @param {number} [configGroupId=null]
-   * @param {number} [configVersion=null]
-   * @param {boolean} [isForCompare=false]
-   * @returns {{name: string, data: {}}}
-   */
-  generateAjaxDataForVersions: function (serviceName, configGroupId, configVersion, isForCompare) {
-    var result = {
-      name: 'configs.config_versions.load.all.min',
-      data: {}
-    };
-    if (serviceName) {
-      result.data.serviceName = serviceName;
-      if (configVersion) {
-        result.name = 'configs.config_versions.load';
-        result.data.configVersion = configVersion;
-        result.data.isForCompare = isForCompare;
-      } else if (configGroupId) {
-        result.name = 'configs.config_versions.load.group';
-        result.data.configGroupId = configGroupId;
-      } else {
-        result.name = 'configs.config_versions.load.service.min';
-      }
-    }
-    return result;
-  },
-
-  /**
-   * runs <code>configGroupsMapper<code>
-   * @param data
-   * @param opt
-   * @param params
-   */
-  saveConfigVersionsToModel: function (data, opt, params) {
-    App.configVersionsMapper.map(data, params.isForCompare);
-  },
-
-  /**
-   * load config themes
-   * @param {string} serviceName
-   * @returns {$.ajax}
-   */
-  loadConfigTheme: function(serviceName) {
-    return App.ajax.send({
-      name: 'configs.theme',
-      sender: this,
-      data: {
-        serviceName: serviceName,
-        stackVersionUrl: App.get('stackVersionURL')
-      },
-      success: 'saveThemeToModel'
-    });
-  },
-
-  /**
-   * runs <code>themeMapper<code>
-   * @param data
-   */
-  saveThemeToModel: function(data) {
-    App.themesMapper.map(data);
-  },
-
-  /**
-   * Load themes for specified services by one API call.
-   *
-   * @method loadConfigThemeForServices
-   * @param {String|String[]} serviceNames
-   * @returns {$.Deferred}
-   */
-  loadConfigThemeForServices: function (serviceNames) {
-    var data = {
-      serviceNames: Em.isArray(serviceNames) ? serviceNames.join(',') : serviceNames,
-      stackVersionUrl: App.get('stackVersionURL')
-    };
-    return App.ajax.send({
-      name: 'configs.theme.services',
-      sender: this,
-      data: data,
-      success: 'loadConfigThemeForServicesSuccess',
-      error: 'loadConfigThemeForServicesError'
-    });
-  },
-
-  loadConfigThemeForServicesSuccess: function(data) {
-    if (!data.items.length) return;
-    App.themesMapper.map({
-      items: data.items.mapProperty('themes').reduce(function(p,c) {
-        return p.concat(c);
-      })
-    });
-  },
-
-  loadConfigThemeForServicesError: function(request, ajaxOptions, error, opt, params) {
-    console.log('ERROR: failed to load theme configs for', params.serviceNames);
   }
 
 });

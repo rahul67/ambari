@@ -23,17 +23,18 @@ var mainServiceInfoConfigsController = null;
 describe("App.MainServiceInfoConfigsController", function () {
 
   beforeEach(function () {
-    sinon.stub(App.config, 'loadConfigTheme').returns($.Deferred().resolve().promise());
     sinon.stub(App.themesMapper, 'generateAdvancedTabs').returns(Em.K);
     mainServiceInfoConfigsController = App.MainServiceInfoConfigsController.create({
       loadDependentConfigs: function () {
         return {done: Em.K}
+      },
+      loadConfigTheme: function () {
+        return $.Deferred().resolve().promise();
       }
     });
   });
 
   afterEach(function() {
-    App.config.loadConfigTheme.restore();
     App.themesMapper.generateAdvancedTabs.restore();
   });
 
@@ -164,19 +165,6 @@ describe("App.MainServiceInfoConfigsController", function () {
     it("without unsaved", function () {
       mainServiceInfoConfigsController.set("hash", "hash");
       expect(mainServiceInfoConfigsController.hasUnsavedChanges()).to.equal(false);
-    });
-  });
-
-  describe("#manageConfigurationGroup", function () {
-    beforeEach(function () {
-      sinon.stub(mainServiceInfoConfigsController, "manageConfigurationGroups", Em.K);
-    });
-    afterEach(function () {
-      mainServiceInfoConfigsController.manageConfigurationGroups.restore();
-    });
-    it("run manageConfigurationGroups", function () {
-      mainServiceInfoConfigsController.manageConfigurationGroup();
-      expect(mainServiceInfoConfigsController.manageConfigurationGroups.calledOnce).to.equal(true);
     });
   });
 
@@ -341,45 +329,6 @@ describe("App.MainServiceInfoConfigsController", function () {
     it("trigger onConfigGroupChange", function () {
       mainServiceInfoConfigsController.doCancel();
       expect(Em.run.once.calledWith(mainServiceInfoConfigsController, "onConfigGroupChange")).to.equal(true);
-    });
-  });
-
-  describe("#getCurrentServiceComponents", function () {
-    var t = Em.Object.create({
-      content: Em.Object.create({
-        hostComponents: [
-          Em.Object.create({
-            componentName: "componentName1",
-            displayName: "displayName1"
-          }),
-          Em.Object.create({
-            componentName: "componentName2",
-            displayName: "displayName2"
-          })
-        ]
-      }),
-      validComponents: Em.A([
-        Em.Object.create({
-          componentName: "componentName1",
-          displayName: "displayName1",
-          selected: false
-        }),
-        Em.Object.create({
-          componentName: "componentName2",
-          displayName: "displayName2",
-          selected: false
-        })
-      ])
-    });
-
-    beforeEach(function () {
-      mainServiceInfoConfigsController.set("content", { hostComponents: Em.A([])});
-    });
-
-    it("get current service components", function () {
-      mainServiceInfoConfigsController.get("content.hostComponents").push(t.content.hostComponents[0]);
-      var com = mainServiceInfoConfigsController.get("getCurrentServiceComponents");
-      expect(com[0]).to.eql(t.validComponents[0]);
     });
   });
 

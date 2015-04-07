@@ -1784,7 +1784,7 @@ var urls = {
     'mock': '/data/requests/host_check/jdk_check_results.json'
   },
   'wizard.step3.host_info': {
-    'real': '/hosts?fields=Hosts/total_mem,Hosts/cpu_count,Hosts/disk_info,Hosts/last_agent_env,Hosts/host_name,Hosts/os_type,Hosts/os_arch,Hosts/ip',
+    'real': '/hosts?fields=Hosts/total_mem,Hosts/cpu_count,Hosts/disk_info,Hosts/last_agent_env,Hosts/host_name,Hosts/os_type,Hosts/os_arch,Hosts/os_family,Hosts/ip',
     'mock': '/data/wizard/bootstrap/two_hosts_information.json',
     'format': function () {
       return {
@@ -2316,11 +2316,12 @@ var urls = {
     mock: '/data/configurations/service_version.json'
   },
   'service.serviceConfigVersions.get.multiple': {
-    real: '/clusters/{clusterName}/configurations/service_config_versions?service_name={serviceName}&service_config_version.in({serviceConfigVersions})',
+    real: '/clusters/{clusterName}/configurations/service_config_versions?service_name={serviceName}&service_config_version.in({serviceConfigVersions}){additionalParams}',
     mock: '/data/configurations/service_version.json',
     format: function (data) {
       return {
-        serviceConfigVersions: data.serviceConfigVersions.join(',')
+        serviceConfigVersions: data.serviceConfigVersions.join(','),
+        additionalParams: data.additionalParams || ''
       }
     }
   },
@@ -2416,6 +2417,17 @@ var urls = {
   'widgets.layouts.get': {
     real: '/users?widget_layouts/section_name={sectionName}&widget_layouts/scope=CLUSTER',
     mock: '/data/widget_layouts/HBASE/layouts.json'
+  },
+
+  'widgets.layout.save': {
+    real: '/clusters/{clusterName}/widget_layouts/{layout_name}',
+    mock: '',
+    format: function (data) {
+      return {
+        type: 'PUT',
+        data: JSON.stringify(data.data)
+      }
+    }
   },
 
   'widgets.serviceComponent.metrics.get': {

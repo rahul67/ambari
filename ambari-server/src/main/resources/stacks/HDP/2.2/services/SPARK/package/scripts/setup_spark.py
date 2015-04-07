@@ -224,6 +224,8 @@ def setup_tarball():
     shutil.rmtree(tempdir)
 
 def setup_spark_user_group():
+    import params
+
     if params.spark_group:
         Group(params.spark_group, 
               ignore_failures = False

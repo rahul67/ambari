@@ -127,6 +127,7 @@ public class StageUtils {
     componentToClusterInfoKeyMap.put("HBASE_REGIONSERVER", "hbase_rs_hosts");
     componentToClusterInfoKeyMap.put("KERBEROS_SERVER", "kdc_host");
     componentToClusterInfoKeyMap.put("KERBEROS_ADMIN_CLIENT", "kerberos_adminclient_host");
+    componentToClusterInfoKeyMap.put("SPARK_HISTORY_SERVER", "spark_history_server_host");
   }
 
   static {

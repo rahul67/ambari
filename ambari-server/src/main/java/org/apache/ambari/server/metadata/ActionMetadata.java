@@ -18,12 +18,17 @@
 
 package org.apache.ambari.server.metadata;
 
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.ambari.server.Role;
 import org.apache.ambari.server.state.Service;
 
-import java.util.*;
+import com.google.inject.Singleton;
 
 /**
  * Contains metadata about actions supported by services
@@ -70,6 +75,7 @@ public class ActionMetadata {
     serviceClients.put("pig"        , Role.PIG.toString());
     serviceClients.put("sqoop"      , Role.SQOOP.toString());
     serviceClients.put("yarn"       , Role.YARN_CLIENT.toString());
+    serviceClients.put("spark"      , Role.SPARK_CLIENT.toString());
   }
 
   public List<String> getActions(String serviceName) {

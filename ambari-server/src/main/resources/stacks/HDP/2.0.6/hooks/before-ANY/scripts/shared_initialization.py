@@ -69,16 +69,18 @@ def setup_users():
   import params
   
   for group in params.group_list:
-    Group(group,
-        ignore_failures = params.ignore_groupsusers_create
-    )
+    if group:
+        Group(group,
+            ignore_failures = params.ignore_groupsusers_create
+        )
     
   for user in params.user_list:
-    User(user,
-        gid = params.user_to_gid_dict[user],
-        groups = params.user_to_groups_dict[user],
-        ignore_failures = params.ignore_groupsusers_create       
-    )
+    if user:
+        User(user,
+             gid = params.user_to_gid_dict[user],
+             groups = params.user_to_groups_dict[user],
+             ignore_failures = params.ignore_groupsusers_create       
+        )
            
   set_uid(params.smoke_user, params.smoke_user_dirs)
 

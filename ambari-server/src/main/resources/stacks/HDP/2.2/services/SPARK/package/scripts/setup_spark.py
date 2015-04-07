@@ -35,6 +35,8 @@ def setup_spark(env, type, action = None):
 
   env.set_params(params)
 
+  setup_spark_user_group()
+  
   Directory([params.spark_pid_dir, params.spark_log_dir, params.spark_conf],
             owner=params.spark_user,
             group=params.user_group,
@@ -189,9 +191,6 @@ def setup_tarball():
     
     tempdir = tempfile.mkdtemp()
     tarball_name = tempdir + os.sep + "spark.tgz"
-    extracted_dir = os.path.splitext(params.spark_tarball_url.split('/')[-1])[0]
-    spark_install_dir = params.spark_install_location + os.sep + extracted_dir
-    Logger.info("Spar Install Dir: %s" % (spark_install_dir))
     u = urllib2.urlopen(params.spark_tarball_url)
     f = open(tarball_name, 'wb')
     meta = u.info()
@@ -212,10 +211,22 @@ def setup_tarball():
     if (os.path.isdir(params.spark_home)):
         raise Fail("ERROR: Spark Installation Already Exists At: %s" % (params.spark_home))
     os.chdir(os.path.abspath(os.path.join(params.spark_home, os.pardir)))
-    os.symlink(spark_install_dir, os.path.basename(params.spark_home))
-    if (os.path.isdir(os.path.join(spark_install_dir, "conf"))):
-        shutil.rmtree(os.path.join(spark_install_dir, "conf"))
-    os.chdir(spark_install_dir)
+    os.symlink(params.spark_install_dir, os.path.basename(params.spark_home))
+    if (os.path.isdir(os.path.join(params.spark_install_dir, "conf"))):
+        shutil.rmtree(os.path.join(params.spark_install_dir, "conf"))
+    os.chdir(params.spark_install_dir)
     os.symlink(params.spark_conf, "conf")
     
     shutil.rmtree(tempdir)
+
+def setup_spark_user_group():
+    if params.spark_group:
+        Group(params.spark_group, 
+              ignore_failures = False
+        )
+    if params.spark_user:
+        User(params.spark_user,
+             gid = params.spark_group,
+             groups = [params.spark_group, params.user_group],
+             ignore_failures = False
+        )

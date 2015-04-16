@@ -214,8 +214,10 @@ def setup_tarball():
         raise Fail("ERROR: Spark Installation Already Exists At: %s" % (params.spark_home))
     os.chdir(os.path.abspath(os.path.join(params.spark_home, os.pardir)))
     os.symlink(params.spark_install_dir, os.path.basename(params.spark_home))
-    if (os.path.isdir(os.path.join(params.spark_install_dir, "conf"))):
-        shutil.rmtree(os.path.join(params.spark_install_dir, "conf"))
+    conf_dir = os.path.join(params.spark_install_dir, "conf")
+    if (os.path.isdir(conf_dir)):
+        backup_conf = conf_dir + ".orig"
+        shutil.move(conf_dir, backup_conf)
     os.chdir(params.spark_install_dir)
     os.symlink(params.spark_conf, "conf")
     

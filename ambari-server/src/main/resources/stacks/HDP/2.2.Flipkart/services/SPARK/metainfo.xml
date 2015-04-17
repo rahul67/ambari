@@ -23,7 +23,7 @@
     <services>
         <service>
             <name>SPARK</name>
-            <extends>common-services/SPARK/1.2.0.2.2</extends>		
+            <extends>common-services/SPARK/1.3.1</extends>		
         </service>
     </services>
 </metainfo>

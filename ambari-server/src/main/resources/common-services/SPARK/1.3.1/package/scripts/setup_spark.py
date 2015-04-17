@@ -35,7 +35,7 @@ def setup_spark(env, type, action = None):
 
   env.set_params(params)
 
-  setup_spark_user_group()
+  _setup_spark_user_group()
   
   Directory([params.spark_pid_dir, params.spark_log_dir, params.spark_conf],
             owner=params.spark_user,
@@ -189,7 +189,7 @@ def create_file(file_path):
 def setup_tarball():
     import params
     
-    setup_spark_user_group()
+    _setup_spark_user_group()
     
     tempdir = tempfile.mkdtemp()
     tarball_name = tempdir + os.sep + "spark.tgz"
@@ -223,9 +223,11 @@ def setup_tarball():
     
     Execute (format("chown -R root:root {params.spark_install_dir}"))
     
+    _copy_spark_libs_to_hdfs()
+    
     shutil.rmtree(tempdir)
 
-def setup_spark_user_group():
+def _setup_spark_user_group():
     import params
 
     if params.spark_group:
@@ -238,3 +240,15 @@ def setup_spark_user_group():
              groups = [params.spark_group, params.user_group],
              ignore_failures = False
         )
+
+def _copy_spark_libs_to_hdfs():
+    import params
+    
+    pairs = []
+    files = [f for f in os.listdir(os.path.join(params.spark_install_dir, "lib"))]
+    for file in files:
+        s = os.path.join(params.spark_install_dir, "lib", file)
+        d = os.path.join(params.spark_yarn_jar_path_hdfs, file)
+        pairs.append((s,d))
+    
+    _copy_files(pairs, params.hdfs_user, params.hdfs_user, params.user_group, "")

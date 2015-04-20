@@ -148,4 +148,38 @@
     </description>
   </property>
 
+  <property>
+    <name>spark.driver.extraLibraryPath</name>
+    <value>/usr/lib/hadoop/lib/native:/usr/hdp/2.2.0.0-2041/hadoop/lib/native:/usr/hdp/2.2.0.0-2041/hadoop/lib/native/Linux-amd64-64</value>
+    <description>
+      Location of the spark jar file in case override is desired. Default is local.
+    </description>
+  </property>
+
+  <property>
+    <name>spark.executor.extraLibraryPath</name>
+    <value>/usr/lib/hadoop/lib/native:/usr/hdp/2.2.0.0-2041/hadoop/lib/native:/usr/hdp/2.2.0.0-2041/hadoop/lib/native/Linux-amd64-64</value>
+    <description>
+      Location of the spark jar file in case override is desired. Default is local.
+    </description>
+  </property>
+
+  <property>
+    <name>spark.jars</name>
+    <value>/usr/lib/hadoop/lib/hadoop-4mc-1.1.0.jar,/usr/lib/hadoop/lib/hadoop-lzo-0.6.0.jar,/usr/hdp/2.2.0.0-2041/hadoop/lib/snappy-java-1.0.4.1.jar</value>
+    <description>
+      Location of the spark jar file in case override is desired. Default is local.
+    </description>
+  </property>
+
+  <property>
+    <name>spark.yarn.services</name>
+    <value>org.apache.spark.deploy.yarn.history.YarnHistoryService</value>
+  </property>
+
+  <property>
+    <name>spark.history.provider</name>
+    <value>org.apache.spark.deploy.yarn.history.YarnHistoryProvider</value>
+  </property>
+
 </configuration>

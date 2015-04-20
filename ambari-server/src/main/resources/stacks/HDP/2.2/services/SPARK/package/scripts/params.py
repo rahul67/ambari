@@ -31,10 +31,12 @@ stack_name = default("/hostLevelParams/stack_name", None)
 stack_version_unformatted = str(config['hostLevelParams']['stack_version'])
 hdp_stack_version = format_hdp_stack_version(stack_version_unformatted)
 
+spark_yarn_jar_path_hdfs = config['configurations']['spark-env']['spark_yarn_jar_path_hdfs']
 spark_tarball_url = config['configurations']['spark-env']['spark_tarball_url']
 spark_install_location = "/usr/hdp/2.2.0.0-2041"
 spark_extracted_dir = os.path.splitext(spark_tarball_url.split('/')[-1])[0]
 spark_install_dir = spark_install_location + os.sep + spark_extracted_dir
+backup_existing_installation = default("/configurations/spark-env/backup_existing_installation", True)
 
 
 # New Cluster Stack Version that is defined during the RESTART of a Rolling Upgrade
@@ -110,6 +112,7 @@ spark_yarn_executor_memoryOverhead = default("/configurations/spark-defaults/spa
 spark_yarn_driver_memoryOverhead = default("/configurations/spark-defaults/spark.yarn.driver.memoryOverhead", "384")
 spark_history_provider = default("/configurations/spark-defaults/spark.history.provider",
                                  "org.apache.spark.deploy.yarn.history.YarnHistoryProvider")
+spark_yarn_services = default("/configurations/spark-defaults/spark.yarn.services", "org.apache.spark.deploy.yarn.history.YarnHistoryService")
 spark_history_ui_port = default("/configurations/spark-defaults/spark.history.ui.port", "18080")
 
 spark_env_sh = config['configurations']['spark-env']['content']
@@ -127,7 +130,7 @@ spark_yarn_am_extraJavaOptions = str(config['configurations']['spark-defaults'][
 spark_javaopts_properties = str(spark_javaopts_properties)
 
 security_enabled = config['configurations']['cluster-env']['security_enabled']
-kinit_path_local = functions.get_kinit_path(["/usr/bin", "/usr/kerberos/bin", "/usr/sbin"])
+kinit_path_local = ""
 spark_kerberos_keytab =  config['configurations']['spark-defaults']['spark.history.kerberos.keytab']
 spark_kerberos_principal =  config['configurations']['spark-defaults']['spark.history.kerberos.principal']
 if security_enabled:

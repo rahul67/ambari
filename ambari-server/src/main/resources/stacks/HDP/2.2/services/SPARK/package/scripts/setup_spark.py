@@ -24,6 +24,7 @@ import shutil
 import os
 import tempfile
 import urllib2
+from time import gmtime, strftime
 from resource_management import *
 from resource_management.core.exceptions import ComponentIsNotRunning
 from resource_management.core.logger import Logger
@@ -35,7 +36,7 @@ def setup_spark(env, type, action = None):
 
   env.set_params(params)
 
-  setup_spark_user_group()
+  _setup_spark_user_group()
   
   Directory([params.spark_pid_dir, params.spark_log_dir, params.spark_conf],
             owner=params.spark_user,
@@ -129,8 +130,8 @@ def spark_properties(params):
   # Hardcoded paramaters to be added to spark-defaults.conf
   spark_dict['spark.yarn.historyServer.address'] = params.spark_history_server_host + ':' + str(
     params.spark_history_ui_port)
-  spark_dict['spark.yarn.services'] = 'org.apache.spark.deploy.yarn.history.YarnHistoryService'
-  spark_dict['spark.history.provider'] = 'org.apache.spark.deploy.yarn.history.YarnHistoryProvider'
+  spark_dict['spark.yarn.services'] = params.spark_yarn_services
+  spark_dict['spark.history.provider'] = params.spark_history_provider
   spark_dict['spark.history.ui.port'] = params.spark_history_ui_port
 
   spark_dict['spark.driver.extraJavaOptions'] = params.spark_driver_extraJavaOptions
@@ -189,7 +190,7 @@ def create_file(file_path):
 def setup_tarball():
     import params
     
-    setup_spark_user_group()
+    _setup_spark_user_group()
     
     tempdir = tempfile.mkdtemp()
     tarball_name = tempdir + os.sep + "spark.tgz"
@@ -206,6 +207,16 @@ def setup_tarball():
         f.write(buffer)
     f.close()
     os.chdir(params.spark_install_location)
+    if (os.path.exists(params.spark_install_dir)):
+        if params.backup_existing_installation:
+            backup_time = strftime("%Y%m%d-%H%M%S")
+            backup_dir = params.spark_install_dir + "." + backup_time
+            Logger.info("Backing up existing installation at: %s" % (backup_dir))
+            shutil.move(params.spark_install_dir, backup_dir)
+        else:
+            Logger.info("Removing existing installation from: %s" % (params.spark_install_dir))
+            shutil.rmtree(params.spark_install_dir)
+
     Execute(format("tar -xzf {tarball_name}"))
     if (os.path.islink(params.spark_home)):
         Logger.info("Overriding Spark Installation at: %s" % (params.spark_home))
@@ -214,8 +225,10 @@ def setup_tarball():
         raise Fail("ERROR: Spark Installation Already Exists At: %s" % (params.spark_home))
     os.chdir(os.path.abspath(os.path.join(params.spark_home, os.pardir)))
     os.symlink(params.spark_install_dir, os.path.basename(params.spark_home))
-    if (os.path.isdir(os.path.join(params.spark_install_dir, "conf"))):
-        shutil.rmtree(os.path.join(params.spark_install_dir, "conf"))
+    conf_dir = os.path.join(params.spark_install_dir, "conf")
+    if (os.path.isdir(conf_dir)):
+        backup_conf = conf_dir + ".orig"
+        shutil.move(conf_dir, backup_conf)
     os.chdir(params.spark_install_dir)
     os.symlink(params.spark_conf, "conf")
     
@@ -223,7 +236,7 @@ def setup_tarball():
     
     shutil.rmtree(tempdir)
 
-def setup_spark_user_group():
+def _setup_spark_user_group():
     import params
 
     if params.spark_group:
@@ -236,3 +249,15 @@ def setup_spark_user_group():
              groups = [params.spark_group, params.user_group],
              ignore_failures = False
         )
+
+def _copy_spark_libs_to_hdfs():
+    import params
+    
+    pairs = []
+    files = [f for f in os.listdir(os.path.join(params.spark_install_dir, "lib"))]
+    for file in files:
+        s = os.path.join(params.spark_install_dir, "lib", file)
+        d = os.path.join(params.spark_yarn_jar_path_hdfs, file)
+        pairs.append((s,d))
+    
+    _copy_files(pairs, params.hdfs_user, params.hdfs_user, params.user_group, "")

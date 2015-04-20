@@ -36,6 +36,7 @@ spark_tarball_url = config['configurations']['spark-env']['spark_tarball_url']
 spark_install_location = "/usr/hdp/2.2.0.0-2041"
 spark_extracted_dir = os.path.splitext(spark_tarball_url.split('/')[-1])[0]
 spark_install_dir = spark_install_location + os.sep + spark_extracted_dir
+backup_existing_installation = default("/configurations/spark-env/backup_existing_installation", True)
 
 
 # New Cluster Stack Version that is defined during the RESTART of a Rolling Upgrade

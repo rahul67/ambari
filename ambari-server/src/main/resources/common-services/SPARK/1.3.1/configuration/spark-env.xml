@@ -55,6 +55,11 @@
     <value>/apps/spark/</value>
   </property>
 
+  <property>
+    <name>backup_existing_installation</name>
+    <value>true</value>
+  </property>
+
   <!-- spark-env.sh -->
   <property>
     <name>content</name>

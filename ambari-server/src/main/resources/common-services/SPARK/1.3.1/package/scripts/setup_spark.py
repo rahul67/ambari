@@ -24,6 +24,7 @@ import shutil
 import os
 import tempfile
 import urllib2
+from time import gmtime, strftime
 from resource_management import *
 from resource_management.core.exceptions import ComponentIsNotRunning
 from resource_management.core.logger import Logger
@@ -206,6 +207,16 @@ def setup_tarball():
         f.write(buffer)
     f.close()
     os.chdir(params.spark_install_location)
+    if (os.path.exists(params.spark_install_dir)):
+        if params.backup_existing_installation:
+            backup_time = strftime("%Y%m%d-%H%M%S")
+            backup_dir = params.spark_install_dir + "." + backup_time
+            Logger.info("Backing up existing installation at: %s" % (backup_dir))
+            shutil.move(params.spark_install_dir, backup_dir)
+        else:
+            Logger.info("Removing existing installation from: %s" % (params.spark_install_dir))
+            shutil.rmtree(params.spark_install_dir)
+
     Execute(format("tar -xzf {tarball_name}"))
     if (os.path.islink(params.spark_home)):
         Logger.info("Overriding Spark Installation at: %s" % (params.spark_home))

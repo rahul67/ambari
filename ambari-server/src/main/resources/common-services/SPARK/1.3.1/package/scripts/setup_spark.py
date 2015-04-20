@@ -130,8 +130,8 @@ def spark_properties(params):
   # Hardcoded paramaters to be added to spark-defaults.conf
   spark_dict['spark.yarn.historyServer.address'] = params.spark_history_server_host + ':' + str(
     params.spark_history_ui_port)
-  spark_dict['spark.yarn.services'] = 'org.apache.spark.deploy.yarn.history.YarnHistoryService'
-  spark_dict['spark.history.provider'] = 'org.apache.spark.deploy.yarn.history.YarnHistoryProvider'
+  spark_dict['spark.yarn.services'] = params.spark_yarn_services
+  spark_dict['spark.history.provider'] = params.spark_history_provider
   spark_dict['spark.history.ui.port'] = params.spark_history_ui_port
 
   spark_dict['spark.driver.extraJavaOptions'] = params.spark_driver_extraJavaOptions

@@ -112,6 +112,7 @@ spark_yarn_executor_memoryOverhead = default("/configurations/spark-defaults/spa
 spark_yarn_driver_memoryOverhead = default("/configurations/spark-defaults/spark.yarn.driver.memoryOverhead", "384")
 spark_history_provider = default("/configurations/spark-defaults/spark.history.provider",
                                  "org.apache.spark.deploy.yarn.history.YarnHistoryProvider")
+spark_yarn_services = default("/configurations/spark-defaults/spark.yarn.services", "org.apache.spark.deploy.yarn.history.YarnHistoryService")
 spark_history_ui_port = default("/configurations/spark-defaults/spark.history.ui.port", "18080")
 
 spark_env_sh = config['configurations']['spark-env']['content']

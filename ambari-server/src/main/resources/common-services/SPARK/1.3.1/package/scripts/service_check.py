@@ -30,10 +30,6 @@ class SparkServiceCheck(Script):
 
     env.set_params(params)
 
-    if params.security_enabled:
-      spark_kinit_cmd = format("{kinit_path_local} -kt {spark_kerberos_keytab} {spark_principal}; ")
-      Execute(spark_kinit_cmd, user=params.spark_user)
-
     command = "curl"
     httpGssnegotiate = "--negotiate"
     userpswd = "-u:"

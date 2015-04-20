@@ -68,10 +68,6 @@ class JobHistoryServer(Script):
     env.set_params(params)
     setup_spark(env, 'server', action='start')
 
-    if params.security_enabled:
-      spark_kinit_cmd = format("{kinit_path_local} -kt {spark_kerberos_keytab} {spark_principal}; ")
-      Execute(spark_kinit_cmd, user=params.spark_user)
-
     """
     copy_tarballs_to_hdfs('tez', 'spark-historyserver', params.spark_user, params.hdfs_user, params.user_group)
     """

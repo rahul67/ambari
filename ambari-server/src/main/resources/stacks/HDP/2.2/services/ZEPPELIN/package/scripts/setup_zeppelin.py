@@ -52,6 +52,10 @@ def setup_zeppelin(env, type, action = None):
                          owner=params.zeppelin_user,
                          mode=0775
       )
+    if action == 'config':
+      interpreter = os.path.join(params.zeppelin_conf, "interpreter.json")
+      if os.path.exists(interpreter):
+          os.remove(interpreter)
 
   XmlConfig( "zeppelin-site.xml",
             conf_dir = params.zeppelin_conf,

@@ -211,5 +211,9 @@
       <maximum>0.8</maximum>
       <increment-step>0.01</increment-step>
     </value-attributes>
+    <name>hbase.regionserver.wal.codec</name>
+    <display-name>Phoenix SQL</display-name>
+    <value>org.apache.hadoop.hbase.regionserver.wal.WALCellCodec</value>
+    <description>Phoenix SQL</description>
   </property>
 </configuration>

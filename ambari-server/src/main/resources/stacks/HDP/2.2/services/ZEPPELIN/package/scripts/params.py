@@ -51,8 +51,9 @@ zeppelin_mem = config['configurations']['zeppelin-env']['zeppelin_mem']
 zeppelin_intp_mem = config['configurations']['zeppelin-env']['zeppelin_intp_mem']
 zeppelin_niceness = config['configurations']['zeppelin-env']['zeppelin_log_dir']
 zeppelin_server_port = config['configurations']['zeppelin-site']['zeppelin.server.port']
+spark_yarn_jar = config['configurations']['zeppelin-env']['spark_yarn_jar']
+spark_yarn_jar = spark_yarn_jar.strip()
 
-spark_yarn_jar_path_hdfs = config['configurations']['spark-env']['spark_yarn_jar_path_hdfs']
 hadoop_home = "/usr/hdp/current/hadoop-client"
 hadoop_bin_dir = "/usr/hdp/current/hadoop-client/bin"
 zeppelin_conf = '/etc/zeppelin/conf'

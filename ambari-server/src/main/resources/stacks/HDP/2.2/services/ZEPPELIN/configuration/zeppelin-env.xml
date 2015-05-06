@@ -92,6 +92,11 @@
     <value>0</value>
   </property>
 
+  <property>
+    <name>spark_yarn_jar</name>
+    <value> </value>
+  </property>
+
   <!-- zeppelin-env.sh -->
   <property>
     <name>content</name>
@@ -156,7 +161,9 @@ export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-{{hadoop_conf_dir}}}
 # export PYTHONPATH              # extra PYTHONPATH.
 
 export SPARK_HOME=${SPARK_HOME:-{{spark_home}}}
-export SPARK_YARN_JAR={{spark_yarn_jar_path_hdfs}}
+if [ "{{spark_yarn_jar}}" != "" ]; then
+    export SPARK_YARN_JAR={{spark_yarn_jar}}
+fi
 export ZEPPELIN_PORT={{zeppelin_server_port}}
 
 </value>

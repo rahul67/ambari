@@ -23,6 +23,7 @@ from resource_management.libraries.functions.default import default
 from resource_management import *
 from setup_zeppelin import *
 import status_params
+import re
 
 config = Script.get_config()
 tmp_dir = Script.get_tmp_dir()
@@ -34,22 +35,46 @@ hdp_stack_version = format_hdp_stack_version(stack_version_unformatted)
 # Params from zeppelin-env
 zeppelin_tarball_url = config['configurations']['zeppelin-env']['zeppelin_tarball_url']
 zeppelin_install_location = "/usr/hdp/2.2.0.0-2041"
-zeppelin_extracted_dir = os.path.splitext(zeppelin_tarball_url.split('/')[-1])[0]
+zeppelin_extracted_dir = re.sub('\.tgz$', '', zeppelin_tarball_url.split('/')[-1])
+zeppelin_extracted_dir = re.sub('\.tar\.gz$', '', zeppelin_extracted_dir)
 zeppelin_install_dir = zeppelin_install_location + os.sep + zeppelin_extracted_dir
 backup_existing_installation = default("/configurations/zeppelin-env/backup_existing_installation", True)
 
+zeppelin_yarn_queue = default("/configurations/zeppelin-env/zeppelin_yarn_queue", "default")
 zeppelin_log_dir = config['configurations']['zeppelin-env']['zeppelin_log_dir']
 zeppelin_pid_dir = config['configurations']['zeppelin-env']['zeppelin_pid_dir']
-spark_master = config['configurations']['zeppelin-env']['spark-master']
+spark_master = config['configurations']['zeppelin-env']['spark_master']
 backup_existing_installation = default("/configurations/zeppelin-env/backup_existing_installation", True)
+
+spark_jobhistoryserver_hosts = default("/clusterHostInfo/spark_jobhistoryserver_hosts", [])
+
+if len(spark_jobhistoryserver_hosts) > 0:
+  spark_history_server_host = spark_jobhistoryserver_hosts[0]
+else:
+  spark_history_server_host = "localhost"
+
+spark_history_ui_port = default("/configurations/spark-defaults/spark.history.ui.port", "18080")
+
 zeppelin_java_opts = config['configurations']['zeppelin-env']['zeppelin_java_opts']
 # Append Spark options from spark-defaults to zeppelin_java_opts to pass on to SparkContext
-zeppelin_java_opts = _append_spark_default_opts(zeppelin_java_opts)
+spark_defaults = config['configurations']['spark-defaults'].copy()
+spark_defaults['spark.yarn.queue'] = zeppelin_yarn_queue
+spark_defaults['spark.yarn.historyServer.address'] = spark_history_server_host + ':' + str(spark_history_ui_port)
+spark_opts_for_zeppelin = ""
+for key in spark_defaults:
+    val = str(spark_defaults[key])
+    val = val.strip()
+    if val:
+        spark_opts_for_zeppelin = spark_opts_for_zeppelin + " -D" + key + "=" + val
+
+# Append explicit Zeppelin Java Options to the end so they take precedence
+# overriding previous ones.
+zeppelin_java_opts = spark_opts_for_zeppelin + " " + zeppelin_java_opts
 
 zeppelin_intp_java_opts = config['configurations']['zeppelin-env']['zeppelin_intp_java_opts']
 zeppelin_mem = config['configurations']['zeppelin-env']['zeppelin_mem']
 zeppelin_intp_mem = config['configurations']['zeppelin-env']['zeppelin_intp_mem']
-zeppelin_niceness = config['configurations']['zeppelin-env']['zeppelin_log_dir']
+zeppelin_niceness = config['configurations']['zeppelin-env']['zeppelin_niceness']
 zeppelin_server_port = config['configurations']['zeppelin-site']['zeppelin.server.port']
 spark_yarn_jar = config['configurations']['zeppelin-env']['spark_yarn_jar']
 spark_yarn_jar = spark_yarn_jar.strip()
@@ -86,18 +111,11 @@ else:
 
 zeppelin_server_pid_file = format("{zeppelin_pid_dir}/zeppelin-{zeppelin_user}-{zeppelin_server_host}.pid")
 
-spark_jobhistoryserver_hosts = default("/clusterHostInfo/spark_jobhistoryserver_hosts", [])
-
-if len(spark_jobhistoryserver_hosts) > 0:
-  spark_history_server_host = spark_jobhistoryserver_hosts[0]
-else:
-  spark_history_server_host = "localhost"
-
-spark_history_ui_port = default("/configurations/spark-defaults/spark.history.ui.port", "18080")
-
-zeppelin_yarn_queue = default("/configurations/zeppelin-env/zeppelin_yarn_queue", "default")
 zeppelin_env_sh = config['configurations']['zeppelin-env']['content']
 zeppelin_log4j_properties = config['configurations']['zeppelin-log4j-properties']['content']
+
+hive_server_host = default("/clusterHostInfo/hive_server_host", [])
+is_hive_installed = not len(hive_server_host) == 0
 
 security_enabled = config['configurations']['cluster-env']['security_enabled']
 kinit_path_local = ""
@@ -111,31 +129,8 @@ HdfsDirectory = functools.partial(
   conf_dir=hadoop_conf_dir,
   hdfs_user=hdfs_user,
   security_enabled = security_enabled,
-  keytab = hdfs_user_keytab,
+  keytab = '',
   kinit_path_local = kinit_path_local,
   bin_dir = hadoop_bin_dir
 )
 
-def _get_spark_properties():
-  spark_dict = dict()
-
-  all_spark_config  = config['configurations']['spark-defaults']
-  #Add all configs unfiltered first to handle Custom case.
-  spark_dict = all_spark_config.copy()
-
-  spark_dict['spark.yarn.queue'] = zeppelin_yarn_queue
-  spark_dict['spark.yarn.historyServer.address'] = spark_history_server_host + ':' + str(spark_history_ui_port)
-
-  return spark_dict
-
-def _append_spark_default_opts(zep_opts):
-    spark_opts = ""
-    spark_defaults = _get_spark_properties()
-    for key in spark_defaults:
-        val = str(spark_defaults[key])
-        val = val.strip()
-        if val:
-            spark_opts = spark_opts + " -D" + key + "=" + val
-    # Append explicit Zeppelin Java Options to the end so they take precedence
-    # overriding previous ones.
-    return spark_opts + " " + zep_opts

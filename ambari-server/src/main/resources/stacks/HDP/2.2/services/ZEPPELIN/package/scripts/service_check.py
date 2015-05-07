@@ -59,4 +59,4 @@ class ZeppelinServiceCheck(Script):
       raise ComponentIsNotRunning()
 
 if __name__ == "__main__":
-  SparkServiceCheck().execute()
+  ZeppelinServiceCheck().execute()

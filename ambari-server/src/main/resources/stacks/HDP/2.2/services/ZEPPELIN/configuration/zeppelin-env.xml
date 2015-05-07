@@ -125,16 +125,16 @@
 export MASTER={{spark_master}}
 
 # export ZEPPELIN_JAVA_OPTS      # Additional jvm options. for example, export ZEPPELIN_JAVA_OPTS="-Dspark.executor.memory=8g -Dspark.cores.max=16"
-export ZEPPELIN_JAVA_OPTS={{zeppelin_java_opts}}
+export ZEPPELIN_JAVA_OPTS="{{zeppelin_java_opts}}"
 
 # export ZEPPELIN_MEM            # Zeppelin jvm mem options Default -Xmx1024m -XX:MaxPermSize=512m
-export ZEPPELIN_MEM={{zeppelin_mem}}
+export ZEPPELIN_MEM="{{zeppelin_mem}}"
 
 # export ZEPPELIN_INTP_MEM       # zeppelin interpreter process jvm mem options. Defualt = ZEPPELIN_MEM
-export ZEPPELIN_INTP_MEM=${ZEPPELIN_MEM:-{{zeppelin_intp_mem}}}
+export ZEPPELIN_INTP_MEM="${ZEPPELIN_MEM:-{{zeppelin_intp_mem}}}"
 
 # export ZEPPELIN_INTP_JAVA_OPTS # zeppelin interpreter process jvm options. Default = ZEPPELIN_JAVA_OPTS
-export ZEPPELIN_INTP_JAVA_OPTS=${ZEPPELIN_JAVA_OPTS:-{{zeppelin_intp_java_opts}}}
+export ZEPPELIN_INTP_JAVA_OPTS="${ZEPPELIN_JAVA_OPTS:-{{zeppelin_intp_java_opts}}}"
 
 # Where log files are stored.  PWD by default.
 export ZEPPELIN_LOG_DIR={{zeppelin_log_dir}}
@@ -162,7 +162,7 @@ export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-{{hadoop_conf_dir}}}
 
 export SPARK_HOME=${SPARK_HOME:-{{spark_home}}}
 if [ "{{spark_yarn_jar}}" != "" ]; then
-    export SPARK_YARN_JAR={{spark_yarn_jar}}
+    export SPARK_YARN_JAR="{{spark_yarn_jar}}"
 fi
 export ZEPPELIN_PORT={{zeppelin_server_port}}
 

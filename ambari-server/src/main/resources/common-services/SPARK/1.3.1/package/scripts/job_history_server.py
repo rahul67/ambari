@@ -68,9 +68,7 @@ class JobHistoryServer(Script):
     env.set_params(params)
     setup_spark(env, 'server', action='start')
 
-    """
-    copy_tarballs_to_hdfs('tez', 'spark-historyserver', params.spark_user, params.hdfs_user, params.user_group)
-    """
+    copy_spark_jars_to_hdfs()
         
     daemon_cmd = format('{spark_history_server_start}')
     no_op_test = format(

@@ -29,7 +29,7 @@ from resource_management import *
 from resource_management.core.exceptions import ComponentIsNotRunning
 from resource_management.core.logger import Logger
 from resource_management.core import shell
-
+from resource_management.libraries.resources.copy_from_local import CopyFromLocal
 
 def setup_spark(env, type, action = None):
   import params
@@ -136,7 +136,8 @@ def spark_properties(params):
 
   spark_dict['spark.driver.extraJavaOptions'] = params.spark_driver_extraJavaOptions
   spark_dict['spark.yarn.am.extraJavaOptions'] = params.spark_yarn_am_extraJavaOptions
-
+  if params.spark_yarn_jar.strip():
+      spark_dict['spark.yarn.jar'] = params.spark_yarn_jar.strip()
 
   return spark_dict
 
@@ -234,8 +235,6 @@ def setup_tarball():
     
     Execute (format("chown -R root:root {params.spark_install_dir}"))
     
-    _copy_spark_libs_to_hdfs()
-    
     shutil.rmtree(tempdir)
 
 def _setup_spark_user_group():
@@ -252,14 +251,24 @@ def _setup_spark_user_group():
              ignore_failures = False
         )
 
-def _copy_spark_libs_to_hdfs():
+def copy_spark_jars_to_hdfs():
     import params
     
-    pairs = []
-    files = [f for f in os.listdir(os.path.join(params.spark_install_dir, "lib"))]
-    for file in files:
-        s = os.path.join(params.spark_install_dir, "lib", file)
-        d = os.path.join(params.spark_yarn_jar_path_hdfs, file)
-        pairs.append((s,d))
-    
-    _copy_files(pairs, params.hdfs_user, params.hdfs_user, params.user_group, "")
+    if params.spark_yarn_jar_path_hdfs:
+        params.HdfsDirectory(params.spark_yarn_jar_path_hdfs,
+                             action="create",
+                             owner=params.hdfs_user,
+                             group=params.user_group,
+                             mode=0755,
+                             recursive_chown=True,
+                             recursive_chmod=False
+                             )
+        files = [ f for f in os.listdir(os.path.join(params.spark_install_dir, "lib"))]
+        for file in files:
+            spark_lib_path = os.path.join(params.spark_install_dir, "lib", file)
+            CopyFromLocal(spark_lib_path,
+                          dest_dir=params.spark_yarn_jar_path_hdfs,
+                          dest_file=file,
+                          owner=params.hdfs_user,
+                          mode=0644)
+

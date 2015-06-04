@@ -22,6 +22,7 @@ import tempfile
 __all__ = ["Script"]
 
 import os
+import subprocess
 import sys
 import json
 import logging
@@ -477,6 +478,10 @@ class Script(object):
       component_name = stack_to_component[stack_name] if stack_name in stack_to_component else None
       if component_name and stack_name and version and \
               compare_versions(format_hdp_stack_version(hdp_stack_version), '2.2.0.0') >= 0:
-        Execute(('/usr/bin/hdp-select', 'set', component_name, version),
+        # As users can put their own custom services in Stack, set the version
+        # only when it's provided via hdp-select
+        output = subprocess.check_output(["/usr/bin/hdp-select", "status", "all"], shell=False)
+        if component_name in output:
+            Execute(('/usr/bin/hdp-select', 'set', component_name, version),
                 sudo = True)
 

@@ -31,7 +31,8 @@ stack_name = default("/hostLevelParams/stack_name", None)
 stack_version_unformatted = str(config['hostLevelParams']['stack_version'])
 hdp_stack_version = format_hdp_stack_version(stack_version_unformatted)
 
-spark_yarn_jar_path_hdfs = config['configurations']['spark-env']['spark_yarn_jar_path_hdfs']
+spark_yarn_jar = config['configurations']['spark-defaults']['spark.yarn.jar']
+spark_yarn_jar_path_hdfs = os.path.dirname(spark_yarn_jar)
 spark_tarball_url = config['configurations']['spark-env']['spark_tarball_url']
 spark_install_location = "/usr/hdp/2.2.0.0-2041"
 spark_extracted_dir = os.path.splitext(spark_tarball_url.split('/')[-1])[0]

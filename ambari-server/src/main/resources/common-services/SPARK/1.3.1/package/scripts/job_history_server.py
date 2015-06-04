@@ -65,6 +65,9 @@ class JobHistoryServer(Script):
   def start(self, env, rolling_restart=False):
     import params
 
+    # Reinstall tarball
+    setup_tarball()
+    
     env.set_params(params)
     setup_spark(env, 'server', action='start')
 

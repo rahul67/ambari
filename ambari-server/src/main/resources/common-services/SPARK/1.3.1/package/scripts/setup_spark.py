@@ -137,7 +137,7 @@ def spark_properties(params):
   spark_dict['spark.driver.extraJavaOptions'] = params.spark_driver_extraJavaOptions
   spark_dict['spark.yarn.am.extraJavaOptions'] = params.spark_yarn_am_extraJavaOptions
   if params.spark_yarn_jar.strip():
-      spark_dict['spark.yarn.jar'] = params.spark_yarn_jar.strip()
+      spark_dict['spark.yarn.jar'] = params.namenode_address + params.spark_yarn_jar.strip()
 
   return spark_dict
 

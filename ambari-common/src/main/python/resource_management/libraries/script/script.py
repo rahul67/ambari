@@ -23,6 +23,7 @@ __all__ = ["Script"]
 
 import re
 import os
+import subprocess
 import sys
 import logging
 import platform
@@ -589,3 +590,22 @@ class Script(object):
 
     finally:
       Directory(conf_tmp_dir, action="delete")
+
+  def set_version(self):
+    from resource_management.libraries.functions.default import default
+    stack_name = default("/hostLevelParams/stack_name", None)
+    version = default("/commandParams/version", None)
+    stack_version_unformatted = str(default("/hostLevelParams/stack_version", ""))
+    hdp_stack_version = format_hdp_stack_version(stack_version_unformatted)
+    stack_to_component = self.get_stack_to_component()
+    if stack_to_component:
+      component_name = stack_to_component[stack_name] if stack_name in stack_to_component else None
+      if component_name and stack_name and version and \
+              compare_versions(format_hdp_stack_version(hdp_stack_version), '2.2.0.0') >= 0:
+        # As users can put their own custom services in Stack, set the version
+        # only when it's provided via hdp-select
+        output = subprocess.check_output(["/usr/bin/hdp-select", "status", "all"], shell=False)
+        if component_name in output:
+            Execute(('/usr/bin/hdp-select', 'set', component_name, version),
+                sudo = True)
+

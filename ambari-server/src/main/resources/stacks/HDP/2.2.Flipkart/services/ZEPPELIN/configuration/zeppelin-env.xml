@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+
+<configuration>
+  <property>
+    <name>zeppelin_user</name>
+    <value>spark</value>
+    <property-type>USER</property-type>
+    <description>Zeppelin Daemon user</description>
+  </property>
+
+  <property>
+    <name>zeppelin_group</name>
+    <value>spark</value>
+    <property-type>GROUP</property-type>
+    <description>zeppelin group</description>
+  </property>
+
+  <property>
+    <name>zeppelin_log_dir</name>
+    <value>/var/log/zeppelin</value>
+    <description>Zeppelin Log Dir</description>
+  </property>
+
+  <property>
+    <name>zeppelin_pid_dir</name>
+    <value>/var/run/zeppelin</value>
+  </property>
+
+  <property>
+    <name>zeppelin_tarball_url</name>
+    <value>http://localhost/zeppelin/zeppelin-0.5.0.tar.gz</value>
+  </property>
+
+  <property>
+    <name>spark_master</name>
+    <value>yarn-client</value>
+  </property>
+
+  <property>
+    <name>zeppelin_yarn_queue</name>
+    <value>default</value>
+    <description>Queue to be used on Yarn. Passed as spark.yarn.queue to SparkContext</description>
+  </property>
+
+  <property>
+    <name>backup_existing_installation</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>zeppelin_java_opts</name>
+    <value> </value>
+  </property>
+
+  <property>
+    <name>zeppelin_mem</name>
+    <value>-Xmx1024m -XX:MaxPermSize=512m</value>
+  </property>
+
+  <property>
+    <name>zeppelin_intp_mem</name>
+    <value>-Xmx1024m -XX:MaxPermSize=512m</value>
+  </property>
+
+  <property>
+    <name>zeppelin_intp_java_opts</name>
+    <value> </value>
+  </property>
+
+  <property>
+    <name>zeppelin_niceness</name>
+    <value>0</value>
+  </property>
+
+  <!-- 
+  <property>
+    <name>spark_yarn_jar</name>
+    <value> </value>
+  </property>
+  -->
+
+  <!-- zeppelin-env.sh -->
+  <property>
+    <name>content</name>
+    <description>This is the jinja template for zeppelin-env.sh file</description>
+    <value>
+#!/usr/bin/env bash
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# export JAVA_HOME=
+# export MASTER=                 # Spark master url. eg. spark://master_addr:7077. Leave empty if you want to use local mode
+export MASTER={{spark_master}}
+
+# export ZEPPELIN_JAVA_OPTS      # Additional jvm options. for example, export ZEPPELIN_JAVA_OPTS="-Dspark.executor.memory=8g -Dspark.cores.max=16"
+export ZEPPELIN_JAVA_OPTS="{{zeppelin_java_opts}}"
+
+# export ZEPPELIN_MEM            # Zeppelin jvm mem options Default -Xmx1024m -XX:MaxPermSize=512m
+export ZEPPELIN_MEM="{{zeppelin_mem}}"
+
+# export ZEPPELIN_INTP_MEM       # zeppelin interpreter process jvm mem options. Defualt = ZEPPELIN_MEM
+export ZEPPELIN_INTP_MEM="${ZEPPELIN_MEM:-{{zeppelin_intp_mem}}}"
+
+# export ZEPPELIN_INTP_JAVA_OPTS # zeppelin interpreter process jvm options. Default = ZEPPELIN_JAVA_OPTS
+export ZEPPELIN_INTP_JAVA_OPTS="${ZEPPELIN_JAVA_OPTS:-{{zeppelin_intp_java_opts}}}"
+
+# Where log files are stored.  PWD by default.
+export ZEPPELIN_LOG_DIR={{zeppelin_log_dir}}
+
+# The pid files are stored. /tmp by default.
+export ZEPPELIN_PID_DIR={{zeppelin_pid_dir}}
+
+# export ZEPPELIN_NOTEBOOK_DIR   # Where notebook saved
+export ZEPPELIN_NOTEBOOK_DIR={{zeppelin_notebook_dir}}
+
+# A string representing this instance of zeppelin. $USER by default
+export ZEPPELIN_IDENT_STRING=$USER
+# The scheduling priority for daemons. Defaults to 0.
+export ZEPPELIN_NICENESS={{zeppelin_niceness}}
+
+# Options read in YARN client mode
+# yarn-site.xml is located in configuration directory in HADOOP_CONF_DIR.
+export HADOOP_HOME=${HADOOP_HOME:-{{hadoop_home}}}
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-{{hadoop_conf_dir}}}
+
+# Pyspark (supported with Spark 1.2.1 and above)
+# To configure pyspark, you need to set spark distribution's path to 'spark.home' property in Interpreter setting screen in Zeppelin GUI
+# export PYSPARK_PYTHON          # path to the python command. must be the same path on the driver(Zeppelin) and all workers.
+# export PYTHONPATH              # extra PYTHONPATH.
+
+export SPARK_HOME=${SPARK_HOME:-{{spark_home}}}
+if [ "{{spark_yarn_jar}}" != "" ]; then
+    export SPARK_YARN_JAR="{{spark_yarn_jar}}"
+fi
+export ZEPPELIN_PORT={{zeppelin_server_port}}
+
+</value>
+  </property>
+
+</configuration>

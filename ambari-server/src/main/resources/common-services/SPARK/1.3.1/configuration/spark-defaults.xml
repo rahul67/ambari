@@ -150,9 +150,9 @@
 
   <property>
     <name>spark.yarn.jar</name>
-    <value></value>
+    <value>/apps/spark/spark-assembly-1.3.1-hadoop2.6.0.jar</value>
     <description>
-      Location of the spark jar file in case override is desired. Default is local.
+      Location of the spark jar file on HDFS in case override is desired. Default is local.
     </description>
   </property>
 

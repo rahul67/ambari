@@ -29,7 +29,7 @@ exec_tmp_dir = Script.get_tmp_dir()
 #Cosmos data
 cosmos_pid_dir = status_params.cosmos_pid_dir
 cosmos_collectd_pid_file = status_params.cosmos_collectd_pid_file
-cosmos_jmx_pid_file = status_params.cosmos_jmx_pid_file
+cosmos_jmx_lock_file = status_params.cosmos_jmx_lock_file
 
 cosmos_user = config['configurations']['cosmos-env']['cosmos_user']
 

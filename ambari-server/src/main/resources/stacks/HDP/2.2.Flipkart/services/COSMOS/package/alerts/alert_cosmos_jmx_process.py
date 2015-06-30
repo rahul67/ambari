@@ -20,6 +20,7 @@ limitations under the License.
 
 import os
 import socket
+import os.path
 
 from resource_management.libraries.functions.check_process_status import check_process_status
 from resource_management.core.exceptions import ComponentIsNotRunning
@@ -40,19 +41,16 @@ def get_tokens():
   return (COSMOS_JMX_PID_DIR,)
 
 @OsFamilyFuncImpl(OsFamilyImpl.DEFAULT)
-def is_jmx_process_live(pid_file):
+def is_jmx_process_live(lock_file):
   """
   Gets whether the Cosmos JMX represented by the specified file is running.
-  :param pid_file: the PID file of the jmx process to check
+  :param lock_file: the lock file of the jmx process to check
   :return: True if the cosmos jmx process is running, False otherwise
   """
   live = False
 
-  try:
-    check_process_status(pid_file)
+  if os.path.exists(lock_file):
     live = True
-  except ComponentIsNotRunning:
-    pass
 
   return live
 
@@ -70,14 +68,14 @@ def execute(parameters=None, host_name=None):
     return (RESULT_CODE_UNKNOWN, ['There were no parameters supplied to the script.'])
 
   if set([COSMOS_JMX_PID_DIR]).issubset(parameters):
-    COSMOS_JMX_PID_PATH = os.path.join(parameters[COSMOS_JMX_PID_DIR], 'cosmos-jmx.pid')
+    COSMOS_JMX_LOCK_PATH = os.path.join(parameters[COSMOS_JMX_PID_DIR], 'sv/cosmos-jmx/lock')
   else:
     return (RESULT_CODE_UNKNOWN, ['The cosmos_jmx_pid_dir is a required parameter.'])
 
   if host_name is None:
     host_name = socket.getfqdn()
 
-  cosmos_jmx_process_running = is_jmx_process_live(COSMOS_JMX_PID_PATH)
+  cosmos_jmx_process_running = is_jmx_process_live(COSMOS_JMX_LOCK_PATH)
 
   alert_state = RESULT_CODE_OK if cosmos_jmx_process_running else RESULT_CODE_CRITICAL
 

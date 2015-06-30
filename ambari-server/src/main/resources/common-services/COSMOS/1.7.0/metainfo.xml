@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<!--Licensed to the Apache Software Foundation (ASF) under one
+* or more contributor license agreements.  See the NOTICE file
+* distributed with this work for additional information
+* regarding copyright ownership.  The ASF licenses this file
+* to you under the Apache License, Version 2.0 (the
+* "License"); you may not use this file except in compliance
+* with the License.  You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+-->
+<metainfo>
+  <schemaVersion>2.0</schemaVersion>
+  <services>
+    <service>
+      <name>COSMOS</name>
+      <displayName>Cosmos</displayName>
+      <comment>Cosmos Monitoring and Metric Service.</comment>
+      <version>1.7.0</version>
+      <components>
+        <component>
+          <name>COSMOS_COLLLECTD</name>
+          <displayName>Cosmos Collectd Daemon</displayName>
+          <category>SLAVE</category>
+          <cardinality>ALL</cardinality>
+          <versionAdvertised>false</versionAdvertised>
+          <auto-deploy>
+            <enabled>true</enabled>
+          </auto-deploy>
+          <commandScript>
+            <script>scripts/cosmos_collectd.py</script>
+            <scriptType>PYTHON</scriptType>
+            <timeout>600</timeout>
+          </commandScript>
+        </component>
+        <component>
+          <name>COSMOS_JMX</name>
+          <displayName>Cosmos JMX Daemon</displayName>
+          <category>SLAVE</category>
+          <cardinality>ALL</cardinality>
+          <versionAdvertised>false</versionAdvertised>
+          <auto-deploy>
+            <enabled>true</enabled>
+          </auto-deploy>
+          <commandScript>
+            <script>scripts/cosmos_jmx.py</script>
+            <scriptType>PYTHON</scriptType>
+            <timeout>600</timeout>
+          </commandScript>
+        </component>
+      </components>
+
+      <osSpecifics>
+        <osSpecific>
+          <osFamily>debian7,ubuntu12,ubuntu14</osFamily>
+          <packages>
+            <package>
+              <name>fk-libestr</name>
+            </package>
+            <package>
+              <name>fk-liblogging</name>
+            </package>
+            <package>
+              <name>libjson-c2</name>
+            </package>
+            <package>
+              <name>libjson0</name>
+            </package>
+            <package>
+              <name>fk-liblognorm</name>
+            </package>
+            <package>
+              <name>fk-librelp</name>
+            </package>
+            <package>
+              <name>fk-librdkafka</name>
+            </package>
+            <package>
+              <name>fk-rsyslog</name>
+            </package>
+            <package>
+              <name>stream-relay</name>
+            </package>
+            <package>
+              <name>cosmos-base</name>
+            </package>
+            <package>
+              <name>cosmos-collectd</name>
+            </package>
+            <package>
+              <name>cosmos-jmx</name>
+            </package>
+          </packages>
+        </osSpecific>
+      </osSpecifics>
+
+      <configuration-dependencies>
+        <config-type>hadoop-env</config-type>
+        <config-type>yarn-env</config-type>
+      </configuration-dependencies>
+
+      <commandScript>
+        <script>scripts/service_check.py</script>
+        <scriptType>PYTHON</scriptType>
+        <timeout>300</timeout>
+      </commandScript>
+
+    </service>
+  </services>
+</metainfo>

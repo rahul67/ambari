@@ -21,6 +21,8 @@ limitations under the License.
 from resource_management import *
 from ambari_commons import OSCheck
 
+config = Script.get_config()
+
 cosmos_pid_dir = config['configurations']['cosmos-env']['pid_dir']
 cosmos_collectd_pid_file = config['configurations']['cosmos-env']['cosmos_collectd_pid_file']
 cosmos_jmx_pid_file = config['configurations']['cosmos-env']['cosmos_jmx_pid_file']

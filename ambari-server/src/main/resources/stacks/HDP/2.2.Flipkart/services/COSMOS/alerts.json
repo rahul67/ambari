@@ -1,0 +1,82 @@
+{
+  "COSMOS": {
+    "service": [
+      {
+        "name": "cosmos_collectd_process_percent",
+        "label": "Percent Collectd Processes Available",
+        "description": "This alert is triggered if a percentage of Cosmos Collectd processes are not up.",
+        "interval": 1,
+        "scope": "SERVICE",
+        "enabled": true,
+        "source": {
+          "type": "AGGREGATE",
+          "alert_name": "cosmos_collectd_process",
+          "reporting": {
+            "ok": {
+              "text": "affected: [{1}], total: [{0}]"
+            },
+            "warning": {
+              "text": "affected: [{1}], total: [{0}]",
+              "value": 0.1
+            },
+            "critical": {
+              "text": "affected: [{1}], total: [{0}]",
+              "value": 0.3
+            }
+          }
+        }
+      },
+      {
+        "name": "cosmos_jmx_process_percent",
+        "label": "Percent Cosmos JMX Processes Available",
+        "description": "This alert is triggered if a percentage of Cosmos JMX processes are not up.",
+        "interval": 1,
+        "scope": "SERVICE",
+        "enabled": true,
+        "source": {
+          "type": "AGGREGATE",
+          "alert_name": "cosmos_jmx_process",
+          "reporting": {
+            "ok": {
+              "text": "affected: [{1}], total: [{0}]"
+            },
+            "warning": {
+              "text": "affected: [{1}], total: [{0}]",
+              "value": 0.1
+            },
+            "critical": {
+              "text": "affected: [{1}], total: [{0}]",
+              "value": 0.3
+            }
+          }
+        }
+      }
+    ],
+    "COSMOS_COLLECTD": [
+      {
+        "name": "cosmos_collectd_process",
+        "label": "Cosmos Collectd Status",
+        "description": "This alert indicates the status of the Cosmos CollectD process as determined by the collectd status script.",
+        "interval": 1,
+        "scope": "ANY",
+        "source": {
+          "type": "SCRIPT",
+          "path": "COSMOS/1.7.0/package/alerts/alert_cosmos_collectd_process.py"
+        }
+      }
+    ],
+    "COSMOS_JMX": [
+      {
+        "name": "cosmos_jmx_process",
+        "label": "Cosmos JMX Status",
+        "description": "This alert indicates the status of the Cosmos JMX process as determined by the collectd status script.",
+        "interval": 1,
+        "scope": "ANY",
+        "source": {
+          "type": "SCRIPT",
+          "path": "COSMOS/1.7.0/package/alerts/alert_cosmos_jmx_process.py"
+        }
+      }
+    ]
+  }
+}

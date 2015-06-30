@@ -1,0 +1,15 @@
+{
+  "servers" : [
+    {
+      "port" : "{{datanode_jmx_port}}",
+      "host" : "{{hostname}}",
+      "process": "DataNode",
+      "queries" : [
+        {
+          "obj" : "*"
+        }
+      ],
+      "numQueryThreads" : 2
+    }
+  ]
+}

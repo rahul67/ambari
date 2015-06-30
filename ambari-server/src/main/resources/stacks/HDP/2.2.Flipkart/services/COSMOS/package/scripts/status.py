@@ -20,6 +20,7 @@ limitations under the License.
 from resource_management import *
 from ambari_commons import OSConst
 from ambari_commons.os_family_impl import OsFamilyFuncImpl, OsFamilyImpl
+import os.path
 
 @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
 def check_service_status(name):
@@ -29,4 +30,4 @@ def check_service_status(name):
     check_process_status(params.cosmos_collectd_pid_file)
 
   elif name == 'jmx':
-    check_process_status(params.cosmos_jmx_pid_file)
+    os.path.exists(params.cosmos_jmx_lock_file)

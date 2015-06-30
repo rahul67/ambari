@@ -50,8 +50,6 @@ def cosmos_service(name, action):
     pass
   elif name == 'jmx':
     cmd = format("{cosmos_jmx_script}")
-    pid_file = params.cosmos_jmx_pid_file
-    no_op_test = format("ls {pid_file} >/dev/null 2>&1 && ps `cat {pid_file}` >/dev/null 2>&1")
 
     if action == 'start':
       daemon_cmd = format("{cmd} start")

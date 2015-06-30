@@ -32,9 +32,9 @@
     <description>Cosmos v2 CollectD PID File</description>
   </property>
   <property>
-    <name>cosmos_jmx_pid_file</name>
-    <value>/var/run/cosmos-jmx.pid</value>
-    <description>Cosmos v2 JMX PID dir</description>
+    <name>cosmos_jmx_lock_file</name>
+    <value>/var/run/sv/cosmos-jmx/lock</value>
+    <description>Cosmos v2 JMX lock file</description>
   </property>
   <property>
     <name>cosmos_user</name>

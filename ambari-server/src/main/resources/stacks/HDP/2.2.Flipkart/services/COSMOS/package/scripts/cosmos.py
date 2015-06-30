@@ -20,11 +20,7 @@ limitations under the License.
 
 from resource_management import *
 from ambari_commons import OSConst
-from service_mapping import *
 from ambari_commons.os_family_impl import OsFamilyFuncImpl, OsFamilyImpl
-from ambari_commons.str_utils import compress_backslashes
-import glob
-import os
 
 @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
 def cosmos(name=None):

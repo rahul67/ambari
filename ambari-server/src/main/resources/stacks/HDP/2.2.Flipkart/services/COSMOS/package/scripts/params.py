@@ -18,7 +18,6 @@ limitations under the License.
 
 """
 
-from functions import calc_xmn_from_xms
 from resource_management import *
 import status_params
 from ambari_commons import OSCheck
@@ -33,12 +32,6 @@ cosmos_collectd_pid_file = status_params.cosmos_collectd_pid_file
 cosmos_jmx_pid_file = status_params.cosmos_jmx_pid_file
 
 cosmos_user = config['configurations']['cosmos-env']['cosmos_user']
-
-cosmos_collectd_hosts = default("/clusterHostInfo/cosmos_collectd_hosts", [])
-cosmos_jmx_hosts = default("/clusterHostInfo/cosmos_jmx_hosts", [])
-
-cosmos_collectd_host_single = cosmos_collectd_hosts[0] #TODO cardinality is 1+ so we can have more than one host
-cosmos_jmx_host_single = cosmos_jmx_hosts[0]
 
 cosmos_jmx_script = "/etc/init.d/cosmos-jmx"
 cosmos_collectd_script = "/etc/init.d/cosmos-collectd"

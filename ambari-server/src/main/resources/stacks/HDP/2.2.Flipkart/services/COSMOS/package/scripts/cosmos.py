@@ -26,4 +26,32 @@ from ambari_commons.os_family_impl import OsFamilyFuncImpl, OsFamilyImpl
 def cosmos(name=None):
   import params
 
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'namenode.jmx'),
+       owner=params.cosmos_user,
+       group=params.cosmos_user,
+       mode=0644,
+       content=Template("namenode.jmx.j2")
+  )
+
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'yarn.jmx'),
+       owner=params.cosmos_user,
+       group=params.cosmos_user,
+       mode=0644,
+       content=Template("yarn.jmx.j2")
+  )
+
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'datanode.jmx'),
+       owner=params.cosmos_user,
+       group=params.cosmos_user,
+       mode=0644,
+       content=Template("datanode.jmx.j2")
+  )
+
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'zookeeper.jmx'),
+       owner=params.cosmos_user,
+       group=params.cosmos_user,
+       mode=0644,
+       content=Template("zookeeper.jmx.j2")
+  )
+
   pass

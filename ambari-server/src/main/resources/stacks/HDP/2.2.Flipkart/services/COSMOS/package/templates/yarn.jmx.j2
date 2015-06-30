@@ -1,0 +1,15 @@
+{
+  "servers" : [
+    {
+      "port" : "{{yarn_jmx_port}}",
+      "host" : "{{hostname}}",
+      "process": "ResourceManager",
+      "queries" : [
+        {
+          "obj" : "*"
+        }
+      ],
+      "numQueryThreads" : 2
+    }
+  ]
+}

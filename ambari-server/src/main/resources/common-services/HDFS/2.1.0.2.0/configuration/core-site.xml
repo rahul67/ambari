@@ -184,4 +184,27 @@ DEFAULT
       Location of topology script used by Hadoop to determine the rack location of nodes.
     </description>
   </property>
+
+  <!-- JMX Configuration -->
+  <property>
+    <name>namenode_jmx_port</name>
+    <value>9006</value>
+    <description>
+      JMX port for Cosmos Metric collection.
+    </description>
+  </property>
+  <property>
+    <name>yarn_jmx_port</name>
+    <value>9007</value>
+    <description>
+      JMX port for Cosmos Metric collection.
+    </description>
+  </property>
+  <property>
+    <name>datanode_jmx_port</name>
+    <value>9008</value>
+    <description>
+      JMX port for Cosmos Metric collection.
+    </description>
+  </property>
 </configuration>

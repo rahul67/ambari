@@ -59,4 +59,9 @@
     <description>The time interval in hours for which the purge task has to be triggered.
       Set to a positive integer (1 and above) to enable the auto purging.</description>
   </property>
+  <property>
+    <name>zookeeper_jmx_port</name>
+    <value>9009</value>
+    <description>JMX port for Cosmos Metrics Collection</description>
+  </property>
 </configuration>

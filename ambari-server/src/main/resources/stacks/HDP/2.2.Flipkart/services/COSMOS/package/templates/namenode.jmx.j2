@@ -1,0 +1,15 @@
+{
+  "servers" : [
+    {
+      "port" : "{{namenode_jmx_port}}",
+      "host" : "{{hostname}}",
+      "process": "NameNode",
+      "queries" : [
+        {
+          "obj" : "*"
+        }
+      ],
+      "numQueryThreads" : 2
+    }
+  ]
+}

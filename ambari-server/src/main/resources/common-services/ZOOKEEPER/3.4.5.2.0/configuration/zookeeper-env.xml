@@ -52,6 +52,10 @@ export SERVER_JVMFLAGS={{zk_server_heapsize}}
 export JAVA=$JAVA_HOME/bin/java
 export CLASSPATH=$CLASSPATH:/usr/share/zookeeper/*
 
+{% if zookeeper_jmx_port &gt; 0 %}
+export SERVER_JVMFLAGS="-Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port={{zookeeper_jmx_port}} ${SERVER_JVMFLAGS}"
+{% endif %}
+
 {% if security_enabled %}
 export SERVER_JVMFLAGS="$SERVER_JVMFLAGS -Djava.security.auth.login.config={{zk_server_jaas_file}}"
 export CLIENT_JVMFLAGS="$CLIENT_JVMFLAGS -Djava.security.auth.login.config={{zk_client_jaas_file}}"

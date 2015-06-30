@@ -22,36 +22,38 @@ from resource_management import *
 from ambari_commons import OSConst
 from ambari_commons.os_family_impl import OsFamilyFuncImpl, OsFamilyImpl
 
+import os.path
+
 @OsFamilyFuncImpl(os_family=OsFamilyImpl.DEFAULT)
 def cosmos(name=None):
   import params
 
-  File(os.path.join(params.cosmos_jmx_conf_dir, 'namenode.jmx'),
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'namenode.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("namenode.jmx.j2")
+       content=Template("namenode.json.j2")
   )
 
-  File(os.path.join(params.cosmos_jmx_conf_dir, 'yarn.jmx'),
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'yarn.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("yarn.jmx.j2")
+       content=Template("yarn.json.j2")
   )
 
-  File(os.path.join(params.cosmos_jmx_conf_dir, 'datanode.jmx'),
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'datanode.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("datanode.jmx.j2")
+       content=Template("datanode.json.j2")
   )
 
-  File(os.path.join(params.cosmos_jmx_conf_dir, 'zookeeper.jmx'),
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'zookeeper.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("zookeeper.jmx.j2")
+       content=Template("zookeeper.json.j2")
   )
 
   pass

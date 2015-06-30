@@ -33,6 +33,12 @@ jdk_name = default("/hostLevelParams/jdk_name", None)
 java_home = config['hostLevelParams']['java_home']
 java_version = int(config['hostLevelParams']['java_version'])
 
+# JMX configuration
+namenode_jmx_port = int(default("/configurations/core-site/namenode_jmx_port", 0))
+yarn_jmx_port = int(default("/configurations/core-site/yarn_jmx_port", 0))
+datanode_jmx_port = int(default("/configurations/core-site/datanode_jmx_port", 0))
+zookeeper_jmx_port = int(default("/configurations/zoo.cfg/zookeeper_jmx_port", 0))
+
 ambari_server_hostname = config['clusterHostInfo']['ambari_server_host'][0]
 
 stack_version_unformatted = str(config['hostLevelParams']['stack_version'])

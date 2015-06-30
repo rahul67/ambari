@@ -1,0 +1,15 @@
+{
+  "servers" : [
+    {
+      "port" : "{{zookeeper_jmx_port}}",
+      "host" : "{{hostname}}",
+      "process": "ZooKeeper",
+      "queries" : [
+        {
+          "obj" : "*"
+        }
+      ],
+      "numQueryThreads" : 2
+    }
+  ]
+}

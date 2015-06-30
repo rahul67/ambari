@@ -41,4 +41,9 @@
     <value>root</value>
     <description>User to execute cosmos daemons</description>
   </property>
+  <property>
+    <name>cosmos_jmx_conf_dir</name>
+    <value>/etc/cosmos-jmx</value>
+    <description>Cosmos JMX Configuration Dir</description>
+  </property>
 </configuration>

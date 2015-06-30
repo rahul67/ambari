@@ -32,9 +32,16 @@ cosmos_collectd_pid_file = status_params.cosmos_collectd_pid_file
 cosmos_jmx_lock_file = status_params.cosmos_jmx_lock_file
 
 cosmos_user = config['configurations']['cosmos-env']['cosmos_user']
+cosmos_jmx_conf_dir = config['configurations']['cosmos-env']['cosmos_jmx_conf_dir']
 
 cosmos_jmx_script = "/etc/init.d/cosmos-jmx"
 cosmos_collectd_script = "/etc/init.d/cosmos-collectd"
+
+# JMX configuration
+namenode_jmx_port = int(default("/configurations/core-site/namenode_jmx_port", 0))
+yarn_jmx_port = int(default("/configurations/core-site/yarn_jmx_port", 0))
+datanode_jmx_port = int(default("/configurations/core-site/datanode_jmx_port", 0))
+zookeeper_jmx_port = int(default("/configurations/zoo.cfg/zookeeper_jmx_port", 0))
 
 hostname = status_params.hostname
 

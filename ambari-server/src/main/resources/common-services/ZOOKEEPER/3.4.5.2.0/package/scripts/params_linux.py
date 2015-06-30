@@ -33,6 +33,8 @@ tmp_dir = Script.get_tmp_dir()
 stack_version_unformatted = str(config['hostLevelParams']['stack_version'])
 hdp_stack_version = format_hdp_stack_version(stack_version_unformatted)
 
+zookeeper_jmx_port = int(default("/configurations/zoo.cfg/zookeeper_jmx_port", 0))
+
 stack_name = default("/hostLevelParams/stack_name", None)
 current_version = default("/hostLevelParams/current_version", None)
 component_directory = status_params.component_directory

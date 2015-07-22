@@ -37,11 +37,19 @@ cosmos_jmx_conf_dir = config['configurations']['cosmos-env']['cosmos_jmx_conf_di
 cosmos_jmx_script = "/etc/init.d/cosmos-jmx"
 cosmos_collectd_script = "/etc/init.d/cosmos-collectd"
 
+cosmos_service_name = default("/configurations/cosmos-env/cosmos_service_name", "test")
+
 # JMX configuration
 namenode_jmx_port = int(default("/configurations/core-site/namenode_jmx_port", 0))
 yarn_jmx_port = int(default("/configurations/core-site/yarn_jmx_port", 0))
 datanode_jmx_port = int(default("/configurations/core-site/datanode_jmx_port", 0))
 zookeeper_jmx_port = int(default("/configurations/zoo.cfg/zookeeper_jmx_port", 0))
+
+# JMX Templates
+namenode_json_template = config['configurations']['cosmos-env']['jmx-namenode-content']
+datanode_json_template = config['configurations']['cosmos-env']['jmx-datanode-content']
+yarn_json_template = config['configurations']['cosmos-env']['jmx-yarn-content']
+zookeeper_json_template = config['configurations']['cosmos-env']['jmx-zookeeper-content']
 
 hostname = status_params.hostname
 

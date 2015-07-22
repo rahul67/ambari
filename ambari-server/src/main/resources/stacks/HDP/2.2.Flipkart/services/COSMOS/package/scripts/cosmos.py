@@ -32,28 +32,28 @@ def cosmos(name=None):
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("namenode.json.j2")
+       content=InlineTemplate(params.namenode_json_template)
   )
 
   File(os.path.join(params.cosmos_jmx_conf_dir, 'yarn.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("yarn.json.j2")
+       content=InlineTemplate(params.yarn_json_template)
   )
 
   File(os.path.join(params.cosmos_jmx_conf_dir, 'datanode.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("datanode.json.j2")
+       content=InlineTemplate(params.datanode_json_template)
   )
 
   File(os.path.join(params.cosmos_jmx_conf_dir, 'zookeeper.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=Template("zookeeper.json.j2")
+       content=InlineTemplate(params.zookeeper_json_template)
   )
 
   pass

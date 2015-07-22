@@ -37,6 +37,11 @@
     <value>/var/run/zookeeper</value>
     <description>ZooKeeper Pid Dir</description>
   </property>
+  <property>
+    <name>zk_java_opts</name>
+    <value>-Xmx2048m</value>
+    <description>ZooKeeper Java Opts.</description>
+  </property>
 
   
   <!-- zookeeper-env.sh -->
@@ -48,7 +53,7 @@ export JAVA_HOME={{java64_home}}
 export ZOOKEEPER_HOME={{zk_home}}
 export ZOO_LOG_DIR={{zk_log_dir}}
 export ZOOPIDFILE={{zk_pid_file}}
-export SERVER_JVMFLAGS={{zk_server_heapsize}}
+export SERVER_JVMFLAGS={{zk_java_opts}}
 export JAVA=$JAVA_HOME/bin/java
 export CLASSPATH=$CLASSPATH:/usr/share/zookeeper/*
 

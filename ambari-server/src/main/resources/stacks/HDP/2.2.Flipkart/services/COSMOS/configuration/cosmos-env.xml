@@ -21,7 +21,13 @@
 -->
 
 <configuration>
+
   <property>
+    <name>cosmos_service_name</name>
+    <value>test</value>
+    <description>Cosmos Metrics Service Identifier</description>
+  </property>
+    <property>
     <name>cosmos_pid_dir</name>
     <value>/var/run</value>
     <description>PID dir</description>
@@ -52,21 +58,22 @@
     <name>jmx-datanode-content</name>
     <description>This is the jinja template for datanode.json file for Cosmos JMX metrics</description>
     <value>
-{% templatetag openbrace %}
+{
   "servers" : [
-    {% templatetag openbrace %}
+    {
+      "prefix" : {{cosmos_service_name}},
       "port" : "{{datanode_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "DataNode",
       "queries" : [
-        {% templatetag openbrace %}
+        {
           "obj" : "*"
-        {% templatetag closebrace %}
+        }
       ],
       "numQueryThreads" : 2
-    {% templatetag closebrace %}
+    }
   ]
-{% templatetag closebrace %}
+}
     </value>
   </property>
 
@@ -74,21 +81,22 @@
     <name>jmx-namenode-content</name>
     <description>This is the jinja template for namenode.json file for Cosmos JMX metrics</description>
     <value>
-{% templatetag openbrace %}
+{
   "servers" : [
-    {% templatetag openbrace %}
+    {
+      "prefix" : {{cosmos_service_name}},
       "port" : "{{namenode_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "NameNode",
       "queries" : [
-        {% templatetag openbrace %}
+        {
           "obj" : "*"
-        {% templatetag closebrace %}
+        }
       ],
       "numQueryThreads" : 2
-    {% templatetag closebrace %}
+    }
   ]
-{% templatetag closebrace %}
+}
     </value>
   </property>
 
@@ -96,21 +104,22 @@
     <name>jmx-yarn-content</name>
     <description>This is the jinja template for yarn.json file for Cosmos JMX metrics</description>
     <value>
-{% templatetag openbrace %}
+{
   "servers" : [
-    {% templatetag openbrace %}
+    {
+      "prefix" : {{cosmos_service_name}},
       "port" : "{{yarn_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "ResourceManager",
       "queries" : [
-        {% templatetag openbrace %}
+        {
           "obj" : "*"
-        {% templatetag closebrace %}
+        }
       ],
       "numQueryThreads" : 2
-    {% templatetag closebrace %}
+    }
   ]
-{% templatetag closebrace %}
+}
     </value>
   </property>
 
@@ -118,21 +127,22 @@
     <name>jmx-zookeeper-content</name>
     <description>This is the jinja template for zookeeper.json file for Cosmos JMX metrics</description>
     <value>
-{% templatetag openbrace %}
+{
   "servers" : [
-    {% templatetag openbrace %}
+    {
+      "prefix" : {{cosmos_service_name}},
       "port" : "{{zookeeper_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "ZooKeeper",
       "queries" : [
-        {% templatetag openbrace %}
+        {
           "obj" : "*"
-        {% templatetag closebrace %}
+        }
       ],
       "numQueryThreads" : 2
-    {% templatetag closebrace %}
+    }
   ]
-{% templatetag closebrace %}
+}
     </value>
   </property>
 

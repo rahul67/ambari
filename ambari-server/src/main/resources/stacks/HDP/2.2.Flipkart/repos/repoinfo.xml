@@ -55,46 +55,46 @@
   </os>
   <os family="ubuntu12">
     <repo>
-      <baseurl>http://hnode5.nm.flipkart.com/hdp-mirror/HDP/ubuntu12/2.x/GA/2.2.0.0</baseurl>
+      <baseurl>http://fdp-infra-mirror/hdp-mirror/HDP/ubuntu12/2.x/GA/2.2.0.0</baseurl>
       <repoid>HDP-2.2</repoid>
       <reponame>HDP</reponame>
     </repo>
     <repo>
-      <baseurl>http://hnode5.nm.flipkart.com/hdp-mirror/HDP-UTILS-1.1.0.20/repos/ubuntu12</baseurl>
+      <baseurl>http://fdp-infra-mirror/hdp-mirror/HDP-UTILS-1.1.0.20/repos/ubuntu12</baseurl>
       <repoid>HDP-UTILS-1.1.0.20</repoid>
       <reponame>HDP-UTILS</reponame>
     </repo>
   </os>
   <os family="ubuntu7">
     <repo>
-      <baseurl>http://hnode5.nm.flipkart.com/hdp-mirror/HDP/ubuntu12/2.x/GA/2.2.0.0</baseurl>
+      <baseurl>http://fdp-infra-mirror/hdp-mirror/HDP/ubuntu12/2.x/GA/2.2.0.0</baseurl>
       <repoid>HDP-2.2</repoid>
       <reponame>HDP</reponame>
     </repo>
     <repo>
-      <baseurl>http://hnode5.nm.flipkart.com/hdp-mirror/HDP-UTILS-1.1.0.20/repos/ubuntu12</baseurl>
+      <baseurl>http://fdp-infra-mirror/hdp-mirror/HDP-UTILS-1.1.0.20/repos/ubuntu12</baseurl>
       <repoid>HDP-UTILS-1.1.0.20</repoid>
       <reponame>HDP-UTILS</reponame>
     </repo>
     <repo>
-      <baseurl>http://archive.ubuntu.com/ubuntu/</baseurl>
+      <baseurl>http://fdp-infra-mirror/ubuntu/</baseurl>
       <repoid>Ubuntu-Trusty</repoid>
       <reponame>trusty</reponame>
     </repo>
   </os>
   <os family="debian7">
     <repo>
-      <baseurl>http://hnode5.nm.flipkart.com/hdp-mirror/HDP/ubuntu12/2.x/GA/2.2.0.0</baseurl>
+      <baseurl>http://fdp-infra-mirror/hdp-mirror/HDP/ubuntu12/2.x/GA/2.2.0.0</baseurl>
       <repoid>HDP-2.2</repoid>
       <reponame>HDP</reponame>
     </repo>
     <repo>
-      <baseurl>http://hnode5.nm.flipkart.com/hdp-mirror/HDP-UTILS-1.1.0.20/repos/ubuntu12</baseurl>
+      <baseurl>http://fdp-infra-mirror/hdp-mirror/HDP-UTILS-1.1.0.20/repos/ubuntu12</baseurl>
       <repoid>HDP-UTILS-1.1.0.20</repoid>
       <reponame>HDP-UTILS</reponame>
     </repo>
     <repo>
-      <baseurl>http://archive.ubuntu.com/ubuntu/</baseurl>
+      <baseurl>http://fdp-infra-mirror/ubuntu/</baseurl>
       <repoid>Ubuntu-Trusty</repoid>
       <reponame>trusty</reponame>
     </repo>

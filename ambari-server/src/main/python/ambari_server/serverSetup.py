@@ -748,8 +748,8 @@ class JDKSetupLinux(JDKSetup):
                  "http://public-repo-1.hortonworks.com/ARTIFACTS/jdk-8u40-linux-x64.tar.gz", "jdk-8u40-linux-x64.tar.gz",
                  "http://public-repo-1.hortonworks.com/ARTIFACTS/jce_policy-8.zip", "jce_policy-8.zip",
       JDKRelease("jdk1.8", "Oracle JDK 1.8",
-                 "http://hnode5.nm.flipkart.com/java/jdk-8u40-linux-x64.tar.gz", "jdk-8u40-linux-x64.tar.gz",
-                 "http://hnode5.nm.flipkart.com/java/jce_policy-8.zip", "jce_policy-8.zip",
+                 "http://fdp-infra-mirror/java/jdk-8u40-linux-x64.tar.gz", "jdk-8u40-linux-x64.tar.gz",
+                 "http://fdp-infra-mirror/java/jce_policy-8.zip", "jce_policy-8.zip",
                  "/usr/jdk64/jdk1.8.0_40",
                  "(jdk.*)/jre")
     ]

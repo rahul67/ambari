@@ -96,6 +96,12 @@
             <package>
               <name>protobuf-compiler</name>
             </package>
+            <package>
+              <name>fdp-infra-hadoop-common-patch</name>
+            </package>
+            <package>
+              <name>fk-bigfoot-4mc</name>
+            </package>
           </packages>
         </osSpecific>
       </osSpecifics>

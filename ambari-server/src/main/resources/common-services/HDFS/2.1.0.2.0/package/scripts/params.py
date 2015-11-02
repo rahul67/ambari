@@ -18,6 +18,7 @@ limitations under the License.
 """
 from ambari_commons import OSCheck
 from resource_management.libraries.functions.default import default
+from resource_management.libraries.functions.version import compare_versions, format_hdp_stack_version
 
 if OSCheck.is_windows_family():
   from params_windows import *
@@ -90,15 +91,15 @@ else:
 import functools
 #create partial functions with common arguments for every HdfsDirectory call
 #to create hdfs directory we need to call params.HdfsDirectory in code
-HdfsDirectory = functools.partial(
-  HdfsDirectory,
-  conf_dir=hadoop_conf_dir,
-  hdfs_user=hdfs_user,
-  security_enabled = security_enabled,
-  keytab = hdfs_user_keytab,
-  kinit_path_local = kinit_path_local,
-  bin_dir = hadoop_bin_dir
-)
+# HdfsDirectory = functools.partial(
+#   HdfsDirectory,
+#   conf_dir=hadoop_conf_dir,
+#   hdfs_user=hdfs_user,
+#   security_enabled = security_enabled,
+#   keytab = hdfs_user_keytab,
+#   kinit_path_local = kinit_path_local,
+#   bin_dir = hadoop_bin_dir
+# )
 
 # The logic for LZO also exists in OOZIE's params.py
 io_compression_codecs = default("/configurations/core-site/io.compression.codecs", None)

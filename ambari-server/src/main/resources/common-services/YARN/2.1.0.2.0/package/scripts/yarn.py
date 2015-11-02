@@ -333,6 +333,14 @@ def yarn(name = None):
               group=params.user_group
     )
 
+  if "fair-scheduler" in params.config['configurations']:
+    File(format("{hadoop_conf_dir}/fair-scheduler.xml"),
+         owner=params.yarn_user,
+        group=params.user_group,
+        mode=0644,
+        content=InlineTemplate(params.fair_scheduler_xml_template)
+    )
+
   if "capacity-scheduler" in params.config['configurations']:
     XmlConfig("capacity-scheduler.xml",
               conf_dir=params.hadoop_conf_dir,

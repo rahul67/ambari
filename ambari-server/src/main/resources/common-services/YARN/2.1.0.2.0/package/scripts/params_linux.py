@@ -152,6 +152,7 @@ mapred_pid_dir_prefix = status_params.mapred_pid_dir_prefix
 mapred_log_dir_prefix = config['configurations']['mapred-env']['mapred_log_dir_prefix']
 mapred_env_sh_template = config['configurations']['mapred-env']['content']
 yarn_env_sh_template = config['configurations']['yarn-env']['content']
+fair_scheduler_xml_template = default('/configurations/fair-scheduler/content', None)
 yarn_nodemanager_recovery_dir = default('/configurations/yarn-site/yarn.nodemanager.recovery.dir', None)
 
 if len(rm_hosts) > 1:

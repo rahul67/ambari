@@ -59,9 +59,9 @@ def namenode(action=None, do_format=True, rolling_restart=False, env=None):
          group=params.user_group
     )
 
-    if params.dfs_ha_enabled and \
-      params.dfs_ha_namenode_standby is not None and \
-      params.hostname == params.dfs_ha_namenode_standby:
+    if params.dfs_ha_enabled[params.current_nn_nsid] and \
+      params.init_standby is not None and \
+      params.hostname in params.dfs_ha_namenode_standby:
         # if the current host is the standby NameNode in an HA deployment
         # run the bootstrap command, to start the NameNode in standby mode
         # this requires that the active NameNode is already up and running,
@@ -91,7 +91,7 @@ def namenode(action=None, do_format=True, rolling_restart=False, env=None):
               user = params.hdfs_user)
 
     is_namenode_safe_mode_off = format("hdfs dfsadmin -fs {namenode_address} -safemode get | grep 'Safe mode is OFF'")
-    if params.dfs_ha_enabled:
+    if params.dfs_ha_enabled[params.current_nn_nsid]:
       is_active_namenode_cmd = as_user(format("hdfs --config {hadoop_conf_dir} haadmin -getServiceState {namenode_id} | grep active"), params.hdfs_user, env={'PATH':params.hadoop_bin_dir})
     else:
       is_active_namenode_cmd = None
@@ -105,7 +105,7 @@ def namenode(action=None, do_format=True, rolling_restart=False, env=None):
     # 3 (no-HA)           | ON -> OFF                 | Yes                      |
     check_for_safemode_off = False
     msg = ""
-    if params.dfs_ha_enabled:
+    if params.dfs_ha_enabled[params.current_nn_nsid]:
       code, out = shell.call(is_active_namenode_cmd, logoutput=True) # If active NN, code will be 0
       if code == 0: # active
         check_for_safemode_off = True
@@ -163,7 +163,7 @@ def namenode(action=None, do_format=True, rolling_restart=False, env=None):
     namenode_format_marker = os.path.join(params.hadoop_conf_dir,"NN_FORMATTED")
     if not os.path.exists(namenode_format_marker):
       hadoop_cmd = "cmd /C %s" % (os.path.join(params.hadoop_home, "bin", "hadoop.cmd"))
-      Execute("%s namenode -format" % (hadoop_cmd))
+      Execute("%s %s" % (hadoop_cmd, params.fmt_cmd))
       open(namenode_format_marker, 'a').close()
     Service(params.namenode_win_service_name, action=action)
   elif action == "stop":
@@ -218,16 +218,17 @@ def format_namenode(force=None):
   dfs_name_dir = params.dfs_name_dir
   hdfs_user = params.hdfs_user
   hadoop_conf_dir = params.hadoop_conf_dir
+  fmt_cmd = params.fmt_cmd
 
-  if not params.dfs_ha_enabled:
+  if not params.dfs_ha_enabled[params.current_nn_nsid]:
     if force:
-      ExecuteHadoop('namenode -format',
+      ExecuteHadoop(fmt_cmd,
                     kinit_override=True,
                     bin_dir=params.hadoop_bin_dir,
                     conf_dir=hadoop_conf_dir)
     else:
       if not is_namenode_formatted(params):
-        Execute(format("yes Y | hdfs --config {hadoop_conf_dir} namenode -format"),
+        Execute(format("yes Y | hdfs --config {hadoop_conf_dir} {fmt_cmd}"),
                 user = params.hdfs_user,
                 path = [params.hadoop_bin_dir]
         )
@@ -236,18 +237,18 @@ def format_namenode(force=None):
             recursive = True
           )
   else:
-    if params.dfs_ha_namenode_active is not None and \
-       params.hostname == params.dfs_ha_namenode_active:
+    if params.init_active is not None and \
+       params.hostname in params.dfs_ha_namenode_active:
       # check and run the format command in the HA deployment scenario
       # only format the "active" namenode in an HA deployment
       if force:
-        ExecuteHadoop('namenode -format',
+        ExecuteHadoop(fmt_cmd,
                       kinit_override=True,
                       bin_dir=params.hadoop_bin_dir,
                       conf_dir=hadoop_conf_dir)
       else:
         if not is_namenode_formatted(params):
-          Execute(format("yes Y | hdfs --config {hadoop_conf_dir} namenode -format"),
+          Execute(format("yes Y | hdfs --config {hadoop_conf_dir} {fmt_cmd}"),
                   user = params.hdfs_user,
                   path = [params.hadoop_bin_dir]
           )
@@ -329,7 +330,7 @@ def decommission():
             user=hdfs_user
     )
 
-    if params.dfs_ha_enabled:
+    if params.dfs_ha_enabled[params.current_nn_nsid]:
       # due to a bug in hdfs, refreshNodes will not run on both namenodes so we
       # need to execute each command scoped to a particular namenode
       nn_refresh_cmd = format('dfsadmin -fs hdfs://{namenode_rpc} -refreshNodes')
@@ -352,7 +353,7 @@ def decommission():
        owner=hdfs_user
   )
 
-  if params.dfs_ha_enabled:
+  if params.dfs_ha_enabled[params.current_nn_nsid]:
     # due to a bug in hdfs, refreshNodes will not run on both namenodes so we
     # need to execute each command scoped to a particular namenode
     nn_refresh_cmd = format('cmd /c hadoop dfsadmin -fs hdfs://{namenode_rpc} -refreshNodes')

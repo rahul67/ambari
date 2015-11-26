@@ -55,19 +55,24 @@ def post_upgrade_check():
     raise Fail("Could not retrieve Namenode HA addresses. Error: " + str(err))
 
   Logger.info(str(namenode_ha))
-  nn_address = namenode_ha.get_address(NAMENODE_STATE.ACTIVE)
+  nn_addresses = namenode_ha.get_address(NAMENODE_STATE.ACTIVE)
 
-  nn_data = utils.get_jmx_data(nn_address, 'org.apache.hadoop.hdfs.server.namenode.FSNamesystem', 'JournalTransactionInfo',
+  nn_data = {}
+  for nn_addr in nn_addresses:
+    nn_data[nn_addr] = utils.get_jmx_data(nn_addr, 'org.apache.hadoop.hdfs.server.namenode.FSNamesystem', 'JournalTransactionInfo',
                          namenode_ha.is_encrypted(), params.security_enabled)
-  if not nn_data:
-    raise Fail("Could not retrieve JournalTransactionInfo from JMX")
+  for nn_addr in nn_data:
+    if not nn_data[nn_addr]:
+      raise Fail("Could not retrieve JournalTransactionInfo from JMX for " + str(nn_addr) )
 
   try:
-    last_txn_id = int(nn_data['LastAppliedOrWrittenTxId'])
-    success = ensure_jns_have_new_txn(all_journal_node_hosts, last_txn_id)
-
-    if not success:
-      raise Fail("Could not ensure that all Journal nodes have a new log transaction id")
+    last_txn_ids = {}
+    for nn_addr in nn_data:
+      last_txn_id[nn_addr] = int(nn_data[nn_addr]['LastAppliedOrWrittenTxId'])
+      nsid_for_nn = params.hostname_nsid_map[nn_addr.split(":")[0].strip()]
+      success = ensure_jns_have_new_txn(all_journal_node_hosts, nsid_for_nn, last_txn_id[nn_addr])
+      if not success:
+        raise Fail("Could not ensure that all Journal nodes have a new log transaction id")
   except KeyError:
     raise Fail("JournalTransactionInfo does not have key LastAppliedOrWrittenTxId from JMX info")
 
@@ -85,9 +90,10 @@ def hdfs_roll_edits():
   Execute(command, user=params.hdfs_user, tries=1)
 
 
-def ensure_jns_have_new_txn(nodes, last_txn_id):
+def ensure_jns_have_new_txn(nodes, nameservice, last_txn_id):
   """
   :param nodes: List of Journalnodes
+  :param nameservice: Namenode HA NameService
   :param last_txn_id: Integer of last transaction id
   :return: Return true on success, false otherwise
   """
@@ -123,7 +129,7 @@ def ensure_jns_have_new_txn(nodes, last_txn_id):
         continue
 
       url = '%s://%s:%s' % (protocol, node, params.journalnode_port)
-      data = utils.get_jmx_data(url, 'Journal-', 'LastWrittenTxId', params.https_only, params.security_enabled)
+      data = utils.get_jmx_data(url, 'Journal-'+ nameservice, 'LastWrittenTxId', params.https_only, params.security_enabled)
       if data:
         actual_txn_ids[node] = int(data)
         if actual_txn_ids[node] >= last_txn_id:

@@ -26,34 +26,77 @@ else:
   from params_linux import *
 
 host_sys_prepped = default("/hostLevelParams/host_sys_prepped", False)
+
+cluster_id = default("/configurations/cluster-env/cluster-id", None)
+if cluster_id:
+  fmt_cmd = format("namenode -format -clusterid {cluster_id}")
+else:
+  fmt_cmd = "namenode -format"
+
+# Use the namenode RPC address if configured, otherwise, fallback to the default file system
+namenode_address = None
+if 'dfs.namenode.rpc-address' in config['configurations']['hdfs-site']:
+  namenode_rpcaddress = config['configurations']['hdfs-site']['dfs.namenode.rpc-address']
+  namenode_address = [format("hdfs://{namenode_rpcaddress}")]
+else:
+  namenode_address = [config['configurations']['core-site']['fs.defaultFS']]
+
+# User NameServices for NN addresses if configured. Overrides fs.defaultFS and rpc-address URIs
+dfs_ha_nameservices = []
+if 'dfs.nameservices' in config['configurations']['hdfs-site']:
+  nameservices = config['configurations']['hdfs-site']['dfs.nameservices']
+  dfs_ha_nameservices = [ns.strip() for ns in nameservices.split(",")]
+  namenode_address = ["hdfs://%s" % ns for ns in dfs_ha_nameservices]
+
 # HDFS High Availability properties
-dfs_ha_enabled = False
-dfs_ha_nameservices = default("/configurations/hdfs-site/dfs.nameservices", None)
-dfs_ha_namenode_ids = default(format("/configurations/hdfs-site/dfs.ha.namenodes.{dfs_ha_nameservices}"), None)
+dfs_ha_namenode_ids = {}
+for ns in dfs_ha_nameservices:
+  dfs_ha_namenode_ids[ns] = default(format("/configurations/hdfs-site/dfs.ha.namenodes.{ns}"), None)
 dfs_ha_automatic_failover_enabled = default("/configurations/hdfs-site/dfs.ha.automatic-failover.enabled", False)
 
+dfs_ha_namenode_active = []
+dfs_ha_namenode_standby = []
 # hostname of the active HDFS HA Namenode (only used when HA is enabled)
-dfs_ha_namenode_active = default("/configurations/hadoop-env/dfs_ha_initial_namenode_active", None)
+init_active = default("/configurations/hadoop-env/dfs_ha_initial_namenode_active", None)
+if init_active:
+  dfs_ha_namenode_active = [nn.strip() for nn in init_active.split(",")]
 # hostname of the standby HDFS HA Namenode (only used when HA is enabled)
-dfs_ha_namenode_standby = default("/configurations/hadoop-env/dfs_ha_initial_namenode_standby", None)
+init_standby = default("/configurations/hadoop-env/dfs_ha_initial_namenode_standby", None)
+if init_standby:
+  dfs_ha_namenode_standby = [nn.strip() for nn in init_standby.split(",")]
 
+# Values for the current Host
 namenode_id = None
 namenode_rpc = None
+other_namenode_id = None
+current_nn_nsid = None
 
-if dfs_ha_namenode_ids:
-  dfs_ha_namemodes_ids_list = dfs_ha_namenode_ids.split(",")
-  dfs_ha_namenode_ids_array_len = len(dfs_ha_namemodes_ids_list)
-  if dfs_ha_namenode_ids_array_len > 1:
-    dfs_ha_enabled = True
-if dfs_ha_enabled:
-  for nn_id in dfs_ha_namemodes_ids_list:
-    nn_host = config['configurations']['hdfs-site'][format('dfs.namenode.rpc-address.{dfs_ha_nameservices}.{nn_id}')]
-    if hostname in nn_host:
-      namenode_id = nn_id
-      namenode_rpc = nn_host
-  # With HA enabled namenode_address is recomputed
-  namenode_address = format('hdfs://{dfs_ha_nameservices}')
+dfs_ha_namemodes_ids_list = {}
+dfs_ha_namenode_ids_array_len = {}
+dfs_ha_enabled = {}
+hostname_nsid_map = {}
 
+for nsid in dfs_ha_namenode_ids:
+  if dfs_ha_namenode_ids[nsid]:
+    dfs_ha_namemodes_ids_list[nsid] = [nnid.strip() for nnid in dfs_ha_namenode_ids[nsid].split(",")]
+    dfs_ha_namenode_ids_array_len[nsid] = len(dfs_ha_namemodes_ids_list[nsid])
+    if dfs_ha_namenode_ids_array_len[nsid] > 1:
+      dfs_ha_enabled[nsid] = True
+  if dfs_ha_enabled[nsid]:
+    for nn_id in dfs_ha_namemodes_ids_list[nsid]:
+      nn_host = config['configurations']['hdfs-site'][format('dfs.namenode.rpc-address.{nsid}.{nn_id}')]
+      hostname_nsid_map[nn_host.split(":")[0].strip()] = nsid
+      if hostname in nn_host:
+        namenode_id = nn_id
+        namenode_rpc = nn_host
+        current_nn_nsid = nsid
+    # With HA enabled namenode_address is recomputed
+    namenode_address = format('hdfs://{current_nn_nsid}')
+
+  # Calculate the namenode id of the other namenode. This is needed during RU to initiate an HA failover using ZKFC.
+  if namenode_id is not None and len(dfs_ha_namemodes_ids_list[current_nn_nsid]) == 2:
+    other_namenode_id = list(set(dfs_ha_namemodes_ids_list[current_nn_nsid]) - set([namenode_id]))[0]
+    
 if dfs_http_policy is not None and dfs_http_policy.upper() == "HTTPS_ONLY":
   https_only = True
   journalnode_address = default('/configurations/hdfs-site/dfs.journalnode.https-address', None)

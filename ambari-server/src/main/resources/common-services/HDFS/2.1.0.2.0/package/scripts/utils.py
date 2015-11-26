@@ -128,7 +128,7 @@ def kill_zkfc(zkfc_user):
   :return: Return True if ZKFC was killed, otherwise, false.
   """
   import params
-  if params.dfs_ha_enabled:
+  if params.dfs_ha_enabled[params.hostname_nsid_map[params.hostname]]:
     zkfc_pid_file = get_service_pid_file("zkfc", zkfc_user)
     if zkfc_pid_file:
       check_process = as_user(format("ls {zkfc_pid_file} > /dev/null 2>&1 && ps -p `cat {zkfc_pid_file}` > /dev/null 2>&1"), user=zkfc_user)

@@ -40,25 +40,6 @@ dfs_data_dir = config['configurations']['hdfs-site']['dfs.datanode.data.dir']
 #decomission
 hdfs_exclude_file = default("/clusterHostInfo/decom_dn_hosts", [])
 exclude_file_path = config['configurations']['hdfs-site']['dfs.hosts.exclude']
-# HDFS High Availability properties
-dfs_ha_enabled = False
-dfs_ha_nameservices = default("/configurations/hdfs-site/dfs.nameservices", None)
-dfs_ha_namenode_ids = default(format("/configurations/hdfs-site/dfs.ha.namenodes.{dfs_ha_nameservices}"), None)
-
-namenode_id = None
-namenode_rpc = None
-hostname = config["hostname"]
-if dfs_ha_namenode_ids:
-  dfs_ha_namemodes_ids_list = dfs_ha_namenode_ids.split(",")
-  dfs_ha_namenode_ids_array_len = len(dfs_ha_namemodes_ids_list)
-  if dfs_ha_namenode_ids_array_len > 1:
-    dfs_ha_enabled = True
-if dfs_ha_enabled:
-  for nn_id in dfs_ha_namemodes_ids_list:
-    nn_host = config['configurations']['hdfs-site'][format('dfs.namenode.rpc-address.{dfs_ha_nameservices}.{nn_id}')]
-    if hostname in nn_host:
-      namenode_id = nn_id
-      namenode_rpc = nn_host
 
 hadoop_user = config["configurations"]["cluster-env"]["hadoop.user.name"]
 hdfs_user = hadoop_user

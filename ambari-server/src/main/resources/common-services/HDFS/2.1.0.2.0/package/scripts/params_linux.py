@@ -223,57 +223,12 @@ for dn_dir in dfs_name_dirs:
  tmp_mark_dir = format("{dn_dir}{hdfs_namenode_formatted_mark_suffix}")
  namenode_formatted_mark_dirs.append(tmp_mark_dir)
 
-# Use the namenode RPC address if configured, otherwise, fallback to the default file system
-namenode_address = None
-if 'dfs.namenode.rpc-address' in config['configurations']['hdfs-site']:
-  namenode_rpcaddress = config['configurations']['hdfs-site']['dfs.namenode.rpc-address']
-  namenode_address = format("hdfs://{namenode_rpcaddress}")
-else:
-  namenode_address = config['configurations']['core-site']['fs.defaultFS']
-
 fs_checkpoint_dirs = default("/configurations/hdfs-site/dfs.namenode.checkpoint.dir", "").split(',')
 
 dfs_data_dir = config['configurations']['hdfs-site']['dfs.datanode.data.dir']
 dfs_data_dir = ",".join([re.sub(r'^\[.+\]', '', dfs_dir.strip()) for dfs_dir in dfs_data_dir.split(",")])
 
 data_dir_mount_file = "/var/lib/ambari-agent/data/datanode/dfs_data_dir_mount.hist"
-
-# HDFS High Availability properties
-dfs_ha_enabled = False
-dfs_ha_nameservices = default("/configurations/hdfs-site/dfs.nameservices", None)
-dfs_ha_namenode_ids = default(format("/configurations/hdfs-site/dfs.ha.namenodes.{dfs_ha_nameservices}"), None)
-dfs_ha_automatic_failover_enabled = default("/configurations/hdfs-site/dfs.ha.automatic-failover.enabled", False)
-
-# hostname of the active HDFS HA Namenode (only used when HA is enabled)
-dfs_ha_namenode_active = default("/configurations/hadoop-env/dfs_ha_initial_namenode_active", None)
-# hostname of the standby HDFS HA Namenode (only used when HA is enabled)
-dfs_ha_namenode_standby = default("/configurations/hadoop-env/dfs_ha_initial_namenode_standby", None)
-
-# Values for the current Host
-namenode_id = None
-namenode_rpc = None
-
-dfs_ha_namemodes_ids_list = []
-other_namenode_id = None
-
-if dfs_ha_namenode_ids:
-  dfs_ha_namemodes_ids_list = dfs_ha_namenode_ids.split(",")
-  dfs_ha_namenode_ids_array_len = len(dfs_ha_namemodes_ids_list)
-  if dfs_ha_namenode_ids_array_len > 1:
-    dfs_ha_enabled = True
-if dfs_ha_enabled:
-  for nn_id in dfs_ha_namemodes_ids_list:
-    nn_host = config['configurations']['hdfs-site'][format('dfs.namenode.rpc-address.{dfs_ha_nameservices}.{nn_id}')]
-    if hostname in nn_host:
-      namenode_id = nn_id
-      namenode_rpc = nn_host
-  # With HA enabled namenode_address is recomputed
-  namenode_address = format('hdfs://{dfs_ha_nameservices}')
-
-  # Calculate the namenode id of the other namenode. This is needed during RU to initiate an HA failover using ZKFC.
-  if namenode_id is not None and len(dfs_ha_namemodes_ids_list) == 2:
-    other_namenode_id = list(set(dfs_ha_namemodes_ids_list) - set([namenode_id]))[0]
-
 
 if dfs_http_policy is not None and dfs_http_policy.upper() == "HTTPS_ONLY":
   https_only = True

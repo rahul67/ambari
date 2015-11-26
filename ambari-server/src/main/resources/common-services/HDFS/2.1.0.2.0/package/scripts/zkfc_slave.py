@@ -57,8 +57,8 @@ class ZkfcSlaveDefault(ZkfcSlave):
     # only run this format command if the active namenode hostname is set
     # The Ambari UI HA Wizard prompts the user to run this command
     # manually, so this guarantees it is only run in the Blueprints case
-    if params.dfs_ha_enabled and \
-       params.dfs_ha_namenode_active is not None:
+    if params.dfs_ha_enabled[params.hostname_nsid_map[params.hostname]] and \
+       params.init_active is not None:
       success =  initialize_ha_zookeeper(params)
       if not success:
         raise Fail("Could not initialize HA state in zookeeper")

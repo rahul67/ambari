@@ -37,7 +37,25 @@ class HdfsServiceCheckDefault(HdfsServiceCheck):
     dir = '/tmp'
     tmp_file = format("{dir}/{unique}")
 
-    safemode_command = format("dfsadmin -fs {namenode_address} -safemode get | grep OFF")
+    if len(params.dfs_ha_nameservices) > 0:
+      for nsid in params.dfs_ha_nameservices:
+        nn_address = format('hdfs://{nsid}')
+        self.do_service_checks_on_hdfs_default(nn_address, dir, tmp_file)
+    else:
+      self.do_service_checks_on_hdfs_default(params.namenode_address, dir, tmp_file)
+
+  def do_service_checks_on_hdfs_default(self, nn_address, dir, tmp_file):
+    """
+    This method encapsulates all HDFS checks for default OS so the same can be executed for as many name services as are configured in a federated cluster.
+    Or the same can be just executed once in case only one nameservice is configured or Namenodes are not in HA.
+    :param nn_address: hdfs address - either with nameservice or namenode address in case of non-HA config.
+    :param dir: test directory to be created on given hdfs address
+    :param tmp_file: test file to be created in given hdfs directory
+    """
+
+    import params
+
+    safemode_command = format("dfsadmin -fs {nn_address} -safemode get | grep OFF")
 
     if params.security_enabled:
       Execute(format("{kinit_path_local} -kt {hdfs_user_keytab} {hdfs_principal_name}"),
@@ -54,19 +72,22 @@ class HdfsServiceCheckDefault(HdfsServiceCheck):
     params.HdfsResource(dir,
                         type="directory",
                         action="create_on_execute",
-                        mode=0777
+                        mode=0777,
+                        default_fs=nn_address
     )
     params.HdfsResource(tmp_file,
                         type="file",
                         action="delete_on_execute",
+                        default_fs=nn_address
     )
 
     params.HdfsResource(tmp_file,
                         type="file",
                         source="/etc/passwd",
-                        action="create_on_execute"
+                        action="create_on_execute",
+                        default_fs=nn_address
     )
-    params.HdfsResource(None, action="execute")
+    params.HdfsResource(None, action="execute", default_fs=nn_address)
 
     if params.has_journalnode_hosts:
       if params.security_enabled:
@@ -122,17 +143,35 @@ class HdfsServiceCheckWindows(HdfsServiceCheck):
     dir = '/tmp'
     tmp_file = dir + '/' + unique
 
+    if len(params.dfs_ha_nameservices) > 0:
+      for nsid in params.dfs_ha_nameservices:
+        nn_address = format('hdfs://{nsid}')
+        self.do_service_checks_on_hdfs_windows(nn_address, dir, tmp_file)
+    else:
+      self.do_service_checks_on_hdfs_windows(params.namenode_address, dir, tmp_file)
+
+  def do_service_checks_on_hdfs_windows(self, nn_address, dir, tmp_file):
+    """
+    This method encapsulates all HDFS checks on Windows OS so the same can be executed for as many name services as are configured in a federated cluster.
+    Or the same can be just executed once in case only one nameservice is configured or Namenodes are not in HA.
+    :param nn_address: hdfs address - either with nameservice or namenode address in case of non-HA config.
+    :param dir: test directory to be created on given hdfs address
+    :param tmp_file: test file to be created in given hdfs directory
+    """
+
+    import params
+
     #commands for execution
     hadoop_cmd = "cmd /C %s" % (os.path.join(params.hadoop_home, "bin", "hadoop.cmd"))
-    create_dir_cmd = "%s fs -mkdir %s" % (hadoop_cmd, dir)
-    own_dir = "%s fs -chmod 777 %s" % (hadoop_cmd, dir)
-    test_dir_exists = "%s fs -test -e %s" % (hadoop_cmd, dir)
-    cleanup_cmd = "%s fs -rm %s" % (hadoop_cmd, tmp_file)
-    create_file_cmd = "%s fs -put %s %s" % (hadoop_cmd, os.path.join(params.hadoop_conf_dir, "core-site.xml"), tmp_file)
-    test_cmd = "%s fs -test -e %s" % (hadoop_cmd, tmp_file)
+    create_dir_cmd = "%s fs -mkdir %s%s" % (hadoop_cmd, nn_address, dir)
+    own_dir = "%s fs -chmod 777 %s%s" % (hadoop_cmd, nn_address, dir)
+    test_dir_exists = "%s fs -test -e %s%s" % (hadoop_cmd, nn_address, dir)
+    cleanup_cmd = "%s fs -rm %s%s" % (hadoop_cmd, nn_address, tmp_file)
+    create_file_cmd = "%s fs -put %s %s%s" % (hadoop_cmd, os.path.join(params.hadoop_conf_dir, "core-site.xml"), nn_address, tmp_file)
+    test_cmd = "%s fs -test -e %s%s" % (hadoop_cmd, nn_address, tmp_file)
 
     hdfs_cmd = "cmd /C %s" % (os.path.join(params.hadoop_home, "bin", "hdfs.cmd"))
-    safemode_command = "%s dfsadmin -safemode get | %s OFF" % (hdfs_cmd, params.grep_exe)
+    safemode_command = "%s dfsadmin -fs %s -safemode get | %s OFF" % (hdfs_cmd, nn_address, params.grep_exe)
 
     Execute(safemode_command, logoutput=True, try_sleep=3, tries=20)
     Execute(create_dir_cmd, user=params.hdfs_user,logoutput=True, ignore_failures=True)

@@ -84,7 +84,7 @@ class NameNode(Script):
   def stop(self, env, rolling_restart=False):
     import params
     env.set_params(params)
-    if rolling_restart and params.dfs_ha_enabled:
+    if rolling_restart and params.dfs_ha_enabled[params.hostname_nsid_map[params.hostname]]:
       if params.dfs_ha_automatic_failover_enabled:
         initiate_safe_zkfc_failover()
       else:

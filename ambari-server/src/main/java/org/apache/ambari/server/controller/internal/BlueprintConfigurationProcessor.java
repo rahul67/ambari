@@ -19,15 +19,6 @@
 package org.apache.ambari.server.controller.internal;
 
 
-import org.apache.ambari.server.state.PropertyDependencyInfo;
-import org.apache.ambari.server.topology.Cardinality;
-import org.apache.ambari.server.topology.ClusterTopology;
-import org.apache.ambari.server.topology.Configuration;
-import org.apache.ambari.server.topology.HostGroupInfo;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,6 +33,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.ambari.server.state.PropertyDependencyInfo;
+import org.apache.ambari.server.topology.Cardinality;
+import org.apache.ambari.server.topology.ClusterTopology;
+import org.apache.ambari.server.topology.Configuration;
+import org.apache.ambari.server.topology.HostGroupInfo;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Updates configuration properties based on cluster topology.  This is done when exporting
@@ -262,16 +262,28 @@ public class BlueprintConfigurationProcessor {
       // if the active/stanbdy namenodes are not specified, assign them automatically
       if (! isNameNodeHAInitialActiveNodeSet(clusterProps) && ! isNameNodeHAInitialStandbyNodeSet(clusterProps)) {
         Collection<String> nnHosts = clusterTopology.getHostAssignmentsForComponent("NAMENODE");
-        if (nnHosts.size() != 2) {
-          throw new ConfigurationTopologyException("NAMENODE HA requires exactly 2 hosts running NAMENODE but there are: " +
+        if ((nnHosts.size() % 2) != 0) {
+          throw new ConfigurationTopologyException("NAMENODE HA requires exactly 2 hosts running NAMENODE per NameService but there are: " +
               nnHosts.size() + " Hosts: " + nnHosts);
         }
 
         // set the properties that configure which namenode is active,
         // and which is a standby node in this HA deployment
         Iterator<String> nnHostIterator = nnHosts.iterator();
-        clusterConfig.setProperty("hadoop-env", "dfs_ha_initial_namenode_active", nnHostIterator.next());
-        clusterConfig.setProperty("hadoop-env", "dfs_ha_initial_namenode_standby", nnHostIterator.next());
+        StringBuilder active = new StringBuilder();
+        StringBuilder standby = new StringBuilder();
+        
+        // We've already checked nnHosts contains even number of hosts.
+        while (nnHostIterator.hasNext()) {
+          active.append(nnHostIterator.next());
+          active.append(",");
+          standby.append(nnHostIterator.next());
+          standby.append(",");
+        }
+        String active_nn = active.length() > 0 ? active.substring(0, active.length() - 1) : ""; 
+        String standby_nn = standby.length() > 0 ? standby.substring(0, standby.length() - 1) : "";
+        clusterConfig.setProperty("hadoop-env", "dfs_ha_initial_namenode_active", active_nn);
+        clusterConfig.setProperty("hadoop-env", "dfs_ha_initial_namenode_standby", standby_nn);
 
         configTypesUpdated.add("hadoop-env");
       }
@@ -1091,7 +1103,7 @@ public class BlueprintConfigurationProcessor {
           if (matchingGroupCount == 0 && cardinality.isValidCount(0)) {
             return origValue;
           } else {
-            if (topology.isNameNodeHAEnabled() && isComponentNameNode() && (matchingGroupCount == 2)) {
+            if (topology.isNameNodeHAEnabled() && isComponentNameNode() && ((matchingGroupCount % 2) == 0)) {
               // if this is the defaultFS property, it should reflect the nameservice name,
               // rather than a hostname (used in non-HA scenarios)
               if (properties.containsKey("core-site") && properties.get("core-site").get("fs.defaultFS").equals(origValue)) {

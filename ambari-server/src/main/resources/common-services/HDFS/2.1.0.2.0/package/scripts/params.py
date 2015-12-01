@@ -71,31 +71,34 @@ namenode_rpc = None
 other_namenode_id = None
 current_nn_nsid = None
 
-dfs_ha_namemodes_ids_list = {}
+dfs_ha_namenodes_ids_list = {}
 dfs_ha_namenode_ids_array_len = {}
 dfs_ha_enabled = {}
 hostname_nsid_map = {}
 
-for nsid in dfs_ha_namenode_ids:
+for nsid in dfs_ha_nameservices:
   if dfs_ha_namenode_ids[nsid]:
-    dfs_ha_namemodes_ids_list[nsid] = [nnid.strip() for nnid in dfs_ha_namenode_ids[nsid].split(",")]
-    dfs_ha_namenode_ids_array_len[nsid] = len(dfs_ha_namemodes_ids_list[nsid])
-    if dfs_ha_namenode_ids_array_len[nsid] > 1:
+    dfs_ha_namenodes_ids_list[nsid] = [nnid.strip() for nnid in dfs_ha_namenode_ids[nsid].split(",")]
+    if len(dfs_ha_namenodes_ids_list[nsid]) > 1:
       dfs_ha_enabled[nsid] = True
+    else:
+      dfs_ha_enabled[nsid] = False
   if dfs_ha_enabled[nsid]:
-    for nn_id in dfs_ha_namemodes_ids_list[nsid]:
+    for nn_id in dfs_ha_namenodes_ids_list[nsid]:
       nn_host = config['configurations']['hdfs-site'][format('dfs.namenode.rpc-address.{nsid}.{nn_id}')]
       hostname_nsid_map[nn_host.split(":")[0].strip()] = nsid
       if hostname in nn_host:
         namenode_id = nn_id
         namenode_rpc = nn_host
         current_nn_nsid = nsid
+
+  if current_nn_nsid:
     # With HA enabled namenode_address is recomputed
     namenode_address = format('hdfs://{current_nn_nsid}')
 
   # Calculate the namenode id of the other namenode. This is needed during RU to initiate an HA failover using ZKFC.
-  if namenode_id is not None and len(dfs_ha_namemodes_ids_list[current_nn_nsid]) == 2:
-    other_namenode_id = list(set(dfs_ha_namemodes_ids_list[current_nn_nsid]) - set([namenode_id]))[0]
+  if namenode_id is not None and current_nn_nsid is not None and len(dfs_ha_namenodes_ids_list[current_nn_nsid]) == 2:
+    other_namenode_id = list(set(dfs_ha_namenodes_ids_list[current_nn_nsid]) - set([namenode_id]))[0]
     
 if dfs_http_policy is not None and dfs_http_policy.upper() == "HTTPS_ONLY":
   https_only = True

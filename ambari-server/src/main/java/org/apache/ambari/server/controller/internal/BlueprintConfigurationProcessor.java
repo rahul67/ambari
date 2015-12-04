@@ -153,7 +153,8 @@ public class BlueprintConfigurationProcessor {
   private static final PropertyFilter[] clusterUpdatePropertyFilters =
     { new DependencyEqualsFilter("hbase.security.authorization", "hbase-site", "true"),
       new DependencyNotEqualsFilter("hive.server2.authentication", "hive-site", "NONE"),
-      new HDFSNameNodeHAFilter() };
+      new HDFSNameNodeHAFilter(),
+      new NameNodeFederationFilter() };
 
   private ClusterTopology clusterTopology;
 
@@ -262,9 +263,10 @@ public class BlueprintConfigurationProcessor {
       // if the active/stanbdy namenodes are not specified, assign them automatically
       if (! isNameNodeHAInitialActiveNodeSet(clusterProps) && ! isNameNodeHAInitialStandbyNodeSet(clusterProps)) {
         Collection<String> nnHosts = clusterTopology.getHostAssignmentsForComponent("NAMENODE");
+        String[] nameServices = parseNameServices(clusterTopology.getConfiguration().getFullProperties().get("hdfs-site"));
         if ((nnHosts.size() % 2) != 0) {
           throw new ConfigurationTopologyException("NAMENODE HA requires exactly 2 hosts running NAMENODE per NameService but there are: " +
-              nnHosts.size() + " Hosts: " + nnHosts);
+              nnHosts.size() + " in " + nameServices.length + "NameServices. Hosts: " + nnHosts + "; NameServices: " + nameServices);
         }
 
         // set the properties that configure which namenode is active,
@@ -315,6 +317,10 @@ public class BlueprintConfigurationProcessor {
    * This involves converting concrete topology information to host groups.
    */
   public void doUpdateForBlueprintExport() {
+    if (clusterTopology.isNameNodeFederationEnabled()) {
+      doNameNodeFederationUpdate();
+    }
+
     // HA configs are only processed in cluster configuration, not HG configurations
     if (clusterTopology.isNameNodeHAEnabled()) {
       doNameNodeHAUpdate();
@@ -409,6 +415,10 @@ public class BlueprintConfigurationProcessor {
   private Collection<Map<String, Map<String, PropertyUpdater>>> createCollectionOfUpdaters() {
     Collection<Map<String, Map<String, PropertyUpdater>>> updaters = allUpdaters;
 
+    if (clusterTopology.isNameNodeFederationEnabled()) {
+      updaters = addNameNodeFederationUpdaters(updaters);
+    }
+    
     if (clusterTopology.isNameNodeHAEnabled()) {
       updaters = addNameNodeHAUpdaters(updaters);
     }
@@ -422,6 +432,15 @@ public class BlueprintConfigurationProcessor {
     }
 
     return updaters;
+  }
+
+  private Collection<Map<String, Map<String, PropertyUpdater>>> addNameNodeFederationUpdaters(Collection<Map<String, Map<String, PropertyUpdater>>> updaters) {
+    Collection<Map<String, Map<String, PropertyUpdater>>> federationUpdaters = 
+        new LinkedList<Map<String, Map<String, PropertyUpdater>>>();
+    federationUpdaters.addAll(updaters);
+    federationUpdaters.add(createMapOfNameNodeFederationUpdaters());
+    
+    return federationUpdaters;
   }
 
   /**
@@ -532,6 +551,11 @@ public class BlueprintConfigurationProcessor {
     }
   }
 
+  public void doNameNodeFederationUpdate() {
+    Map<String, Map<String, PropertyUpdater>> federationUpdaters = createMapOfNameNodeFederationUpdaters();
+    doMultiHostExportUpdate(federationUpdaters, clusterTopology.getConfiguration());
+  }
+
   /**
    * Perform export update processing for HA configuration for NameNodes.  The HA NameNode property
    *   names are based on the nameservices defined when HA is enabled via the Ambari UI, so this method
@@ -578,7 +602,29 @@ public class BlueprintConfigurationProcessor {
     }
   }
 
+  /**
+   * Creates map of PropertyUpdater instances that are associated with
+   *   NameNode Federation.  The Federation configuration property
+   *   names are dynamic, and based on other HA config elements in
+   *   hdfs-site.  This method registers updaters for the required
+   *   properties associated with each nameservice.
+   *
+   * @return a Map of registered PropertyUpdaters for handling Federation properties in hdfs-site
+   */
 
+  private Map<String, Map<String, PropertyUpdater>> createMapOfNameNodeFederationUpdaters() {
+    Map<String, Map<String, PropertyUpdater>> federationUpdaters = new HashMap<String, Map<String, PropertyUpdater>>();
+    Map<String, PropertyUpdater> hdfsSiteUpdatersForFederation = new HashMap<String, PropertyUpdater>();
+    federationUpdaters.put("hdfs-site", hdfsSiteUpdatersForFederation);
+
+    Map<String, String> hdfsSiteConfig = clusterTopology.getConfiguration().getFullProperties().get("hdfs-site");
+    for (String nameService : parseNameServices(hdfsSiteConfig)) {
+      final String sharedEditsPropertyName = "dfs.namenode.shared.edits.dir." + nameService;
+      hdfsSiteUpdatersForFederation.put(sharedEditsPropertyName, new MultipleHostTopologyUpdater("JOURNALNODE", ';', false));
+    }
+    return federationUpdaters;
+  }
+  
   /**
    * Creates map of PropertyUpdater instances that are associated with
    *   NameNode High Availability (HA).  The HA configuration property
@@ -2407,7 +2453,8 @@ public class BlueprintConfigurationProcessor {
      * namenode.
      */
     private final Set<String> setOfHDFSPropertyNamesNonHA =
-      Collections.unmodifiableSet( new HashSet<String>(Arrays.asList("dfs.namenode.http-address", "dfs.namenode.https-address", "dfs.namenode.rpc-address")));
+      Collections.unmodifiableSet( new HashSet<String>(Arrays.asList("dfs.namenode.http-address", "dfs.namenode.https-address", 
+          "dfs.namenode.rpc-address", "dfs.secondary.http.address", "dfs.namenode.secondary.http-address")));
 
 
     /**
@@ -2432,6 +2479,29 @@ public class BlueprintConfigurationProcessor {
     }
   }
 
+  /**
+   * Filter implementation that scans for HDFS NameNode properties that should be
+   * removed/ignored when NameNode Federation is enabled.
+   */
+  private static class NameNodeFederationFilter implements PropertyFilter {
+    
+    /**
+     * Set of HDFS properties that are only valid in Non-Federated cluster.
+     */
+    private final Set<String> setOfHDFSPropertyNamesNonFederated = 
+        Collections.unmodifiableSet( new HashSet<String>(Arrays.asList("dfs.namenode.shared.edits.dir")));
+
+    @Override
+    public boolean isPropertyIncluded(String propertyName, String propertyValue, String configType, ClusterTopology topology) {
+      if (topology.isNameNodeFederationEnabled()) {
+        if (setOfHDFSPropertyNamesNonFederated.contains(propertyName)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    
+  }
 
 
 }

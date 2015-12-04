@@ -124,6 +124,13 @@ public interface ClusterTopology {
   public boolean isNameNodeHAEnabled();
 
   /**
+   * Determine if NameNode Federation is enabled.
+   * 
+   * @return true if NameNode Federation is enabled; false otherwise
+   */
+  public boolean isNameNodeFederationEnabled();
+  
+  /**
    * Determine if Yarn ResourceManager HA is enabled.
    *
    * @return true if Yarn ResourceManager HA is enabled; false otherwise

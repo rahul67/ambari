@@ -185,6 +185,24 @@ public class ClusterTopologyImpl implements ClusterTopology {
   }
 
   @Override
+  public boolean isNameNodeFederationEnabled() {
+    return isNameNodeFederationEnabled(configuration.getFullProperties());
+  }
+  
+  /**
+   * Static convenience method checks number of nameservices in given configuration to 
+   * determine if federation is enabled
+   * @param configurationProperties
+   * @return
+   */
+  public static boolean isNameNodeFederationEnabled(Map<String, Map<String, String>> configurationProperties) {
+    //TODO: Check for federation if NameNode HA is not enabled.
+    return configurationProperties.containsKey("hdfs-site") &&
+        configurationProperties.get("hdfs-site").containsKey("dfs.nameservices") &&
+        (configurationProperties.get("hdfs-site").get("dfs.nameservices").split(",").length > 1);
+  }
+  
+  @Override
   public boolean isYarnResourceManagerHAEnabled() {
     return isYarnResourceManagerHAEnabled(configuration.getFullProperties());
   }

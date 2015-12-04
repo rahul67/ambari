@@ -244,12 +244,12 @@ public class UpgradeHelper {
           // Special case for NAMENODE
           if (service.serviceName.equalsIgnoreCase("HDFS") && component.equalsIgnoreCase("NAMENODE")) {
             // !!! revisit if needed
-            if (!hostsType.hosts.isEmpty() && hostsType.master != null && hostsType.secondary != null) {
+            if (!hostsType.hosts.isEmpty() && !hostsType.master.isEmpty() && !hostsType.secondary.isEmpty()) {
               // The order is important, first do the standby, then the active namenode.
               LinkedHashSet<String> order = new LinkedHashSet<String>();
 
-              order.add(hostsType.secondary);
-              order.add(hostsType.master);
+              order.addAll(hostsType.secondary);
+              order.addAll(hostsType.master);
 
               // Override the hosts with the ordered collection
               hostsType.hosts = order;
@@ -369,7 +369,7 @@ public class UpgradeHelper {
             HostsType hostsType = mhr.getMasterAndHosts(service, component);
 
             if (null != hostsType) {
-              value = hostsType.master;
+              value = StringUtils.join(hostsType.master, ", ");
             }
           }
           break;

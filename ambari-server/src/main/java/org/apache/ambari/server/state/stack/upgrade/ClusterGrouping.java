@@ -217,8 +217,8 @@ public class ClusterGrouping extends Grouping {
       if (hosts != null) {
 
         Set<String> realHosts = new LinkedHashSet<String>(hosts.hosts);
-        if (ExecuteHostType.MASTER == et.hosts && null != hosts.master) {
-          realHosts = Collections.singleton(hosts.master);
+        if (ExecuteHostType.MASTER == et.hosts && !hosts.master.isEmpty()) {
+          realHosts = new LinkedHashSet<String>(hosts.master);
         }
 
         // Pick a random host.

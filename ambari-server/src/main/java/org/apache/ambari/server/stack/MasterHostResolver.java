@@ -22,6 +22,7 @@ import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -134,16 +135,16 @@ public class MasterHostResolver {
       switch (s) {
         case HDFS:
           if (componentName.equalsIgnoreCase("NAMENODE")) {
-            if (componentHosts.size() != 2) {
+            if ((componentHosts.size() % 2) != 0) {
               return filterHosts(hostsType, serviceName, componentName);
             }
 
-            Map<Status, String> pair = getNameNodePair();
-            if (pair != null) {
-              hostsType.master = pair.containsKey(Status.ACTIVE) ? pair.get(Status.ACTIVE) :  null;
-              hostsType.secondary = pair.containsKey(Status.STANDBY) ? pair.get(Status.STANDBY) :  null;
+            Map<Status, LinkedHashSet<String>> pairs = getNameNodePair();
+            if (pairs != null) {
+              hostsType.master = pairs.containsKey(Status.ACTIVE) ? pairs.get(Status.ACTIVE) :  null;
+              hostsType.secondary = pairs.containsKey(Status.STANDBY) ? pairs.get(Status.STANDBY) :  null;
             } else {
-              hostsType.master = componentHosts.iterator().next();
+              hostsType.master = new LinkedHashSet<String>(Arrays.asList(componentHosts.iterator().next()));
             }
           }
           break;
@@ -228,52 +229,64 @@ public class MasterHostResolver {
    * @return Returns a map from the state ("active" or "standby" to the hostname with that state if exactly
    * one active and one standby host were found, otherwise, return null.
    */
-  private Map<Status, String> getNameNodePair() {
-    Map<Status, String> stateToHost = new HashMap<Status, String>();
+  private Map<Status, LinkedHashSet<String>> getNameNodePair() {
+    Map<Status, LinkedHashSet<String>> stateToHost = new HashMap<Status, LinkedHashSet<String>>();
     Cluster cluster = getCluster();
 
-    String nameService = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, "dfs.nameservices");
-    if (nameService == null || nameService.isEmpty()) {
+    String nameServices = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, "dfs.nameservices");
+    if (nameServices == null || nameServices.isEmpty()) {
       return null;
     }
 
-    String nnUniqueIDstring = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, "dfs.ha.namenodes." + nameService);
-    if (nnUniqueIDstring == null || nnUniqueIDstring.isEmpty()) {
-      return null;
-    }
-
-    String[] nnUniqueIDs = nnUniqueIDstring.split(",");
-    if (nnUniqueIDs == null || nnUniqueIDs.length != 2) {
-      return null;
-    }
-
-    String policy = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, "dfs.http.policy");
-    boolean encrypted = (policy != null && policy.equalsIgnoreCase(ConfigHelper.HTTPS_ONLY));
-
-    String namenodeFragment = "dfs.namenode." + (encrypted ? "https-address" : "http-address") + ".{0}.{1}";
-
-    for (String nnUniqueID : nnUniqueIDs) {
-      String key = MessageFormat.format(namenodeFragment, nameService, nnUniqueID);
-      String value = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, key);
-
-      try {
-        HostAndPort hp = HTTPUtils.getHostAndPortFromProperty(value);
-        if (hp == null) {
-          throw new MalformedURLException("Could not parse host and port from " + value);
+    for (String nameService : nameServices.split(",")) {
+      nameService = nameService.trim();
+      String nnUniqueIDstring = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, "dfs.ha.namenodes." + nameServices);
+      if (nnUniqueIDstring == null || nnUniqueIDstring.isEmpty()) {
+        return null;
+      }
+  
+      String[] nnUniqueIDs = nnUniqueIDstring.split(",");
+      if (nnUniqueIDs == null || nnUniqueIDs.length != 2) {
+        return null;
+      }
+  
+      String policy = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, "dfs.http.policy");
+      boolean encrypted = (policy != null && policy.equalsIgnoreCase(ConfigHelper.HTTPS_ONLY));
+  
+      String namenodeFragment = "dfs.namenode." + (encrypted ? "https-address" : "http-address") + ".{0}.{1}";
+  
+      for (String nnUniqueID : nnUniqueIDs) {
+        nnUniqueID = nnUniqueID.trim();
+        String key = MessageFormat.format(namenodeFragment, nameService, nnUniqueID);
+        String value = m_configHelper.getValueFromDesiredConfigurations(cluster, ConfigHelper.HDFS_SITE, key);
+  
+        try {
+          HostAndPort hp = HTTPUtils.getHostAndPortFromProperty(value);
+          if (hp == null) {
+            throw new MalformedURLException("Could not parse host and port from " + value);
+          }
+  
+          String state = queryJmxBeanValue(hp.host, hp.port, "Hadoop:service=NameNode,name=NameNodeStatus", "State", true, encrypted);
+  
+          if (null != state && (state.equalsIgnoreCase(Status.ACTIVE.toString()) || state.equalsIgnoreCase(Status.STANDBY.toString()))) {
+            Status status = Status.valueOf(state.toUpperCase());
+            if (stateToHost.containsKey(status)) {
+              stateToHost.get(status).add(hp.host);
+            } else {
+              stateToHost.put(status, new LinkedHashSet<String>(Arrays.asList(hp.host)));
+            }
+          }
+        } catch (MalformedURLException e) {
+          LOG.error(e.getMessage());
         }
-
-        String state = queryJmxBeanValue(hp.host, hp.port, "Hadoop:service=NameNode,name=NameNodeStatus", "State", true, encrypted);
-
-        if (null != state && (state.equalsIgnoreCase(Status.ACTIVE.toString()) || state.equalsIgnoreCase(Status.STANDBY.toString()))) {
-          Status status = Status.valueOf(state.toUpperCase());
-          stateToHost.put(status, hp.host);
-        }
-      } catch (MalformedURLException e) {
-        LOG.error(e.getMessage());
       }
     }
-
-    if (stateToHost.containsKey(Status.ACTIVE) && stateToHost.containsKey(Status.STANDBY) && !stateToHost.get(Status.ACTIVE).equalsIgnoreCase(stateToHost.get(Status.STANDBY))) {
+    LinkedHashSet<String> intersection = null;
+    if (stateToHost.containsKey(Status.STANDBY) && stateToHost.containsKey(Status.ACTIVE)) {
+      intersection = stateToHost.get(Status.STANDBY);
+      intersection.retainAll(stateToHost.get(Status.ACTIVE));
+    }
+    if (null != intersection && intersection.isEmpty()) {
       return stateToHost;
     }
     return null;
@@ -294,8 +307,8 @@ public class MasterHostResolver {
           "Hadoop:service=ResourceManager,name=RMNMInfo", "modelerType", true);
 
       if (null != value) {
-        if (null == hostType.master) {
-          hostType.master = hostname;
+        if (hostType.master.isEmpty()) {
+          hostType.master = new LinkedHashSet<String>(Arrays.asList(hostname));
         }
 
         // Quick and dirty to make sure the master is last in the list
@@ -323,9 +336,9 @@ public class MasterHostResolver {
       if (null != value) {
         Boolean bool = Boolean.valueOf(value);
         if (bool.booleanValue()) {
-          hostsType.master = hostname;
+          hostsType.master = new LinkedHashSet<String>(Arrays.asList(hostname));
         } else {
-          hostsType.secondary = hostname;
+          hostsType.secondary = new LinkedHashSet<String>(Arrays.asList(hostname));
         }
       }
 

@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -892,8 +893,8 @@ public class UpgradeHelperTest {
 
     type = new HostsType();
     type.hosts.addAll(Arrays.asList("h1", "h2"));
-    type.master = "h1";
-    type.secondary = "h2";
+    type.master = new LinkedHashSet<String>(Arrays.asList("h1"));
+    type.secondary = new LinkedHashSet<String>(Arrays.asList("h2"));
     expect(m_masterHostResolver.getMasterAndHosts("HDFS", "NAMENODE")).andReturn(type).anyTimes();
 
     type = new HostsType();
@@ -969,8 +970,8 @@ public class UpgradeHelperTest {
     assertEquals(2, schs.size());
 
     HostsType type = new HostsType();
-    type.master = "h1";
-    type.secondary = "h2";
+    type.master = new LinkedHashSet<String>(Arrays.asList("h1"));
+    type.secondary = new LinkedHashSet<String>(Arrays.asList("h2"));
 
     expect(m_masterHostResolver.getMasterAndHosts("ZOOKEEPER", "ZOOKEEPER_SERVER")).andReturn(null).anyTimes();
     expect(m_masterHostResolver.getMasterAndHosts("HDFS", "NAMENODE")).andReturn(type).anyTimes();

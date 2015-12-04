@@ -21,6 +21,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,8 +51,8 @@ public class TaskWrapperBuilder {
       if (t.getType().equals(Task.Type.EXECUTE)) {
         ExecuteTask et = (ExecuteTask) t;
         if (et.hosts == ExecuteHostType.MASTER) {
-          if (hostsType.master != null) {
-            collection.add(new TaskWrapper(service, component, Collections.singleton(hostsType.master), t));
+          if (!hostsType.master.isEmpty()) {
+            collection.add(new TaskWrapper(service, component, new LinkedHashSet<String>(hostsType.master), t));
             continue;
           } else {
             LOG.error(MessageFormat.format("Found an Execute task for {0} and {1} meant to run on a master but could not find any masters to run on. Skipping this task.", service, component));

@@ -31,14 +31,14 @@ import org.apache.ambari.server.state.ServiceComponentHost;
 public class HostsType {
 
   /**
-   * The master host, if any.
+   * The master hosts, if any.
    */
-  public String master = null;
+  public LinkedHashSet<String> master = new LinkedHashSet<String>();
 
   /**
-   * The secondary host, if any.
+   * The secondary hosts, if any.
    */
-  public String secondary = null;
+  public LinkedHashSet<String> secondary = new LinkedHashSet<String>();
 
   /**
    * Ordered collection of hosts.  This represents all hosts where an upgrade

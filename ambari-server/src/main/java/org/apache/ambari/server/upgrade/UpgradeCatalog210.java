@@ -382,11 +382,12 @@ public class UpgradeCatalog210 extends AbstractUpgradeCatalog {
       dbAccessor.dropFKConstraint(HOST_VERSION_TABLE, "FK_host_version_host_name");
 
       dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "FK_cghm_hname");
-      dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "fk_configgrouphostmapping_host_name");
+      dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "FK_configgrouphostmapping_host_name");
+      dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "FK_configgrouphostmapping_config_group_id");
 
       // FK_krb_pr_host_hostname used to have a CASCADE DELETE, which is not needed.
       dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_krb_pr_host_hostname");
-      dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "fk_kerberos_principal_host_host_name");
+      dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_kerberos_principal_host_host_name");
 
       // FK_krb_pr_host_principalname used to have a CASCADE DELETE, which is not needed, so it will be recreated without it.
       dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_krb_pr_host_principalname");
@@ -487,6 +488,7 @@ public class UpgradeCatalog210 extends AbstractUpgradeCatalog {
     dbAccessor.dropFKConstraint(HOST_COMPONENT_STATE_TABLE, "hstcomponentstatecomponentname");
     dbAccessor.dropFKConstraint(HOST_COMPONENT_DESIRED_STATE_TABLE, "hstcmpnntdesiredstatecmpnntnme");
     dbAccessor.dropFKConstraint(SERVICE_CONFIG_HOSTS_TABLE, "FK_scvhosts_scv");
+    dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_kerberos_principal_host_principal_name");
 
     if (databaseType == Configuration.DatabaseType.DERBY) {
       for (String tableName : tablesWithHostNameInPK) {
@@ -599,11 +601,11 @@ public class UpgradeCatalog210 extends AbstractUpgradeCatalog {
 
     columns = new ArrayList<DBColumnInfo>();
     columns.add(new DBColumnInfo("widget_layout_id", Long.class, null, null, false));
-    columns.add(new DBColumnInfo("widget_id", Long.class, null, null, false));
+    columns.add(new DBColumnInfo("user_widget_id", Long.class, null, null, false));
     columns.add(new DBColumnInfo("widget_order", Short.class, null, null, true));
-    dbAccessor.createTable(WIDGET_LAYOUT_USER_WIDGET_TABLE, columns, "widget_layout_id", "widget_id");
+    dbAccessor.createTable(WIDGET_LAYOUT_USER_WIDGET_TABLE, columns, "widget_layout_id", "user_widget_id");
     dbAccessor.addFKConstraint(WIDGET_LAYOUT_USER_WIDGET_TABLE, "FK_widget_layout_id", "widget_layout_id", "widget_layout", "id", false, false);
-    dbAccessor.addFKConstraint(WIDGET_LAYOUT_USER_WIDGET_TABLE, "FK_widget_id", "widget_id", "widget", "id", false, false);
+    dbAccessor.addFKConstraint(WIDGET_LAYOUT_USER_WIDGET_TABLE, "FK_widget_id", "user_widget_id", "user_widget", "id", false, false);
 
     //Alter users to store active widget layouts
     dbAccessor.addColumn("users", new DBColumnInfo("active_widget_layouts", String.class, 1024, null, true));

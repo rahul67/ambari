@@ -601,11 +601,11 @@ public class UpgradeCatalog210 extends AbstractUpgradeCatalog {
 
     columns = new ArrayList<DBColumnInfo>();
     columns.add(new DBColumnInfo("widget_layout_id", Long.class, null, null, false));
-    columns.add(new DBColumnInfo("user_widget_id", Long.class, null, null, false));
+    columns.add(new DBColumnInfo("widget_id", Long.class, null, null, false));
     columns.add(new DBColumnInfo("widget_order", Short.class, null, null, true));
-    dbAccessor.createTable(WIDGET_LAYOUT_USER_WIDGET_TABLE, columns, "widget_layout_id", "user_widget_id");
+    dbAccessor.createTable(WIDGET_LAYOUT_USER_WIDGET_TABLE, columns, "widget_layout_id", "widget_id");
     dbAccessor.addFKConstraint(WIDGET_LAYOUT_USER_WIDGET_TABLE, "FK_widget_layout_id", "widget_layout_id", "widget_layout", "id", false, false);
-    dbAccessor.addFKConstraint(WIDGET_LAYOUT_USER_WIDGET_TABLE, "FK_widget_id", "user_widget_id", "user_widget", "id", false, false);
+    dbAccessor.addFKConstraint(WIDGET_LAYOUT_USER_WIDGET_TABLE, "FK_widget_id", "widget_id", "widget", "id", false, false);
 
     //Alter users to store active widget layouts
     dbAccessor.addColumn("users", new DBColumnInfo("active_widget_layouts", String.class, 1024, null, true));

@@ -382,11 +382,12 @@ public class UpgradeCatalog210 extends AbstractUpgradeCatalog {
       dbAccessor.dropFKConstraint(HOST_VERSION_TABLE, "FK_host_version_host_name");
 
       dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "FK_cghm_hname");
-      dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "fk_configgrouphostmapping_host_name");
+      dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "FK_configgrouphostmapping_host_name");
+      dbAccessor.dropFKConstraint(CONFIG_GROUP_HOST_MAPPING_TABLE, "FK_configgrouphostmapping_config_group_id");
 
       // FK_krb_pr_host_hostname used to have a CASCADE DELETE, which is not needed.
       dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_krb_pr_host_hostname");
-      dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "fk_kerberos_principal_host_host_name");
+      dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_kerberos_principal_host_host_name");
 
       // FK_krb_pr_host_principalname used to have a CASCADE DELETE, which is not needed, so it will be recreated without it.
       dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_krb_pr_host_principalname");
@@ -487,6 +488,7 @@ public class UpgradeCatalog210 extends AbstractUpgradeCatalog {
     dbAccessor.dropFKConstraint(HOST_COMPONENT_STATE_TABLE, "hstcomponentstatecomponentname");
     dbAccessor.dropFKConstraint(HOST_COMPONENT_DESIRED_STATE_TABLE, "hstcmpnntdesiredstatecmpnntnme");
     dbAccessor.dropFKConstraint(SERVICE_CONFIG_HOSTS_TABLE, "FK_scvhosts_scv");
+    dbAccessor.dropFKConstraint(KERBEROS_PRINCIPAL_HOST_TABLE, "FK_kerberos_principal_host_principal_name");
 
     if (databaseType == Configuration.DatabaseType.DERBY) {
       for (String tableName : tablesWithHostNameInPK) {

@@ -48,6 +48,9 @@ public class VersionUtils {
     version1 = StringUtils.trim(version1);
     version2 = StringUtils.trim(version2);
     
+    version1 = version1.replaceAll("[a-zA-Z]", "");
+    version2 = version2.replaceAll("[a-zA-Z]", "");
+    
     if (version1.indexOf('-') >=0) {
       version1 = version1.substring(0, version1.indexOf('-'));
     }

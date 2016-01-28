@@ -27,7 +27,7 @@ def check_service_status(name):
   import params
   
   if name == 'collectd':
-    check_process_status(params.cosmos_collectd_pid_file)
+    os.path.exists(params.cosmos_collectd_lock_file)
 
   elif name == 'jmx':
     os.path.exists(params.cosmos_jmx_lock_file)

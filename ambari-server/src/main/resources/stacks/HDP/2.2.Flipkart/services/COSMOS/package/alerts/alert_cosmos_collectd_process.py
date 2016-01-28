@@ -30,29 +30,26 @@ RESULT_CODE_OK = 'OK'
 RESULT_CODE_CRITICAL = 'CRITICAL'
 RESULT_CODE_UNKNOWN = 'UNKNOWN'
 
-COSMOS_COLLECTD_PID_DIR = '/var/run'
+COSMOS_COLLECTD_LOCK_DIR = '/etc/service'
 
 def get_tokens():
   """
   Returns a tuple of tokens in the format {{site/property}} that will be used
   to build the dictionary passed into execute
   """
-  return (COSMOS_COLLECTD_PID_DIR,)
+  return (COSMOS_COLLECTD_LOCK_DIR,)
 
 @OsFamilyFuncImpl(OsFamilyImpl.DEFAULT)
-def is_collectd_process_live(pid_file):
+def is_collectd_process_live(lock_file):
   """
   Gets whether the Cosmos CollectD represented by the specified file is running.
-  :param pid_file: the PID file of the collectd process to check
+  :param lock_file: the lock file of the collectd process to check
   :return: True if the collectd process is running, False otherwise
   """
   live = False
 
-  try:
-    check_process_status(pid_file)
+  if os.path.exists(lock_file):
     live = True
-  except ComponentIsNotRunning:
-    pass
 
   return live
 
@@ -69,15 +66,15 @@ def execute(parameters=None, host_name=None):
   if parameters is None:
     return (RESULT_CODE_UNKNOWN, ['There were no parameters supplied to the script.'])
 
-  if set([COSMOS_COLLECTD_PID_DIR]).issubset(parameters):
-    COSMOS_COLLECTD_PID_PATH = os.path.join(parameters[COSMOS_COLLECTD_PID_DIR], 'cosmos-collectdmon.pid')
+  if set([COSMOS_COLLECTD_LOCK_DIR]).issubset(parameters):
+    COSMOS_COLLECTD_LOCK_PATH = os.path.join(parameters[COSMOS_COLLECTD_LOCK_DIR], 'cosmos-collectd/supervise/lock')
   else:
-    return (RESULT_CODE_UNKNOWN, ['The cosmos_collectd_pid_dir is a required parameter.'])
+    return (RESULT_CODE_UNKNOWN, ['The cosmos_collectd_lock_dir is a required parameter.'])
 
   if host_name is None:
     host_name = socket.getfqdn()
 
-  cosmos_collectd_process_running = is_collectd_process_live(COSMOS_COLLECTD_PID_PATH)
+  cosmos_collectd_process_running = is_collectd_process_live(COSMOS_COLLECTD_LOCK_PATH)
 
   alert_state = RESULT_CODE_OK if cosmos_collectd_process_running else RESULT_CODE_CRITICAL
 

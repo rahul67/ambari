@@ -31,14 +31,14 @@ RESULT_CODE_OK = 'OK'
 RESULT_CODE_CRITICAL = 'CRITICAL'
 RESULT_CODE_UNKNOWN = 'UNKNOWN'
 
-COSMOS_JMX_PID_DIR = '/var/run'
+COSMOS_JMX_LOCK_DIR = '/etc/service'
 
 def get_tokens():
   """
   Returns a tuple of tokens in the format {{site/property}} that will be used
   to build the dictionary passed into execute
   """
-  return (COSMOS_JMX_PID_DIR,)
+  return (COSMOS_JMX_LOCK_DIR,)
 
 @OsFamilyFuncImpl(OsFamilyImpl.DEFAULT)
 def is_jmx_process_live(lock_file):
@@ -67,8 +67,8 @@ def execute(parameters=None, host_name=None):
   if parameters is None:
     return (RESULT_CODE_UNKNOWN, ['There were no parameters supplied to the script.'])
 
-  if set([COSMOS_JMX_PID_DIR]).issubset(parameters):
-    COSMOS_JMX_LOCK_PATH = os.path.join(parameters[COSMOS_JMX_PID_DIR], 'sv/cosmos-jmx/lock')
+  if set([COSMOS_JMX_LOCK_DIR]).issubset(parameters):
+    COSMOS_JMX_LOCK_PATH = os.path.join(parameters[COSMOS_JMX_LOCK_DIR], 'cosmos-jmx/supervise/lock')
   else:
     return (RESULT_CODE_UNKNOWN, ['The cosmos_jmx_pid_dir is a required parameter.'])
 

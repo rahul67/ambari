@@ -352,13 +352,11 @@ class InstallPackages(Script):
     else:
       repo['mirrorsList'] = url_info['mirrorsList']
 
-    ubuntu_components = [url_info['name']] + self.UBUNTU_REPO_COMPONENTS_POSTFIX
     file_name = self.REPO_FILE_NAME_PREFIX + self.repository_version
     if not 'repoComponents' in url_info:
       repo['repoComponents'] = self.DEFAULT_UBUNTU_REPO_COMPONENTS_POSTFIX
     
     ubuntu_components = [url_info['name']] + repo['repoComponents'].split()
-    file_name = self.REPO_FILE_NAME_PREFIX + repository_version
 
     Repository(repo['repoName'],
       action = "create",

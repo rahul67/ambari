@@ -271,8 +271,8 @@ export HADOOP_SECURE_DN_PID_DIR={{hadoop_pid_dir_prefix}}/$HADOOP_SECURE_DN_USER
 export HADOOP_MAPRED_PID_DIR={{mapred_pid_dir_prefix}}/$USER
 
 YARN_RESOURCEMANAGER_OPTS="-Dyarn.server.resourcemanager.appsummary.logger=INFO,RMSUMMARY"
-{% if yarn_jmx_port &gt; 0 %}
-YARN_RESOURCEMANAGER_OPTS="${JMX_OPTS} -Dcom.sun.management.jmxremote.port={{yarn_jmx_port}} ${YARN_RESOURCEMANAGER_OPTS}"
+{% if resourcemanager_jmx_port &gt; 0 %}
+YARN_RESOURCEMANAGER_OPTS="${JMX_OPTS} -Dcom.sun.management.jmxremote.port={{resourcemanager_jmx_port}} ${YARN_RESOURCEMANAGER_OPTS}"
 {% endif %}
 
 # A string representing this instance of hadoop. $USER by default.

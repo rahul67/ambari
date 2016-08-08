@@ -19,6 +19,7 @@ limitations under the License.
 """
 from ambari_commons import OSCheck
 from resource_management.libraries.functions.default import default
+from resource_management.libraries.functions import *
 
 if OSCheck.is_windows_family():
   from params_windows import *

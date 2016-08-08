@@ -1,0 +1,15 @@
+{
+  "servers" : [
+    {
+      "port" : "{{resourcemanager_jmx_port}}",
+      "host" : "{{hostname}}",
+      "process": "ResourceManager",
+      "queries" : [
+        {
+          "obj" : "*"
+        }
+      ],
+      "numQueryThreads" : 2
+    }
+  ]
+}

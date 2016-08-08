@@ -35,11 +35,18 @@ def cosmos(name=None):
        content=InlineTemplate(params.namenode_json_template)
   )
 
-  File(os.path.join(params.cosmos_jmx_conf_dir, 'yarn.json'),
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'resourcemanager.json'),
        owner=params.cosmos_user,
        group=params.cosmos_user,
        mode=0644,
-       content=InlineTemplate(params.yarn_json_template)
+       content=InlineTemplate(params.resourcemanager_json_template)
+  )
+
+  File(os.path.join(params.cosmos_jmx_conf_dir, 'nodemanager.json'),
+       owner=params.cosmos_user,
+       group=params.cosmos_user,
+       mode=0644,
+       content=InlineTemplate(params.nodemanager_json_template)
   )
 
   File(os.path.join(params.cosmos_jmx_conf_dir, 'datanode.json'),

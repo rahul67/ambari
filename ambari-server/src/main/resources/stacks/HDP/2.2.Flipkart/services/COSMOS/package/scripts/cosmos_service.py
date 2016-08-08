@@ -28,7 +28,6 @@ def cosmos_service(name, action):
 
   if name == 'collectd':
     cmd = format("{cosmos_collectd_script}")
-    pid_file = params.cosmos_collectd_pid_file
     #no_op_test should be much more complex to work with cumulative status of collectd
     #removing as startup script handle it also
     #no_op_test = format("ls {pid_file} >/dev/null 2>&1 && ps `cat {pid_file}` >/dev/null 2>&1")

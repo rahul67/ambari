@@ -121,7 +121,8 @@ java_version = int(config['hostLevelParams']['java_version'])
 
 # JMX configuration
 namenode_jmx_port = int(default("/configurations/core-site/namenode_jmx_port", 0))
-yarn_jmx_port = int(default("/configurations/core-site/yarn_jmx_port", 0))
+resourcemanager_jmx_port = int(default("/configurations/core-site/resourcemanager_jmx_port", 0))
+nodemanager_jmx_port = int(default("/configurations/core-site/nodemanager_jmx_port", 0))
 datanode_jmx_port = int(default("/configurations/core-site/datanode_jmx_port", 0))
 
 if hdp_stack_version != "" and compare_versions(hdp_stack_version, '2.0') >= 0 and compare_versions(hdp_stack_version, '2.1') < 0 and not OSCheck.is_suse_family():

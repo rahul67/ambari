@@ -195,8 +195,15 @@ DEFAULT
     </description>
   </property>
   <property>
-    <name>yarn_jmx_port</name>
+    <name>resourcemanager_jmx_port</name>
     <value>9007</value>
+    <description>
+      JMX port for Cosmos Metric collection.
+    </description>
+  </property>
+  <property>
+    <name>nodemanager_jmx_port</name>
+    <value>9005</value>
     <description>
       JMX port for Cosmos Metric collection.
     </description>

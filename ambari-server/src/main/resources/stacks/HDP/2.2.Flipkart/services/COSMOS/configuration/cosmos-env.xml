@@ -22,24 +22,19 @@
 
 <configuration>
 
-  <property>
-    <name>cosmos_service_name</name>
-    <value>test</value>
-    <description>Cosmos Metrics Service Identifier</description>
-  </property>
     <property>
     <name>cosmos_pid_dir</name>
     <value>/var/run</value>
     <description>PID dir</description>
   </property>
   <property>
-    <name>cosmos_collectd_pid_file</name>
-    <value>/var/run/cosmos-collectdmon.pid</value>
-    <description>Cosmos v2 CollectD PID File</description>
+    <name>cosmos_collectd_lock_file</name>
+    <value>/etc/service/cosmos-collectd/supervise/lock</value>
+    <description>Cosmos v2 CollectD lock File</description>
   </property>
   <property>
     <name>cosmos_jmx_lock_file</name>
-    <value>/var/run/sv/cosmos-jmx/lock</value>
+    <value>/etc/service/cosmos-jmx/supervise/lock</value>
     <description>Cosmos v2 JMX lock file</description>
   </property>
   <property>
@@ -61,7 +56,6 @@
 {
   "servers" : [
     {
-      "prefix" : {{cosmos_service_name}},
       "port" : "{{datanode_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "DataNode",
@@ -84,7 +78,6 @@
 {
   "servers" : [
     {
-      "prefix" : {{cosmos_service_name}},
       "port" : "{{namenode_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "NameNode",
@@ -101,16 +94,37 @@
   </property>
 
   <property>
-    <name>jmx-yarn-content</name>
-    <description>This is the jinja template for yarn.json file for Cosmos JMX metrics</description>
+    <name>jmx-resourcemanager-content</name>
+    <description>This is the jinja template for rm.json file for Cosmos JMX metrics</description>
     <value>
 {
   "servers" : [
     {
-      "prefix" : {{cosmos_service_name}},
-      "port" : "{{yarn_jmx_port}}",
+      "port" : "{{resourcemanager_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "ResourceManager",
+      "queries" : [
+        {
+          "obj" : "*"
+        }
+      ],
+      "numQueryThreads" : 2
+    }
+  ]
+}
+    </value>
+  </property>
+
+  <property>
+    <name>jmx-nodemanager-content</name>
+    <description>This is the jinja template for nm.json file for Cosmos JMX metrics</description>
+    <value>
+{
+  "servers" : [
+    {
+      "port" : "{{nodemanager_jmx_port}}",
+      "host" : "{{hostname}}",
+      "process": "NodeManager",
       "queries" : [
         {
           "obj" : "*"
@@ -130,7 +144,6 @@
 {
   "servers" : [
     {
-      "prefix" : {{cosmos_service_name}},
       "port" : "{{zookeeper_jmx_port}}",
       "host" : "{{hostname}}",
       "process": "ZooKeeper",
